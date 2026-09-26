@@ -12,7 +12,16 @@ export const CURRENT_VERSION = 1;
 export const MAX_SESSIONS = 500;
 
 export type Difficulty = 1 | 2 | 3 | 4 | 5 | 6;
-export type SessionType = 'typing' | 'numpad';
+export const SESSION_TYPES = ['typing', 'numpad', 'assessment'] as const;
+export type SessionType = (typeof SESSION_TYPES)[number];
+
+export type SessionMistake = {
+  expected: string;
+  typed: string;
+  index: number;
+  /** Only in assessments: which part the mistake came from. */
+  section?: 'typing' | 'numpad';
+};
 
 export type Session = {
   id: string;
@@ -20,7 +29,7 @@ export type Session = {
   startedAt: string; // ISO date string
   durationSec: number;
   metrics: Record<string, number>;
-  mistakes: { expected: string; typed: string; index: number }[];
+  mistakes: SessionMistake[];
 };
 
 export type AppData = {
@@ -53,7 +62,7 @@ function isSession(value: unknown): value is Session {
   if (!isObject(value)) return false;
   return (
     typeof value.id === 'string' &&
-    (value.type === 'typing' || value.type === 'numpad') &&
+    SESSION_TYPES.includes(value.type as SessionType) &&
     typeof value.startedAt === 'string' &&
     typeof value.durationSec === 'number' &&
     isObject(value.metrics) &&

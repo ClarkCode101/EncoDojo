@@ -93,6 +93,17 @@ describe('migrate', () => {
     expect(migrate([])).toBeNull();
   });
 
+  it('accepts assessment sessions', () => {
+    const data = addSession(defaultData(), { ...sampleSession(), type: 'assessment' });
+    expect(migrate(JSON.parse(exportJson(data)))).toEqual(data);
+  });
+
+  it('rejects an unknown session type', () => {
+    const data = addSession(defaultData(), sampleSession());
+    const text = exportJson(data).replace('"typing"', '"karaoke"');
+    expect(parseImport(text).ok).toBe(false);
+  });
+
   it('rejects an invalid difficulty', () => {
     const bad = defaultData();
     (bad.settings as { difficulty: number }).difficulty = 9;

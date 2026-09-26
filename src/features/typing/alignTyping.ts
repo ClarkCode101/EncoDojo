@@ -36,6 +36,13 @@ export type Alignment = {
   mistakes: Mistake[];
 };
 
+/** Short description of a mistake: "Wrong key", "Extra key", or "Skipped". */
+export function mistakeKind(mistake: Mistake): 'Wrong key' | 'Extra key' | 'Skipped' {
+  if (mistake.expected === '') return 'Extra key';
+  if (mistake.typed === '') return 'Skipped';
+  return 'Wrong key';
+}
+
 /** How far (in characters) the typing may drift from the passage. */
 export const BAND = 20;
 

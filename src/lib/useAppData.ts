@@ -7,7 +7,7 @@
  *   updateAppData((d) => ({ ...d, settings: { ...d.settings, sound: true } }));
  */
 import { useSyncExternalStore } from 'react';
-import { STORAGE_KEY, loadData, saveData, type AppData } from './storage';
+import { STORAGE_KEY, addSession, loadData, saveData, type AppData, type Session } from './storage';
 
 let current: AppData = loadData();
 const listeners = new Set<() => void>();
@@ -34,6 +34,16 @@ export function updateAppData(change: (data: AppData) => AppData): boolean {
 /** Replace everything (used by Import and Reset). */
 export function replaceAppData(data: AppData): boolean {
   return updateAppData(() => data);
+}
+
+/** Add a finished session to progress. */
+export function saveSession(session: Session): boolean {
+  return updateAppData((d) => addSession(d, session));
+}
+
+/** Remove a session from progress (e.g. "Don't save this result"). */
+export function removeSession(id: string): boolean {
+  return updateAppData((d) => ({ ...d, sessions: d.sessions.filter((s) => s.id !== id) }));
 }
 
 export function useAppData(): AppData {
