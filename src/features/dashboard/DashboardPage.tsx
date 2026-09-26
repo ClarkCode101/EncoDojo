@@ -1,7 +1,7 @@
-import { ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
+import { ButtonLink, Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
-import { useAppData } from '../../lib/useAppData';
+import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
 import { formatClock } from '../../lib/useCountdown';
 import { bestMetric, currentStreak, latestMetric, recentSessions } from './stats';
 
@@ -50,6 +50,7 @@ export default function DashboardPage() {
   const recent = recentSessions(sessions, 10);
   const streak = currentStreak(sessions);
   const latestAssessment = recentSessions(sessions.filter((s) => s.type === 'assessment'), 1)[0] ?? null;
+  const trainingCount = sessions.filter((s) => s.type !== 'assessment').length;
 
   return (
     <div>
@@ -92,7 +93,10 @@ export default function DashboardPage() {
                 <th className="py-2 pr-4 font-medium">Date</th>
                 <th className="py-2 pr-4 font-medium">Drill</th>
                 <th className="py-2 pr-4 font-medium">Time</th>
-                <th className="py-2 font-medium">Result</th>
+                <th className="py-2 pr-4 font-medium">Result</th>
+                <th className="py-2 font-medium">
+                  <span className="sr-only">Delete</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -108,11 +112,37 @@ export default function DashboardPage() {
                   </td>
                   <td className="py-2 pr-4">{typeLabel[s.type]}</td>
                   <td className="py-2 pr-4 tabular-nums">{formatClock(s.durationSec)}</td>
-                  <td className="py-2 tabular-nums">{summary(s)}</td>
+                  <td className="py-2 pr-4 tabular-nums">{summary(s)}</td>
+                  <td className="py-2 text-right">
+                    <ConfirmButton
+                      size="sm"
+                      label="Delete"
+                      question="Delete this?"
+                      onConfirm={() => removeSession(s.id)}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        )}
+
+        {trainingCount > 0 && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+            <p className="text-sm text-slate-600">
+              Deleting also updates your best scores and streak. Assessments are cleared on the Assessment page.
+            </p>
+            <ConfirmButton
+              label="Clear training history"
+              question={
+                trainingCount === 1
+                  ? 'Delete your 1 training session?'
+                  : `Delete all ${trainingCount} training sessions?`
+              }
+              confirmLabel="Yes, clear all"
+              onConfirm={() => clearSessions(['typing', 'numpad'])}
+            />
+          </div>
         )}
       </Card>
     </div>

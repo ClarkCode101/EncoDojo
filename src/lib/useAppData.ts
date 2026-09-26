@@ -11,9 +11,11 @@ import {
   STORAGE_KEY,
   addSession,
   loadData,
+  removeSessions,
   saveData,
   type AppData,
   type Session,
+  type SessionType,
   type Settings,
 } from './storage';
 
@@ -54,9 +56,14 @@ export function saveSession(session: Session): boolean {
   return updateAppData((d) => addSession(d, session));
 }
 
-/** Remove a session from progress (e.g. "Don't save this result"). */
+/** Remove a session from progress (e.g. "Don't save this result" or Delete). */
 export function removeSession(id: string): boolean {
-  return updateAppData((d) => ({ ...d, sessions: d.sessions.filter((s) => s.id !== id) }));
+  return updateAppData((d) => removeSessions(d, (s) => s.id === id));
+}
+
+/** Remove every session of the given types, e.g. clearSessions(['typing', 'numpad']). */
+export function clearSessions(types: SessionType[]): boolean {
+  return updateAppData((d) => removeSessions(d, (s) => types.includes(s.type)));
 }
 
 export function useAppData(): AppData {

@@ -1,7 +1,7 @@
 /**
  * Small shared UI pieces. Kept in one file because each is only a few lines.
  */
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 type Variant = 'primary' | 'secondary' | 'danger';
@@ -13,19 +13,77 @@ const variantClasses: Record<Variant, string> = {
   danger: 'bg-red-700 text-white hover:bg-red-800 disabled:bg-red-300',
 };
 
+type Size = 'md' | 'sm';
+
+const sizeClasses: Record<Size, string> = {
+  md: 'px-4 py-2 text-sm',
+  sm: 'px-2.5 py-1 text-xs',
+};
+
 const baseButton =
-  'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold ' +
+  'inline-flex items-center justify-center gap-2 rounded-md font-semibold ' +
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ' +
   'focus-visible:outline-blue-600 disabled:cursor-not-allowed';
 
 export function Button({
   variant = 'primary',
+  size = 'md',
   className = '',
   type = 'button',
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size }) {
   return (
-    <button type={type} className={`${baseButton} ${variantClasses[variant]} ${className}`} {...props} />
+    <button
+      type={type}
+      className={`${baseButton} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+      {...props}
+    />
+  );
+}
+
+/**
+ * A button that asks "Are you sure?" before doing something that can't be
+ * undone (like deleting). First click shows the question with Yes / Cancel.
+ */
+export function ConfirmButton({
+  label,
+  question,
+  confirmLabel = 'Yes, delete',
+  onConfirm,
+  size = 'md',
+}: {
+  label: string;
+  question: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+  size?: Size;
+}) {
+  const [asking, setAsking] = useState(false);
+  if (!asking) {
+    return (
+      <Button variant="secondary" size={size} onClick={() => setAsking(true)}>
+        {label}
+      </Button>
+    );
+  }
+  return (
+    <span role="alertdialog" aria-label={question} className="inline-flex flex-wrap items-center gap-2">
+      <span className={size === 'sm' ? 'text-xs text-slate-800' : 'text-sm text-slate-800'}>{question}</span>
+      <Button
+        variant="danger"
+        size={size}
+        autoFocus
+        onClick={() => {
+          setAsking(false);
+          onConfirm();
+        }}
+      >
+        {confirmLabel}
+      </Button>
+      <Button variant="secondary" size={size} onClick={() => setAsking(false)}>
+        Cancel
+      </Button>
+    </span>
   );
 }
 
@@ -40,7 +98,7 @@ export function ButtonLink({
   children: ReactNode;
 }) {
   return (
-    <Link to={to} className={`${baseButton} ${variantClasses[variant]}`}>
+    <Link to={to} className={`${baseButton} ${sizeClasses.md} ${variantClasses[variant]}`}>
       {children}
     </Link>
   );

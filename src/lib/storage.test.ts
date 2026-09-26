@@ -10,6 +10,7 @@ import {
   loadData,
   migrate,
   parseImport,
+  removeSessions,
   saveData,
   type Session,
 } from './storage';
@@ -79,6 +80,30 @@ describe('addSession', () => {
     expect(data.sessions).toHaveLength(MAX_SESSIONS);
     expect(data.sessions[0].id).toBe('s5');
     expect(data.sessions.at(-1)?.id).toBe(`s${MAX_SESSIONS + 4}`);
+  });
+});
+
+describe('removeSessions', () => {
+  const data = [
+    sampleSession('t1'),
+    { ...sampleSession('n1'), type: 'numpad' as const },
+    { ...sampleSession('a1'), type: 'assessment' as const },
+  ].reduce(addSession, defaultData());
+
+  it('removes one session by id', () => {
+    expect(removeSessions(data, (s) => s.id === 'n1').sessions.map((s) => s.id)).toEqual(['t1', 'a1']);
+  });
+
+  it('clears training history but keeps assessments', () => {
+    const left = removeSessions(data, (s) => s.type === 'typing' || s.type === 'numpad');
+    expect(left.sessions.map((s) => s.id)).toEqual(['a1']);
+  });
+
+  it('does not change the original object or other data', () => {
+    const left = removeSessions(data, () => true);
+    expect(left.sessions).toEqual([]);
+    expect(left.settings).toBe(data.settings);
+    expect(data.sessions).toHaveLength(3);
   });
 });
 

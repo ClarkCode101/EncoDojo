@@ -6,11 +6,11 @@
  * (A past report can also be opened from the history list on the intro.)
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, PageHeader } from '../../components/ui';
+import { Button, Card, ConfirmButton, PageHeader } from '../../components/ui';
 import { display } from '../../lib/scoring';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
-import { saveSession, useAppData } from '../../lib/useAppData';
+import { clearSessions, removeSession, saveSession, useAppData } from '../../lib/useAppData';
 import NumpadRunner from '../numpad/NumpadRunner';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
@@ -35,7 +35,10 @@ function Rules() {
       </li>
       <li>No live stats, no "Finish now", and no retry once a part starts — just like a real hiring test.</li>
       <li>Each part's timer starts on your first keystroke. There is a short break between parts.</li>
-      <li>Your result is always saved so you can see your real progress. Don't leave this page until the report appears.</li>
+      <li>
+        Your result is saved automatically so you can see your real progress (you can delete it later from the
+        history). Don't leave this page until the report appears.
+      </li>
     </ul>
   );
 }
@@ -45,46 +48,67 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
     return <p className="text-slate-700">No assessments yet. Your first report will appear here.</p>;
   }
   return (
-    <table className="w-full text-left text-sm">
-      <thead className="text-slate-600">
-        <tr>
-          <th className="py-2 pr-4 font-medium">Date</th>
-          <th className="py-2 pr-4 font-medium">Result</th>
-          <th className="py-2 pr-4 font-medium">Net WPM</th>
-          <th className="py-2 pr-4 font-medium">Typing acc.</th>
-          <th className="py-2 pr-4 font-medium">KPH</th>
-          <th className="py-2 pr-4 font-medium">Entry acc.</th>
-          <th className="py-2 font-medium">
-            <span className="sr-only">Open</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody className="tabular-nums">
-        {sessions.map((s) => (
-          <tr key={s.id} className="border-t border-slate-100">
-            <td className="py-2 pr-4 text-slate-700">
-              {new Date(s.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-            </td>
-            <td className="py-2 pr-4">
-              {s.metrics.jobReady === 1 ? '✅ Job-ready' : `${s.metrics.targetsMet}/${s.metrics.targetsTotal} targets`}
-            </td>
-            <td className="py-2 pr-4">{display(s.metrics.typingNetWpm)}</td>
-            <td className="py-2 pr-4">{display(s.metrics.typingAccuracy)}%</td>
-            <td className="py-2 pr-4">{display(s.metrics.numpadKph).toLocaleString()}</td>
-            <td className="py-2 pr-4">{display(s.metrics.numpadEntryAccuracy)}%</td>
-            <td className="py-2">
-              <button
-                type="button"
-                onClick={() => onOpen(s)}
-                className="rounded text-blue-700 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
-              >
-                View report
-              </button>
-            </td>
+    <>
+      <table className="w-full text-left text-sm">
+        <thead className="text-slate-600">
+          <tr>
+            <th className="py-2 pr-4 font-medium">Date</th>
+            <th className="py-2 pr-4 font-medium">Result</th>
+            <th className="py-2 pr-4 font-medium">Net WPM</th>
+            <th className="py-2 pr-4 font-medium">Typing acc.</th>
+            <th className="py-2 pr-4 font-medium">KPH</th>
+            <th className="py-2 pr-4 font-medium">Entry acc.</th>
+            <th className="py-2 font-medium">
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody className="tabular-nums">
+          {sessions.map((s) => (
+            <tr key={s.id} className="border-t border-slate-100">
+              <td className="py-2 pr-4 text-slate-700">
+                {new Date(s.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+              </td>
+              <td className="py-2 pr-4">
+                {s.metrics.jobReady === 1 ? '✅ Job-ready' : `${s.metrics.targetsMet}/${s.metrics.targetsTotal} targets`}
+              </td>
+              <td className="py-2 pr-4">{display(s.metrics.typingNetWpm)}</td>
+              <td className="py-2 pr-4">{display(s.metrics.typingAccuracy)}%</td>
+              <td className="py-2 pr-4">{display(s.metrics.numpadKph).toLocaleString()}</td>
+              <td className="py-2 pr-4">{display(s.metrics.numpadEntryAccuracy)}%</td>
+              <td className="py-2">
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onOpen(s)}
+                    className="rounded text-blue-700 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+                  >
+                    View report
+                  </button>
+                  <ConfirmButton
+                    size="sm"
+                    label="Delete"
+                    question="Delete this?"
+                    onConfirm={() => removeSession(s.id)}
+                  />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="mt-4 flex justify-end border-t border-slate-200 pt-4">
+        <ConfirmButton
+          label="Clear assessment history"
+          question={
+            sessions.length === 1 ? 'Delete your 1 assessment?' : `Delete all ${sessions.length} assessments?`
+          }
+          confirmLabel="Yes, clear all"
+          onConfirm={() => clearSessions(['assessment'])}
+        />
+      </div>
+    </>
   );
 }
 

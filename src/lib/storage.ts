@@ -180,6 +180,11 @@ export function addSession(data: AppData, session: Session): AppData {
   return { ...data, sessions: capSessions([...data.sessions, session]) };
 }
 
+/** Return a copy of `data` without the sessions for which `shouldRemove` is true. */
+export function removeSessions(data: AppData, shouldRemove: (s: Session) => boolean): AppData {
+  return { ...data, sessions: data.sessions.filter((s) => !shouldRemove(s)) };
+}
+
 /** Simple unique id, good enough for local-only data. */
 export function makeId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
