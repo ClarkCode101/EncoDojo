@@ -10,7 +10,7 @@
  */
 import { useState } from 'react';
 import { CopyIcon } from '../../components/icons';
-import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { SegmentedPicker } from '../../components/ui';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
@@ -112,7 +112,7 @@ export default function CopyPage() {
   }
 
   return (
-    <div>
+    <PracticeFrame>
       <PracticeHeader
         icon={<CopyIcon className="h-6 w-6" />}
         title="Copy Test"
@@ -131,6 +131,6 @@ export default function CopyPage() {
         onStart={() => setRunning(true)}
         onFinish={handleFinish}
       />
-    </div>
+    </PracticeFrame>
   );
 }

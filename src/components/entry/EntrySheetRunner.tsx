@@ -130,21 +130,49 @@ export default function EntrySheetRunner({
         ]}
       />
 
-      <Card>
+      {/* In a PracticeFrame the source shrinks (and scrolls inside) so the sheet stays in view. */}
+      <Card compact className="flex min-h-0 flex-col">
         {/* The source to read from right now. */}
-        <section aria-label={current.title}>
-          <div className="mb-2 text-sm font-semibold text-brand-800">
-            📄 {current.title} #{items.length} → i-type sa row {excelRow(items.length - 1)}
+        <section aria-label={current.title} className="flex min-h-0 flex-col">
+          {/* One toolbar line: which row to type in, the last row's result, key tips, Finish. */}
+          <div className="mb-2 flex min-h-11 flex-wrap items-center justify-between gap-x-5 gap-y-2">
+            <span className="text-sm font-semibold text-brand-800">
+              📄 {current.title} #{items.length} → i-type sa row {excelRow(items.length - 1)}
+            </span>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <span role="status" className="font-bold">
+                {message?.wrong === 0 && <span className="text-green-800">✓ Row {excelRow(message.row)}: lahat tama!</span>}
+                {message && message.wrong > 0 && (
+                  <span className="text-red-700">
+                    ✗ Row {excelRow(message.row)}: {message.wrong} cell ang mali
+                  </span>
+                )}
+              </span>
+              <KeyTips
+                tips={[
+                  { key: 'Tab', text: 'susunod na cell' },
+                  { key: 'Enter', text: 'susunod na row' },
+                ]}
+              />
+              {allowFinishEarly && timer.started && (
+                <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
+                  <EnTl en="Finish" tl="Tapusin na" />
+                </Button>
+              )}
+            </div>
           </div>
-          <div className={scrollSource ? 'max-h-[28rem] overflow-y-auto rounded-sm' : ''}>{current.source}</div>
+          <div className={`min-h-[6rem] shrink overflow-y-auto rounded-sm ${scrollSource ? 'max-h-[28rem]' : ''}`}>
+            {current.source}
+          </div>
         </section>
 
 
         {/* The spreadsheet. */}
-        <div className="mt-5 overflow-x-auto rounded-md border border-stone-300">
+        {/* Like Excel: the header rows stay put and the rows scroll inside the sheet. */}
+        <div className="mt-3 max-h-[16rem] shrink-0 overflow-auto rounded-md border border-stone-300">
           <table className="w-full min-w-[52rem] table-fixed border-collapse text-left font-mono text-[0.95rem]">
             <caption className="sr-only">Spreadsheet: isang row bawat {unit}</caption>
-            <thead>
+            <thead className="sticky top-0 z-[1]">
               {/* Column letters, like Excel */}
               <tr className="bg-stone-100 text-center text-xs font-semibold text-stone-500">
                 <th scope="col" className="w-12 border border-stone-300 py-1">
@@ -221,28 +249,6 @@ export default function EntrySheetRunner({
               })}
             </tbody>
           </table>
-        </div>
-
-        <div className="mt-4 flex min-h-12 flex-wrap items-center justify-between gap-3">
-          <KeyTips
-            tips={[
-              { key: 'Tab', text: 'susunod na cell' },
-              { key: 'Enter', text: 'susunod na row' },
-            ]}
-          />
-          <span role="status" className="text-lg font-bold">
-            {message?.wrong === 0 && <span className="text-green-800">✓ Row {excelRow(message.row)}: lahat tama!</span>}
-            {message && message.wrong > 0 && (
-              <span className="text-red-700">
-                ✗ Row {excelRow(message.row)}: {message.wrong} cell ang mali
-              </span>
-            )}
-          </span>
-          {allowFinishEarly && timer.started && (
-            <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              <EnTl en="Finish" tl="Tapusin na" />
-            </Button>
-          )}
         </div>
       </Card>
     </>

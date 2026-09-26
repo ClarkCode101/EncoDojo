@@ -6,14 +6,15 @@
  * a FORM (like a hiring test). The layout choice is shared with the Copy Test.
  * Results are saved by default (optional).
  * Two screens (components/Practice.tsx): setup (with the full rules), then
- * the drill (with a one-line reminder of the rules).
+ * the drill. The drill repeats only the formats, in the sheet headers / form
+ * labels (e.g. "mm/dd/yyyy"), so nothing is said twice.
  */
 import { useMemo, useState } from 'react';
 import EntryFormRunner from '../../components/entry/EntryFormRunner';
 import EntrySheetRunner from '../../components/entry/EntrySheetRunner';
 import type { EntryResult } from '../../components/entry/types';
 import { DocumentIcon } from '../../components/icons';
-import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { SegmentedPicker } from '../../components/ui';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
@@ -118,7 +119,7 @@ export default function EncodingPage() {
         description="Basahin ang dokumento at i-encode ang mahahalagang detalye ayon sa patakaran."
         chooseTitle="Pumili ng dokumento, kung saan mag-e-encode, at gaano katagal"
         choices={
-          <div className="space-y-4">
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
             <SegmentedPicker
               label="Anong dokumento?"
               options={DOC_TYPES}
@@ -126,21 +127,18 @@ export default function EncodingPage() {
               format={(t) => DOC_INFO[t].label}
               onChange={setDocType}
             />
-            <div className="flex flex-wrap items-end gap-6">
-              <SegmentedPicker
-                label="Saan ka mag-e-encode?"
-                options={MODES}
-                value={mode}
-                format={(m) => MODE_LABEL[m]}
-                onChange={(m) => updateSettings({ copyMode: m })}
-              />
-              <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
-            </div>
+            <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
+            <SegmentedPicker
+              label="Saan ka mag-e-encode?"
+              options={MODES}
+              value={mode}
+              format={(m) => MODE_LABEL[m]}
+              onChange={(m) => updateSettings({ copyMode: m })}
+            />
           </div>
         }
         howTo={[
           `Hanapin sa dokumento ang 5 detalyeng hinihingi ng ${mode === 'form' ? 'form' : 'sheet'} — hindi lahat ng nasa papel ay ie-encode.`,
-          'Sundin ang mga patakaran sa ibaba, lalo na sa petsa at halaga.',
           mode === 'sheet'
             ? 'Tab = susunod na cell. Enter sa dulo ng row = susunod na dokumento.'
             : 'Tab = susunod na field. Enter sa huling field = ipasa ang dokumento.',
@@ -152,7 +150,7 @@ export default function EncodingPage() {
   }
 
   return (
-    <div>
+    <PracticeFrame>
       <PracticeHeader
         icon={<DocumentIcon className="h-6 w-6" />}
         title="Document Encoding"
@@ -160,13 +158,12 @@ export default function EncodingPage() {
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />
-      <EncodingRules compact className="mb-4" />
 
       {mode === 'form' ? (
         <EntryFormRunner key={runKey} {...runnerProps} wideSource />
       ) : (
         <EntrySheetRunner key={runKey} {...runnerProps} columnWidths={COLUMN_WIDTHS[docType]} scrollSource />
       )}
-    </div>
+    </PracticeFrame>
   );
 }

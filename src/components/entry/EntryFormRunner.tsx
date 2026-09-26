@@ -113,37 +113,40 @@ export default function EntryFormRunner({
         ]}
       />
 
-      <Card>
-        {/* Wide documents sit beside the form only when there is room; with large text they need a wider screen. */}
+      <Card compact className="flex min-h-0 flex-col">
+        {/*
+          Wide documents sit beside the form only when there is room; with large text they need a wider screen.
+          grid-rows-[minmax(0,1fr)...]: in a PracticeFrame the columns may shrink and scroll inside.
+        */}
         <div
-          className={`grid gap-6 ${
+          className={`grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,auto)] gap-5 ${
             wideSource
-              ? 'xl:grid-cols-[minmax(0,1fr)_18rem] large-text:xl:grid-cols-1 large-text:2xl:grid-cols-[minmax(0,1fr)_18rem]'
-              : 'lg:grid-cols-2'
+              ? 'xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)] large-text:xl:grid-cols-1 large-text:xl:grid-rows-[minmax(0,1fr)_minmax(0,auto)] large-text:2xl:grid-cols-[minmax(0,1fr)_20rem] large-text:2xl:grid-rows-[minmax(0,1fr)]'
+              : 'lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]'
           }`}
         >
           {/* The source to read from. */}
-          <section aria-label={item.title} className="min-w-0">
+          <section aria-label={item.title} className="flex min-h-0 min-w-0 flex-col">
             <div className="mb-2 text-sm font-semibold text-brand-800">
               📄 {item.title} #{submitted.length + 1}
             </div>
-            {item.source}
+            <div className="min-h-0 overflow-y-auto">{item.source}</div>
           </section>
 
           {/* The form to fill in. */}
           <form
+            id="entry-form"
             aria-label="Form na pupunan"
-            className="min-w-0"
+            className="min-h-0 min-w-0 overflow-y-auto px-1 pb-1"
             onSubmit={(e) => {
               e.preventDefault();
               submit();
             }}
           >
-            <h3 className="mb-1 text-lg font-bold text-stone-900">Dito ka mag-type 👇</h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {item.fields.map((f, i) => (
                 <div key={f.key}>
-                  <label htmlFor={`entry-${f.key}`} className="mb-1 block text-base font-semibold text-stone-800">
+                  <label htmlFor={`entry-${f.key}`} className="mb-0.5 block text-base font-semibold text-stone-800">
                     <EnTl en={f.label} tl={f.tl} />
                     {f.hint && <span className="ml-2 text-sm font-normal text-stone-600">— {f.hint}</span>}
                   </label>
@@ -163,34 +166,35 @@ export default function EntryFormRunner({
                     onKeyDown={(e) => handleKeyDown(e, i)}
                     onPaste={(e) => e.preventDefault()}
                     onDrop={(e) => e.preventDefault()}
-                    className="w-full rounded-lg border-2 border-stone-400 bg-white px-3 py-2 font-mono text-lg focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
+                    className="w-full rounded-lg border-2 border-stone-400 bg-white px-3 py-1 font-mono text-lg focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
                   />
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <Button type="submit">
-                <EnTl en="Submit" tl="Ipasa" />
-              </Button>
-              <span role="status" className="text-lg font-bold">
-                {lastWrongFields === 0 && <span className="text-green-800">✓ Lahat tama!</span>}
-                {lastWrongFields !== null && lastWrongFields > 0 && (
-                  <span className="text-red-700">
-                    ✗ {lastWrongFields} field ang mali sa huling {unit}
-                  </span>
-                )}
-              </span>
-            </div>
           </form>
         </div>
 
-        <div className="mt-5 flex min-h-11 flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-4">
-          <KeyTips
-            tips={[
-              { key: 'Tab', text: 'susunod na field' },
-              { key: 'Enter', text: `sa huling field (${lastField.label}) = ipasa` },
-            ]}
-          />
+        <div className="mt-3 flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-3">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {/* Outside the <form> element, so it points to it with form="entry-form". */}
+            <Button type="submit" form="entry-form">
+              <EnTl en="Submit" tl="Ipasa" />
+            </Button>
+            <span role="status" className="text-lg font-bold">
+              {lastWrongFields === 0 && <span className="text-green-800">✓ Lahat tama!</span>}
+              {lastWrongFields !== null && lastWrongFields > 0 && (
+                <span className="text-red-700">
+                  ✗ {lastWrongFields} field ang mali sa huling {unit}
+                </span>
+              )}
+            </span>
+            <KeyTips
+              tips={[
+                { key: 'Tab', text: 'susunod na field' },
+                { key: 'Enter', text: `sa ${lastField.label} = ipasa` },
+              ]}
+            />
+          </div>
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
               <EnTl en="Finish" tl="Tapusin na" />

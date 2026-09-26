@@ -34,7 +34,8 @@ export default function PassageView({
 
   // Looks like a sheet of paper (the "source document" an encoder copies from).
   return (
-    <div className="overflow-hidden rounded-md border border-stone-200 bg-white shadow-paper">
+    // md:*: inside a PracticeFrame the box may shrink (never below ~3 lines) to fit the window.
+    <div className="flex min-h-0 flex-col overflow-hidden rounded-md border border-stone-200 bg-white shadow-paper">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-dashed border-stone-200 px-5 py-2 text-sm">
         <span className="font-semibold text-brand-800">📄 Ito ang ita-type mo</span>
         <span className="text-stone-600">Kopyahin nang eksakto</span>
@@ -42,7 +43,7 @@ export default function PassageView({
       <div
         ref={boxRef}
         aria-hidden="true"
-        className="relative h-56 overflow-y-auto px-6 py-4 font-mono text-lg leading-loose"
+        className="relative h-56 min-h-[7rem] shrink overflow-y-auto px-6 py-3 font-mono text-lg leading-loose"
       >
         {Array.from(passage).map((char, i) => {
           let className = 'text-stone-500';

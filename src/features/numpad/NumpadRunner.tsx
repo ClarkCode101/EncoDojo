@@ -120,8 +120,8 @@ export default function NumpadRunner({
         ]}
       />
 
-      <Card>
-        <div className="rounded-md border border-stone-200 bg-white py-8 text-center shadow-paper">
+      <Card compact>
+        <div className="rounded-md border border-stone-200 bg-white py-5 text-center shadow-paper">
           <div className="text-lg font-semibold text-stone-700">I-type ang numerong ito:</div>
           <div
             className="mt-2 select-none font-mono text-6xl font-bold tabular-nums tracking-wide text-stone-900"
@@ -132,7 +132,7 @@ export default function NumpadRunner({
         </div>
 
         <form
-          className="mx-auto mt-6 max-w-md"
+          className="mx-auto mt-4 max-w-md"
           onSubmit={(e) => {
             e.preventDefault();
             submit();
@@ -159,14 +159,14 @@ export default function NumpadRunner({
             onPaste={(e) => e.preventDefault()}
             onDrop={(e) => e.preventDefault()}
             placeholder="I-type dito…"
-            className="w-full rounded-xl border-2 border-stone-400 bg-white p-4 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
+            className="w-full rounded-xl border-2 border-stone-400 bg-white p-3 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
           />
           <div className="mt-3 flex justify-center">
             <KeyTips tips={[{ key: 'Enter', text: 'pagkatapos ng bawat numero' }, { text: 'Walang comma (,)' }]} />
           </div>
         </form>
 
-        <div className="mt-4 flex min-h-12 flex-wrap items-center justify-between gap-3">
+        <div className="mt-2 flex min-h-11 flex-wrap items-center justify-between gap-3">
           <span role="status" className="text-lg font-bold">
             {lastWasCorrect === true && <span className="text-green-800">✓ Tama!</span>}
             {lastWasCorrect === false && <span className="text-red-700">✗ Mali ang huli</span>}

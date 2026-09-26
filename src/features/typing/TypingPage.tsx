@@ -9,7 +9,7 @@
  */
 import { useMemo, useState } from 'react';
 import { KeyboardIcon } from '../../components/icons';
-import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { Button, SegmentedPicker } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
@@ -108,7 +108,7 @@ export default function TypingPage() {
   }
 
   return (
-    <div>
+    <PracticeFrame>
       <PracticeHeader
         icon={<KeyboardIcon className="h-6 w-6" />}
         title="Typing Practice"
@@ -133,6 +133,6 @@ export default function TypingPage() {
         onStart={() => setRunning(true)}
         onFinish={handleFinish}
       />
-    </div>
+    </PracticeFrame>
   );
 }

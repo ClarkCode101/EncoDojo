@@ -117,14 +117,17 @@ export function Card({
   icon,
   children,
   className = '',
+  compact = false,
 }: {
   title?: string;
   icon?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Less padding (practice screens, where every pixel of height counts). */
+  compact?: boolean;
 }) {
   return (
-    <section className={`rounded-xl border border-stone-200 bg-white p-6 shadow-sm ${className}`}>
+    <section className={`rounded-xl border border-stone-200 bg-white shadow-sm ${compact ? 'p-4' : 'p-6'} ${className}`}>
       {title && (
         <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-stone-900">
           {icon && <span className="text-brand-700">{icon}</span>}
@@ -193,13 +196,13 @@ export function LiveStatsBar({
 }) {
   const almostDone = started && seconds <= 10;
   // Equal cells, label on top and the number below, split by thin lines.
-  const cell = 'min-w-0 flex-1 px-5 py-2.5';
+  const cell = 'min-w-0 flex-1 px-5 py-2';
   const label = 'truncate text-sm font-medium text-stone-600';
   const value = 'text-2xl font-bold leading-tight tabular-nums text-stone-900';
   return (
     <div
       className={
-        'sticky top-0 z-10 mb-4 grid grid-cols-2 overflow-hidden rounded-xl border-2 shadow-sm ' +
+        'sticky top-0 z-10 mb-3 grid shrink-0 grid-cols-2 overflow-hidden rounded-xl border-2 shadow-sm ' +
         'sm:flex sm:divide-x sm:divide-stone-200 ' +
         (almostDone ? 'border-amber-400 bg-white' : 'border-stone-200 bg-white')
       }
@@ -247,7 +250,7 @@ export function PageHeader({
   icon?: ReactNode;
 }) {
   return (
-    <header className="mb-8 flex items-start gap-4">
+    <header className="mb-6 flex items-start gap-4">
       {icon && (
         <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-800 sm:flex">
           {icon}

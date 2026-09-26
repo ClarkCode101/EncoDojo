@@ -25,6 +25,7 @@ The app must be easy for **older and non-techy users**:
 - **Practice pages use two screens** (owner's decision, 2026-09-26, because one long page felt overwhelming) — `components/Practice.tsx`:
   1. `PracticeSetup`: choices, **at most 3** short "Tandaan" points (+ optional extra like the encoding rules), one big "Simulan" button (focused, so Enter starts).
   2. Practice screen: `PracticeHeader` (title, chosen settings, "‹ Palitan ang settings" only before the first key) + the drill only: a sticky one-line `LiveStatsBar` and a one-line `KeyTips` reminder. No instruction boxes, and never repeat the same instruction in two places. "Ulitin" on results goes straight back to the practice screen.
+  - The practice screen **fits the window with no page scroll** (owner's request) from tablet width up: `PracticeFrame` is exactly window-high; long parts (passage, document, sheet rows, form) shrink and scroll inside their own box (`min-h-0` + `overflow-auto`). Checked at 1366×650, 1366×720, 1920×950. Keep new drills inside this frame and compact (`Card compact`).
 - Every number shown gets a plain explanation via `HelpTip` ("Ano ito?", click-to-open `<details>`, never hover-only). Explanations live in `lib/glossary.ts`.
 - Results screens start with a one-sentence plain summary + the main action buttons, then details.
 - Use shared pieces in `components/ui.tsx` (Button, Card, Step, HelpTip, Notice, Checkbox, LiveStatsBar, KeyTips, SegmentedPicker, ConfirmButton) and `components/icons.tsx` (hand-made SVG icons, no icon library).

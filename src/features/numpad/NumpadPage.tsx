@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { NumpadIcon } from '../../components/icons';
-import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { HelpTip, SegmentedPicker } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import type { NumpadMode, Session } from '../../lib/storage';
@@ -108,7 +108,7 @@ export default function NumpadPage() {
   }
 
   return (
-    <div>
+    <PracticeFrame>
       <PracticeHeader
         icon={<NumpadIcon className="h-6 w-6" />}
         title="Numpad Practice"
@@ -127,6 +127,6 @@ export default function NumpadPage() {
         onStart={() => setRunning(true)}
         onFinish={handleFinish}
       />
-    </div>
+    </PracticeFrame>
   );
 }

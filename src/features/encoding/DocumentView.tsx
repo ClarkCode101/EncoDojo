@@ -83,7 +83,7 @@ function InvoiceView({ doc }: { doc: InvoiceDoc }) {
 
       <div className="mt-5 overflow-x-auto">
         {/* Narrow enough to fit beside the form, so TOTAL AMOUNT DUE is never hidden. */}
-        <table className="w-full min-w-[26rem] border-collapse">
+        <table className="w-full min-w-[25rem] border-collapse">
           <thead>
             <tr>
               <th className={`${th} w-12 text-right`}>Qty</th>
@@ -139,7 +139,7 @@ function DeliveryView({ doc }: { doc: DeliveryDoc }) {
       </div>
 
       <div className="mt-5 overflow-x-auto">
-        <table className="w-full min-w-[26rem] border-collapse">
+        <table className="w-full min-w-[25rem] border-collapse">
           <thead>
             <tr>
               <th className={`${th} w-20 text-right`}>Qty</th>
