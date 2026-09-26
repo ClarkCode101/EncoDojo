@@ -5,9 +5,9 @@
  */
 import { display, normalizeEntry } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
-import { JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
 import { mistakeKind } from '../typing/alignTyping';
-import { assessmentChecks } from './evaluate';
+import { assessmentChecks, hasCopyPart } from './evaluate';
 
 /** A tip only counts as a "pattern" when it happens at least this often... */
 const MIN_PATTERN_COUNT = 3;
@@ -141,10 +141,62 @@ function numpadComments(m: Record<string, number>, mistakes: SessionMistake[]): 
   return out;
 }
 
+/** A tip for each Copy Test field, used when that field is wrong most often. */
+const FIELD_TIPS: Record<string, string> = {
+  name: 'Madalas mali ang Pangalan. Ingat sa "Ma.", "Jr.", "III", at sa "Dela Cruz" laban sa "De la Cruz".',
+  birthDate: 'Madalas mali ang Petsa. Tingnan ang ayos na mm/dd/yyyy at ang bawat "/".',
+  address: 'Madalas mali ang Address. Ingat sa "Brgy.", "Blk", "Lot", mga comma, at pangalan ng lugar.',
+  idNo: 'Madalas mali ang ID No. Tingnan ang bawat digit, gitling (-), at letra sa dulo.',
+};
+
+function copyComments(m: Record<string, number>, mistakes: SessionMistake[]): string[] {
+  const t = JOB_READY_COPY;
+  if (m.copyRecords === 0) {
+    return ['Copy Test: walang naipasang record. Tandaan: pindutin ang Enter sa huling field (ID No.) para maipasa.'];
+  }
+  const net = display(m.copyNetWpm);
+  const acc = display(m.copyFieldAccuracy);
+  const speedOk = net >= t.netWpm;
+  const accOk = acc >= t.fieldAccuracy;
+  const out: string[] = [];
+
+  if (speedOk && accOk) {
+    out.push(`Copy Test: pasado ka sa tamang field at bilis (${acc}% tama, ${net} WPM). Ang galing!`);
+  } else if (speedOk) {
+    out.push(
+      `Copy Test: sapat ang bilis mo (${net} WPM), pero ${acc}% lang ng field ang eksaktong tama (target: ${t.fieldAccuracy}%). ` +
+        'Tingnang mabuti ang malalaking titik, tuldok, at space bago ipasa ang record.',
+    );
+  } else if (accOk) {
+    out.push(
+      `Copy Test: tama ang pagkopya mo (${acc}%). Bilisan pa nang kaunti — ${t.netWpm - net} WPM pa para sa target.`,
+    );
+  } else {
+    out.push(
+      `Copy Test: unahin muna ang eksaktong pagkopya (${acc}% tama, target: ${t.fieldAccuracy}%), saka ang bilis (${net} WPM).`,
+    );
+  }
+
+  // Which field was wrong most often?
+  const counts = new Map<string, number>();
+  for (const x of mistakes) if (x.field) counts.set(x.field, (counts.get(x.field) ?? 0) + 1);
+  const [topField, topCount] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] ?? ['', 0];
+  if (topCount >= 2 && topCount / mistakes.length >= MIN_PATTERN_SHARE && FIELD_TIPS[topField]) {
+    out.push(FIELD_TIPS[topField]);
+  }
+  return out;
+}
+
 /** All feedback for one saved assessment, most important first. */
 export function assessmentComments(assessment: Session): string[] {
   const m = assessment.metrics;
   const typingMistakes = assessment.mistakes.filter((x) => x.section === 'typing');
   const numpadMistakes = assessment.mistakes.filter((x) => x.section === 'numpad');
-  return [overallComment(m), ...typingComments(m, typingMistakes), ...numpadComments(m, numpadMistakes)];
+  const copyMistakes = assessment.mistakes.filter((x) => x.section === 'copy');
+  return [
+    overallComment(m),
+    ...typingComments(m, typingMistakes),
+    ...numpadComments(m, numpadMistakes),
+    ...(hasCopyPart(m) ? copyComments(m, copyMistakes) : []),
+  ];
 }

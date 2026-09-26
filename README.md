@@ -20,10 +20,11 @@ EncoDojo has two modes:
 
 | Screen | What it does |
 | --- | --- |
-| Home | 3 steps to start (Typing → Numpad → Assessment), your best scores, daily streak, recent sessions (delete one or clear all), coming-soon features |
-| Assessment | Typing (1 min) + Numpad (1 min), no live stats or early finish; report card with a PASADO / HINDI PA stamp, job-ready targets, KPH levels, tips, change since last time, and history |
+| Home | 4 steps to start (Typing → Numpad → Copy Test → Assessment), your best scores, daily streak, recent sessions (delete one or clear all), coming-soon features |
+| Assessment | Typing (1 min) + Numpad (1 min) + Copy Test (2 min), no live stats or early finish; report card with a PASADO / HINDI PA stamp, job-ready targets, KPH levels, tips, change since last time, and history |
 | Typing Practice | 30 sec or 1 min, fresh plain office-text passages every time, Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
 | Numpad Practice | 30 sec or 1 min, **Halo-halo** (same numbers as the Assessment) or **Pang-baguhan** (short numbers), KPH, entry accuracy, job-ready check, KPH levels (8,000 / 10,000 / 12,000) |
+| Copy Test | 1 or 2 min: copy fake records (name, birth date, address, ID) into a form exactly; field accuracy, Net WPM, targets, and wrong fields with the exact wrong characters highlighted |
 | Settings | Name, larger text, live stats, sound, backup / restore (JSON), delete everything |
 
 ### How scores are calculated

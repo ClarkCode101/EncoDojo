@@ -3,38 +3,46 @@
  * report card. Saved automatically, so improvement over time is honest
  * (it can be deleted later from the history).
  *
- * Steps: intro -> typing -> break -> numpad -> report
+ * Steps: intro -> typing -> break -> numpad -> break -> copy -> report
  * (A past report can also be opened from the history list on the intro.)
  */
 import { useEffect, useMemo, useState } from 'react';
-import { AssessmentIcon, ClockIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import { AssessmentIcon, ClockIcon, CopyIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, Card, ConfirmButton, HelpTip, PageHeader } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
 import { clearSessions, removeSession, saveSession, useAppData } from '../../lib/useAppData';
+import CopyRunner from '../copy/CopyRunner';
 import NumpadRunner from '../numpad/NumpadRunner';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
 import AssessmentReport from './AssessmentReport';
-import { ASSESSMENT, buildAssessmentSession, previousAssessment } from './evaluate';
+import { ASSESSMENT, buildAssessmentSession, hasCopyPart, previousAssessment } from './evaluate';
 
 type Step =
   | { name: 'intro' }
   | { name: 'typing' }
-  | { name: 'break'; typing: Session }
+  | { name: 'break1'; typing: Session }
   | { name: 'numpad'; typing: Session }
+  | { name: 'break2'; typing: Session; numpad: Session }
+  | { name: 'copy'; typing: Session; numpad: Session }
   | { name: 'report'; assessment: Session; fromHistory: boolean };
 
-/** "Bahagi 1 sa 2" with a simple two-part progress bar. */
-function PartProgress({ part }: { part: 1 | 2 }) {
+const TOTAL_PARTS = 3;
+
+/** "Bahagi 2 sa 3" with a simple progress bar (one segment per part). */
+function PartProgress({ part }: { part: number }) {
   return (
     <div className="mb-6">
-      <div className="mb-2 text-base font-semibold text-stone-700">Bahagi {part} sa 2</div>
+      <div className="mb-2 text-base font-semibold text-stone-700">
+        Bahagi {part} sa {TOTAL_PARTS}
+      </div>
       <div className="flex gap-2" aria-hidden="true">
-        <div className="h-3 flex-1 rounded-full bg-brand-700" />
-        <div className={'h-3 flex-1 rounded-full ' + (part === 2 ? 'bg-brand-700' : 'bg-stone-300')} />
+        {Array.from({ length: TOTAL_PARTS }, (_, i) => (
+          <div key={i} className={'h-3 flex-1 rounded-full ' + (i < part ? 'bg-brand-700' : 'bg-stone-300')} />
+        ))}
       </div>
     </div>
   );
@@ -43,7 +51,7 @@ function PartProgress({ part }: { part: 1 | 2 }) {
 function Rules() {
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
           <KeyboardIcon className="h-8 w-8 shrink-0 text-brand-700" />
           <div>
@@ -58,13 +66,20 @@ function Rules() {
             <div className="text-stone-700">I-type ang mga numero, halaga, at reference number.</div>
           </div>
         </div>
+        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
+          <CopyIcon className="h-8 w-8 shrink-0 text-brand-700" />
+          <div>
+            <div className="text-lg font-bold">Bahagi 3: Copy Test (2 minuto)</div>
+            <div className="text-stone-700">Kopyahin ang pangalan, petsa, address, at ID sa form.</div>
+          </div>
+        </div>
       </div>
 
       <div>
         <h3 className="mb-2 text-lg font-bold text-stone-900">Mga paalala</h3>
         <ul className="list-disc space-y-1 pl-6 text-stone-800">
           <li>Parang totoong exam: walang score habang nagta-type, walang &quot;Tapusin na&quot;, at walang ulitan kapag nasimulan na.</li>
-          <li>Magsisimula ang oras sa unang pindot mo. May pahinga sa pagitan ng dalawang bahagi.</li>
+          <li>Magsisimula ang oras sa unang pindot mo. May pahinga sa pagitan ng bawat bahagi.</li>
           <li>Huwag umalis sa page na ito hangga't hindi lumalabas ang resulta.</li>
           <li>Automatic na mase-save ang resulta. Puwede mo itong burahin mamaya sa listahan sa ibaba.</li>
         </ul>
@@ -87,6 +102,7 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
               <th className="py-2 pr-4 font-semibold">Resulta</th>
               <th className="py-2 pr-4 font-semibold">Typing</th>
               <th className="py-2 pr-4 font-semibold">Numpad</th>
+              <th className="py-2 pr-4 font-semibold">Copy</th>
               <th className="py-2 font-semibold">
                 <span className="sr-only">Mga aksyon</span>
               </th>
@@ -108,6 +124,11 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
                 </td>
                 <td className="py-3 pr-4">
                   {display(s.metrics.numpadKph).toLocaleString()} KPH · {display(s.metrics.numpadEntryAccuracy)}%
+                </td>
+                <td className="py-3 pr-4">
+                  {hasCopyPart(s.metrics)
+                    ? `${display(s.metrics.copyFieldAccuracy)}% · ${display(s.metrics.copyNetWpm)} WPM`
+                    : '—'}
                 </td>
                 <td className="py-3">
                   <div className="flex flex-wrap items-center justify-end gap-2">
@@ -162,7 +183,7 @@ export default function AssessmentPage() {
   );
 
   // Warn before closing or reloading the tab in the middle of a part.
-  const inProgress = step.name === 'typing' || step.name === 'break' || step.name === 'numpad';
+  const inProgress = step.name !== 'intro' && step.name !== 'report';
   useEffect(() => {
     if (!inProgress) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -175,8 +196,8 @@ export default function AssessmentPage() {
     setStep({ name: 'typing' });
   }
 
-  function finishNumpad(typing: Session, numpad: Session) {
-    const assessment = buildAssessmentSession(typing, numpad);
+  function finishCopy(typing: Session, numpad: Session, copy: Session) {
+    const assessment = buildAssessmentSession(typing, numpad, copy);
     saveSession(assessment);
     setStep({ name: 'report', assessment, fromHistory: false });
   }
@@ -209,13 +230,13 @@ export default function AssessmentPage() {
           showLiveStats={false}
           allowFinishEarly={false}
           sound={sound}
-          onFinish={(typing) => setStep({ name: 'break', typing })}
+          onFinish={(typing) => setStep({ name: 'break1', typing })}
         />
       </div>
     );
   }
 
-  if (step.name === 'break') {
+  if (step.name === 'break1') {
     return (
       <div>
         <PageHeader
@@ -260,7 +281,60 @@ export default function AssessmentPage() {
           showLiveStats={false}
           allowFinishEarly={false}
           sound={sound}
-          onFinish={(numpad) => finishNumpad(step.typing, numpad)}
+          onFinish={(numpad) => setStep({ name: 'break2', typing: step.typing, numpad })}
+        />
+      </div>
+    );
+  }
+
+  if (step.name === 'break2') {
+    return (
+      <div>
+        <PageHeader
+          icon={<ClockIcon className="h-8 w-8" />}
+          title="Tapos na ang Bahagi 2! 👏"
+          description="Isa na lang! Naka-save na ang typing at numpad result mo para sa report."
+        />
+        <PartProgress part={3} />
+        <Card title="Susunod: Bahagi 3, Copy Test (2 minuto)" icon={<CopyIcon />}>
+          <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
+            <li>Makikita mo ang isang record (pangalan, petsa, address, ID).</li>
+            <li>Kopyahin ito nang EKSAKTO sa form — pati malalaking titik, tuldok, at comma.</li>
+            <li>
+              Pindutin ang <strong>Enter</strong> para lumipat sa susunod na field. Sa huling field, ang Enter ay
+              magpapasa ng record at lalabas ang susunod.
+            </li>
+          </ol>
+          <HelpTip label="Ano ang field accuracy?">{HELP.fieldAccuracy}</HelpTip>
+          <div className="mt-6">
+            <Button
+              size="lg"
+              autoFocus
+              onClick={() => setStep({ name: 'copy', typing: step.typing, numpad: step.numpad })}
+            >
+              Simulan ang Bahagi 3
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step.name === 'copy') {
+    return (
+      <div>
+        <PageHeader
+          icon={<CopyIcon className="h-8 w-8" />}
+          title="Assessment: Copy Test"
+          description="Kopyahin ang bawat record nang eksakto. 2 minuto."
+        />
+        <PartProgress part={3} />
+        <CopyRunner
+          seconds={ASSESSMENT.copySeconds}
+          showLiveStats={false}
+          allowFinishEarly={false}
+          sound={sound}
+          onFinish={(copy) => finishCopy(step.typing, step.numpad, copy)}
         />
       </div>
     );
@@ -280,7 +354,7 @@ export default function AssessmentPage() {
           <Button size="lg" onClick={start}>
             Simulan ang Assessment
           </Button>
-          <span className="text-stone-600">Mga 2 minuto lang ito.</span>
+          <span className="text-stone-600">Mga 4–5 minuto ito, kasama ang pahinga.</span>
         </div>
       </Card>
 

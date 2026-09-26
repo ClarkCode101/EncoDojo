@@ -3,15 +3,16 @@
  * change since the previous assessment, and the mistake lists.
  */
 import { KphLevels, Stamp, TargetRow } from '../../components/ResultPieces';
-import { AssessmentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import { AssessmentIcon, CopyIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
+import { CopyMistakesCard } from '../copy/CopyResults';
 import { NumpadMistakesCard } from '../numpad/NumpadResults';
 import { TypingMistakesCard } from '../typing/TypingResults';
 import { assessmentComments } from './comments';
-import { assessmentChecks, type Check } from './evaluate';
+import { assessmentChecks, hasCopyPart, type Check } from './evaluate';
 
 /** "↑3 mula sa huli" / "↓2 mula sa huli" / "pareho sa huli" (rounded values). */
 function change(now: number, before: number | undefined, unit = ''): string | undefined {
@@ -108,6 +109,9 @@ export default function AssessmentReport({
           <ButtonLink to="/numpad" variant="secondary">
             <NumpadIcon className="h-5 w-5" /> Numpad Practice
           </ButtonLink>
+          <ButtonLink to="/copy" variant="secondary">
+            <CopyIcon className="h-5 w-5" /> Copy Test
+          </ButtonLink>
         </div>
       </Card>
 
@@ -158,12 +162,39 @@ export default function AssessmentReport({
         </div>
       </Card>
 
+      {/* Older assessments were only typing + numpad, so this part may be missing. */}
+      {hasCopyPart(m) && (
+        <Card title="Bahagi 3: Copy Test" icon={<CopyIcon />} className="mb-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <StatBadge
+              label="Tamang field"
+              value={`${display(m.copyFieldAccuracy)}%`}
+              hint={change(m.copyFieldAccuracy, p?.copyFieldAccuracy, '%')}
+              help={HELP.fieldAccuracy}
+            />
+            <StatBadge
+              label="Bilis (Net WPM)"
+              value={display(m.copyNetWpm)}
+              hint={change(m.copyNetWpm, p?.copyNetWpm)}
+              help={HELP.copyWpm}
+            />
+            <StatBadge
+              label="Natapos na record"
+              value={m.copyRecords}
+              hint={`${m.copyCorrectFields} sa ${m.copyTotalFields} field ang tama`}
+            />
+          </div>
+          <Targets checks={checks.filter((c) => c.section === 'copy')} />
+        </Card>
+      )}
+
       <div className="space-y-6">
         <TypingMistakesCard
           mistakes={assessment.mistakes.filter((x) => x.section === 'typing')}
           errors={m.typingErrors}
         />
         <NumpadMistakesCard mistakes={assessment.mistakes.filter((x) => x.section === 'numpad')} />
+        {hasCopyPart(m) && <CopyMistakesCard mistakes={assessment.mistakes.filter((x) => x.section === 'copy')} />}
       </div>
     </div>
   );

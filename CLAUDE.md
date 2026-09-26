@@ -27,7 +27,7 @@ The app must be easy for **older and non-techy users**:
 - **Training (the "dojo")**: every feature (Typing, Numpad, and later Copy Test, Encoding, QC, Excel) is a training ground. User picks settings, can "Finish now", can retry. Results are saved by default but optional ("Don't save this result" / "Save it again"). A run ended with "Finish now" starts **unsaved** ("Save anyway") because short runs inflate WPM/KPH.
 - **Assessment** (`features/assessment`): runs every feature in a fixed order under exam rules — fixed duration/difficulty, no live stats, no "Finish now", no retry — then shows a **report card**: per-target ✅/❌, overall "Job-ready" verdict, rule-based comments (no AI), change vs previous assessment, and mistake lists. Always saved as ONE session of type `'assessment'`.
 - Each drill has a **Runner** component (`TypingRunner`, `NumpadRunner`) that runs one attempt and returns a Session without saving; training pages and the Assessment both use it. **When adding a new feature, build its Runner first, then add it as a new part of the Assessment** (`evaluate.ts` checks, `comments.ts` rules, `AssessmentReport.tsx` section).
-- Job-ready targets live in `lib/targets.ts` (typing 40 Net WPM / 95%; numpad 8,000 net KPH / 95%). KPH levels (`KPH_LEVELS`): 8,000 Pasado (entry-level), 10,000 Karaniwang hinihingi, 12,000 Magaling — commonly quoted 10-key benchmarks (checked 2026-09 on typing/hiring sites; PH job posts usually state WPM, not KPH). Shown by `KphLevels` on Numpad results and the Assessment report.
+- Job-ready targets live in `lib/targets.ts` (typing 40 Net WPM / 95%; numpad 8,000 net KPH / 95%; copy 95% fields / 30 Net WPM — copy targets are EncoDojo estimates, no public standard). KPH levels (`KPH_LEVELS`): 8,000 Pasado (entry-level), 10,000 Karaniwang hinihingi, 12,000 Magaling — commonly quoted 10-key benchmarks (checked 2026-09 on typing/hiring sites; PH job posts usually state WPM, not KPH). Shown by `KphLevels` on Numpad results and the Assessment report.
 
 ## Hard Constraints (never break these)
 - **Zero cost.** No backend, no database, no login, no paid APIs, no paid services, no API keys or secrets.
@@ -105,14 +105,14 @@ type AppData = {
 
 type Session = {
   id: string;
-  type: 'typing' | 'numpad' | 'assessment';  // extend in later phases (SESSION_TYPES)
+  type: 'typing' | 'numpad' | 'copy' | 'assessment';  // extend in later phases (SESSION_TYPES)
   startedAt: string;                // ISO
   durationSec: number;
   metrics: Record<string, number>;  // e.g. { grossWpm, netWpm, accuracy } or { kph, entryAccuracy }
-  mistakes: { expected: string; typed: string; index: number; section?: 'typing' | 'numpad' }[];
+  mistakes: { expected: string; typed: string; index: number; section?: 'typing' | 'numpad' | 'copy'; field?: string }[];
 };
 ```
-- Assessment sessions store flattened metrics with a part prefix (`typingNetWpm`, `numpadKph`, ... plus `targetsMet`, `targetsTotal`, `jobReady` 0/1) and tag each mistake with `section`. The report is always recomputed from the saved session.
+- Assessment sessions store flattened metrics with a part prefix (`typingNetWpm`, `numpadKph`, `copyFieldAccuracy`, ... plus `targetsMet`, `targetsTotal`, `jobReady` 0/1) and tag each mistake with `section`. The report is always recomputed from the saved session. Assessments from before the Copy Test have no `copy*` metrics: `hasCopyPart()` hides that part (4 targets instead of 6).
 - Wrap all reads/writes in try/catch; if data is missing or corrupt, fall back to defaults and never crash.
 - Include a `migrate()` function so future schema versions can upgrade old data.
 - **Export:** download `encodojo-progress-YYYY-MM-DD.json`. **Import:** validate shape before replacing; show a confirm dialog.
@@ -171,9 +171,13 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 
 ## Later Phases (do not build yet — for context only)
 
-**Assessment v1 — DONE (2026-09-26):** Typing (1 min, plain office text) + Numpad (1 min, difficulty 6) with report card. Every later feature must also be added as a new Assessment part (see "Product Direction").
+**Assessment — DONE (2026-09-26):** Typing (1 min, plain office text) + Numpad (1 min, Halo-halo) + Copy Test (2 min) with report card (6 targets). Every later feature must also be added as a new Assessment part (see "Product Direction").
 
-**Phase 2:** Alphanumeric Copy Test (timed list of fake names/addresses/IDs), Source Document Encoding (rendered fake invoices, receipts, application forms, delivery receipts, timesheets → form fields, per-field QC), Mistake Review screen with "Retry mistakes only".
+**Phase 2 (IN PROGRESS):**
+- ✅ **Copy Test** (`features/copy`, DONE 2026-09-26): copy fake records (Pangalan, Petsa ng kapanganakan, Address, ID No. with made-up pattern `ED-YYYY-NNNNN-L`) into a 4-field form. Enter = next field; Enter on the last field submits. A field is correct only on an exact match (outer spaces ignored). Practice 1 or 2 min; Assessment part 3 (2 min). Wrong fields show the exact wrong/missing characters.
+- ⏳ Next: Mistake Review, then Source Document Encoding.
+
+Original Phase 2 plan: Alphanumeric Copy Test (timed list of fake names/addresses/IDs), Source Document Encoding (rendered fake invoices, receipts, application forms, delivery receipts, timesheets → form fields, per-field QC), Mistake Review screen with "Retry mistakes only".
 
 **Phase 3:** Excel Drills with react-data-grid + HyperFormula and auto-checker, in this order: shortcuts/navigation → formatting (dates, numbers, leading zeros) → sort/filter/find & replace/remove duplicates → SUM/COUNT/IF/COUNTIF/SUMIF → text cleanup (TRIM, PROPER, split/combine names) → VLOOKUP/XLOOKUP → pivot tables (bonus). Also Spot-the-Difference / QC drill.
 

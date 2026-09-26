@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { assessmentComments } from './comments';
-import { assessmentChecks, buildAssessmentSession, previousAssessment } from './evaluate';
+import { assessmentChecks, buildAssessmentSession, hasCopyPart, previousAssessment } from './evaluate';
 
 function typingSession(metrics: Partial<Record<string, number>>, mistakes: SessionMistake[] = []): Session {
   return {
@@ -25,29 +25,66 @@ function numpadSession(metrics: Partial<Record<string, number>>, mistakes: Sessi
   };
 }
 
+function copySession(metrics: Partial<Record<string, number>>, mistakes: SessionMistake[] = []): Session {
+  return {
+    id: 'c1',
+    type: 'copy',
+    startedAt: '2026-09-26T08:04:00.000Z',
+    durationSec: 120,
+    metrics: { netWpm: 35, grossWpm: 36, fieldAccuracy: 100, records: 4, correctFields: 16, totalFields: 16, ...metrics } as Record<string, number>,
+    mistakes,
+  };
+}
+
+/** All three parts; the copy part defaults to a passing one. */
+function build(typing: Session, numpad: Session, copy: Session = copySession({})) {
+  return buildAssessmentSession(typing, numpad, copy);
+}
+
 describe('buildAssessmentSession', () => {
-  it('combines both parts and marks job-ready when all targets pass', () => {
-    const a = buildAssessmentSession(typingSession({}), numpadSession({}));
+  it('combines all three parts and marks job-ready when all targets pass', () => {
+    const a = build(typingSession({}), numpadSession({}));
     expect(a.type).toBe('assessment');
-    expect(a.durationSec).toBe(120);
-    expect(a.metrics).toMatchObject({ typingNetWpm: 45, numpadKph: 9000, targetsMet: 4, targetsTotal: 4, jobReady: 1 });
+    expect(a.durationSec).toBe(240);
+    expect(a.metrics).toMatchObject({
+      typingNetWpm: 45,
+      numpadKph: 9000,
+      copyFieldAccuracy: 100,
+      copyNetWpm: 35,
+      targetsMet: 6,
+      targetsTotal: 6,
+      jobReady: 1,
+    });
+  });
+
+  it('a copy part with no records counts as 0% (not "100% of nothing")', () => {
+    const a = build(typingSession({}), numpadSession({}), copySession({ records: 0, totalFields: 0, correctFields: 0, netWpm: 0 }));
+    expect(a.metrics.copyFieldAccuracy).toBe(0);
+    expect(a.metrics.jobReady).toBe(0);
   });
 
   it('is not job-ready when any target fails', () => {
-    const a = buildAssessmentSession(typingSession({ accuracy: 90 }), numpadSession({}));
-    expect(a.metrics).toMatchObject({ targetsMet: 3, jobReady: 0 });
+    const a = build(typingSession({ accuracy: 90 }), numpadSession({}));
+    expect(a.metrics).toMatchObject({ targetsMet: 5, jobReady: 0 });
   });
 
   it('tags each mistake with its part', () => {
-    const a = buildAssessmentSession(
+    const a = build(
       typingSession({}, [{ expected: 'a', typed: 's', index: 3 }]),
       numpadSession({}, [{ expected: '123', typed: '124', index: 1 }]),
+      copySession({}, [{ expected: 'Dela Cruz', typed: 'De la Cruz', index: 1, field: 'name' }]),
     );
-    expect(a.mistakes.map((m) => m.section)).toEqual(['typing', 'numpad']);
+    expect(a.mistakes.map((m) => m.section)).toEqual(['typing', 'numpad', 'copy']);
   });
 });
 
 describe('assessmentChecks', () => {
+  it('old assessments (typing + numpad only) still get their 4 checks', () => {
+    const old = { typingNetWpm: 45, typingAccuracy: 97, numpadKph: 9000, numpadEntryAccuracy: 100 };
+    expect(hasCopyPart(old)).toBe(false);
+    expect(assessmentChecks(old).map((c) => c.section)).toEqual(['typing', 'typing', 'numpad', 'numpad']);
+  });
+
   it('compares the rounded value (39.6 WPM counts as 40)', () => {
     const checks = assessmentChecks({ typingNetWpm: 39.6, typingAccuracy: 95, numpadKph: 8000, numpadEntryAccuracy: 95 });
     expect(checks.every((c) => c.pass)).toBe(true);
@@ -70,31 +107,32 @@ describe('previousAssessment', () => {
 
 describe('assessmentComments', () => {
   it('congratulates when everything passes', () => {
-    const c = assessmentComments(buildAssessmentSession(typingSession({}), numpadSession({})));
-    expect(c[0]).toMatch(/pasado ka sa lahat ng 4/);
+    const c = assessmentComments(build(typingSession({}), numpadSession({})));
+    expect(c[0]).toMatch(/pasado ka sa lahat ng 6/);
+    expect(c.join(' ')).toMatch(/Copy Test: pasado ka/);
     expect(c.join(' ')).toMatch(/Typing: pasado ka sa bilis at accuracy/);
     expect(c.join(' ')).toMatch(/Numpad: pasado ka sa bilis at accuracy/);
   });
 
   it('tells a fast but careless typist to slow down', () => {
-    const c = assessmentComments(buildAssessmentSession(typingSession({ netWpm: 55, accuracy: 88 }), numpadSession({})));
+    const c = assessmentComments(build(typingSession({ netWpm: 55, accuracy: 88 }), numpadSession({})));
     expect(c.join(' ')).toMatch(/sapat na ang bilis mo.*88% lang ang tama/);
   });
 
   it('notices heavy Backspace use', () => {
-    const c = assessmentComments(buildAssessmentSession(typingSession({ accuracy: 98, keystrokeAccuracy: 90 }), numpadSession({})));
+    const c = assessmentComments(build(typingSession({ accuracy: 98, keystrokeAccuracy: 90 }), numpadSession({})));
     expect(c.join(' ')).toMatch(/Backspace/);
   });
 
   it('spots a pattern of number mistakes', () => {
     const mistakes = ['1', '5', '0', '7'].map((d, i) => ({ expected: d, typed: 'x', index: i }));
-    const c = assessmentComments(buildAssessmentSession(typingSession({}, mistakes), numpadSession({})));
+    const c = assessmentComments(build(typingSession({}, mistakes), numpadSession({})));
     expect(c.join(' ')).toMatch(/magkamali sa mga numero/);
   });
 
   it('does not call 1 or 2 mistakes a pattern', () => {
     const mistakes = [{ expected: '1', typed: 'x', index: 0 }];
-    const c = assessmentComments(buildAssessmentSession(typingSession({}, mistakes), numpadSession({})));
+    const c = assessmentComments(build(typingSession({}, mistakes), numpadSession({})));
     expect(c.join(' ')).not.toMatch(/magkamali sa mga numero/);
   });
 
@@ -106,7 +144,7 @@ describe('assessmentComments', () => {
       { expected: '2025001111', typed: '20250011', index: 4 },
     ];
     const c = assessmentComments(
-      buildAssessmentSession(typingSession({}), numpadSession({ entryAccuracy: 80, correctEntries: 16 }, mistakes)),
+      build(typingSession({}), numpadSession({ entryAccuracy: 80, correctEntries: 16 }, mistakes)),
     ).join(' ');
     expect(c).toMatch(/sentimo/);
     expect(c).toMatch(/kulang ang digit/);
@@ -114,8 +152,31 @@ describe('assessmentComments', () => {
 
   it('handles a numpad part with no entries', () => {
     const c = assessmentComments(
-      buildAssessmentSession(typingSession({}), numpadSession({ kph: 0, entryAccuracy: 100, entries: 0, correctEntries: 0 })),
+      build(typingSession({}), numpadSession({ kph: 0, entryAccuracy: 100, entries: 0, correctEntries: 0 })),
     );
     expect(c.join(' ')).toMatch(/walang numerong naipasa/);
+  });
+
+  it('points out the Copy Test field that is wrong most often', () => {
+    const mistakes = [1, 2, 3].map((i) => ({ expected: 'Brgy. San Roque', typed: 'Brgy San Roque', index: i, field: 'address' }));
+    const c = assessmentComments(
+      build(typingSession({}), numpadSession({}), copySession({ fieldAccuracy: 81, correctFields: 13 }, mistakes)),
+    ).join(' ');
+    expect(c).toMatch(/Madalas mali ang Address/);
+  });
+
+  it('reminds to press Enter when no Copy Test record was submitted', () => {
+    const c = assessmentComments(
+      build(typingSession({}), numpadSession({}), copySession({ records: 0, totalFields: 0, correctFields: 0, netWpm: 0 })),
+    ).join(' ');
+    expect(c).toMatch(/walang naipasang record/);
+  });
+
+  it('old assessments get no Copy Test comments', () => {
+    const old: Session = {
+      id: 'old', type: 'assessment', startedAt: '2026-09-01T00:00:00.000Z', durationSec: 120, mistakes: [],
+      metrics: { typingNetWpm: 45, typingAccuracy: 97, typingKeystrokeAccuracy: 95, numpadKph: 9000, numpadEntryAccuracy: 100, numpadEntries: 20, numpadCorrectEntries: 20 },
+    };
+    expect(assessmentComments(old).join(' ')).not.toMatch(/Copy Test/);
   });
 });

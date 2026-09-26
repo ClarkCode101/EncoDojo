@@ -1,5 +1,5 @@
 /**
- * Turns the two parts of an Assessment (typing + numpad) into one saved
+ * Turns the parts of an Assessment (typing + numpad + copy) into one saved
  * result, and checks it against the job-ready targets.
  *
  * Everything the report needs is computed from the saved Session, so old
@@ -7,13 +7,15 @@
  */
 import { display } from '../../lib/scoring';
 import { makeId, type Session } from '../../lib/storage';
-import { JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
 import { MIXED_DIFFICULTY } from '../numpad/entries';
 
 /** Fixed rules, so every attempt is comparable. */
 export const ASSESSMENT = {
   typingSeconds: 60,
   numpadSeconds: 60,
+  /** A record takes 20-40 seconds, so the Copy Test part gets 2 minutes. */
+  copySeconds: 120,
   /** Same mix as the "Halo-halo" mode in Numpad Practice (long numbers, amounts, reference numbers). */
   numpadDifficulty: MIXED_DIFFICULTY,
 } as const;
@@ -22,7 +24,7 @@ export const ASSESSMENT = {
 const MAX_MISTAKES_PER_PART = 100;
 
 export type Check = {
-  section: 'typing' | 'numpad';
+  section: 'typing' | 'numpad' | 'copy';
   label: string;
   value: number;
   target: number;
@@ -30,8 +32,8 @@ export type Check = {
   pass: boolean;
 };
 
-/** Combine the typing and numpad sessions into one 'assessment' session. */
-export function buildAssessmentSession(typing: Session, numpad: Session): Session {
+/** Combine the typing, numpad, and copy sessions into one 'assessment' session. */
+export function buildAssessmentSession(typing: Session, numpad: Session, copy: Session): Session {
   const metrics: Record<string, number> = {
     typingNetWpm: typing.metrics.netWpm,
     typingGrossWpm: typing.metrics.grossWpm,
@@ -43,6 +45,12 @@ export function buildAssessmentSession(typing: Session, numpad: Session): Sessio
     numpadEntryAccuracy: numpad.metrics.entryAccuracy,
     numpadEntries: numpad.metrics.entries,
     numpadCorrectEntries: numpad.metrics.correctEntries,
+    // No records submitted = nothing was copied correctly (not "100% of nothing").
+    copyFieldAccuracy: copy.metrics.records > 0 ? copy.metrics.fieldAccuracy : 0,
+    copyNetWpm: copy.metrics.netWpm,
+    copyRecords: copy.metrics.records,
+    copyCorrectFields: copy.metrics.correctFields,
+    copyTotalFields: copy.metrics.totalFields,
   };
   const checks = assessmentChecks(metrics);
   metrics.targetsMet = checks.filter((c) => c.pass).length;
@@ -53,13 +61,19 @@ export function buildAssessmentSession(typing: Session, numpad: Session): Sessio
     id: makeId(),
     type: 'assessment',
     startedAt: typing.startedAt,
-    durationSec: typing.durationSec + numpad.durationSec,
+    durationSec: typing.durationSec + numpad.durationSec + copy.durationSec,
     metrics,
     mistakes: [
       ...typing.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'typing' as const })),
       ...numpad.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'numpad' as const })),
+      ...copy.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'copy' as const })),
     ],
   };
+}
+
+/** True when the assessment includes the Copy Test part (older ones had only typing + numpad). */
+export function hasCopyPart(m: Record<string, number>): boolean {
+  return typeof m.copyFieldAccuracy === 'number';
 }
 
 /** Each job-ready target and whether it was met (using rounded values, like the screen). */
@@ -72,12 +86,19 @@ export function assessmentChecks(m: Record<string, number>): Check[] {
     unit,
     pass: display(value) >= target,
   });
-  return [
+  const checks = [
     check('typing', 'Bilis (Net WPM)', m.typingNetWpm, JOB_READY_TYPING.netWpm),
     check('typing', 'Accuracy (tama)', m.typingAccuracy, JOB_READY_TYPING.accuracy, '%'),
     check('numpad', 'Bilis (KPH)', m.numpadKph, JOB_READY_NUMPAD.kph),
     check('numpad', 'Tamang numero', m.numpadEntryAccuracy, JOB_READY_NUMPAD.entryAccuracy, '%'),
   ];
+  if (hasCopyPart(m)) {
+    checks.push(
+      check('copy', 'Tamang field', m.copyFieldAccuracy, JOB_READY_COPY.fieldAccuracy, '%'),
+      check('copy', 'Bilis (Net WPM)', m.copyNetWpm, JOB_READY_COPY.netWpm),
+    );
+  }
+  return checks;
 }
 
 /** The saved assessment taken just before `current`, or null. */
