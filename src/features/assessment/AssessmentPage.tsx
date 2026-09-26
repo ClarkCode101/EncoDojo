@@ -424,7 +424,6 @@ export default function AssessmentPage() {
     return (
       <PracticeFrame>
         <PartHeader icon={<DocumentIcon className="h-6 w-6" />} title="Assessment: Document Encoding" note="3 minuto" part={4} />
-        <EncodingRules compact className="mb-3" />
         <EntryFormRunner
           seconds={ASSESSMENT.encodingSeconds}
           showLiveStats={false}

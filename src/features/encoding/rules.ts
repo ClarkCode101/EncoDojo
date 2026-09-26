@@ -12,10 +12,10 @@ import { formatAmount, formatDate } from '../../lib/format';
 import { pick, type Rng } from '../../lib/random';
 
 /** The rules, as shown to the user above the document (Taglish). */
-export const ENCODING_RULES: { what: string; rule: string; short: string; example: string }[] = [
-  { what: 'Petsa', rule: 'Laging mm/dd/yyyy', short: 'mm/dd/yyyy', example: 'Sept. 14, 2026 → 09/14/2026' },
-  { what: 'Halaga', rule: 'Walang ₱ at walang comma', short: 'walang ₱ at comma', example: '₱5,115.25 → 5115.25' },
-  { what: 'Pangalan at iba pa', rule: 'Eksaktong kopya', short: 'eksaktong kopya', example: 'Ma. Luisa → Ma. Luisa' },
+export const ENCODING_RULES: { what: string; rule: string; example: string }[] = [
+  { what: 'Petsa', rule: 'Laging mm/dd/yyyy', example: 'Sept. 14, 2026 → 09/14/2026' },
+  { what: 'Halaga', rule: 'Walang ₱ at walang comma', example: '₱5,115.25 → 5115.25' },
+  { what: 'Pangalan at iba pa', rule: 'Eksaktong kopya', example: 'Ma. Luisa → Ma. Luisa' },
 ];
 
 const MONTHS_LONG = [

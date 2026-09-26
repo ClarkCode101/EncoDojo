@@ -1,28 +1,12 @@
 /**
- * The encoding rules. Two sizes:
- * - full (setup / break screens): a box with an example for each rule;
- * - compact (while encoding): one short line, so the document stays in view.
+ * The encoding rules, with an example for each (setup and break screens).
+ * While encoding, the formats show in the sheet headers / form placeholders instead.
  */
 import { HelpTip } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { ENCODING_RULES } from './rules';
 
-export default function EncodingRules({ className = '', compact = false }: { className?: string; compact?: boolean }) {
-  if (compact) {
-    return (
-      <p
-        aria-label="Mga patakaran sa pag-encode"
-        className={`flex shrink-0 flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-belt-400 bg-belt-50 px-4 py-1.5 text-stone-900 ${className}`}
-      >
-        <span className="font-semibold">📏 Patakaran:</span>
-        {ENCODING_RULES.map((r) => (
-          <span key={r.what}>
-            {r.what} → <strong className="font-mono">{r.short}</strong>
-          </span>
-        ))}
-      </p>
-    );
-  }
+export default function EncodingRules({ className = '' }: { className?: string }) {
   return (
     <section
       aria-label="Mga patakaran sa pag-encode"

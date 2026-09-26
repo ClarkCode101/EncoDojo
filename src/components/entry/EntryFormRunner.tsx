@@ -94,7 +94,6 @@ export default function EntryFormRunner({
 
   // Live numbers (rounded for display only).
   const live = scoreRecords(submitted, { fields: item.fields, typed: values }, Math.max(timer.elapsedSec, 1)).metrics;
-  const lastField = item.fields[item.fields.length - 1];
 
   return (
     <>
@@ -126,8 +125,24 @@ export default function EntryFormRunner({
         >
           {/* The source to read from. */}
           <section aria-label={item.title} className="flex min-h-0 min-w-0 flex-col">
-            <div className="mb-2 text-sm font-semibold text-brand-800">
-              📄 {item.title} #{submitted.length + 1}
+            {/* One toolbar line (like the spreadsheet): which item, key tips, Finish. No footer row, so the whole form fits. */}
+            <div className="mb-2 flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1">
+              <span className="text-sm font-semibold text-brand-800">
+                📄 {item.title} #{submitted.length + 1}
+              </span>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <KeyTips
+                  tips={[
+                    { key: 'Tab', text: 'susunod na field' },
+                    { key: 'Enter', text: 'sa huling field = ipasa' },
+                  ]}
+                />
+                {allowFinishEarly && timer.started && (
+                  <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
+                    <EnTl en="Finish" tl="Tapusin na" />
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="min-h-0 overflow-y-auto">{item.source}</div>
           </section>
@@ -142,12 +157,11 @@ export default function EntryFormRunner({
             }}
           >
             {/* Only the fields scroll (on small screens); Submit always stays right under them. */}
-            <div className="min-h-0 space-y-2 overflow-y-auto px-1.5 pb-1 [scrollbar-gutter:stable]">
+            <div className="min-h-0 space-y-1.5 overflow-y-auto px-1.5 pb-1 [scrollbar-gutter:stable]">
               {item.fields.map((f, i) => (
                 <div key={f.key}>
-                  <label htmlFor={`entry-${f.key}`} className="mb-0.5 block text-base font-semibold text-stone-800">
+                  <label htmlFor={`entry-${f.key}`} className="block text-base font-semibold text-stone-800">
                     <EnTl en={f.label} tl={f.tl} />
-                    {f.hint && <span className="ml-2 text-sm font-normal text-stone-600">— {f.hint}</span>}
                   </label>
                   <input
                     id={`entry-${f.key}`}
@@ -156,6 +170,8 @@ export default function EntryFormRunner({
                     }}
                     autoFocus={i === 0}
                     type="text"
+                    // The format (e.g. mm/dd/yyyy) shows inside the empty box, like in real data entry software.
+                    placeholder={f.hint}
                     autoComplete="off"
                     spellCheck={false}
                     autoCorrect="off"
@@ -165,7 +181,7 @@ export default function EntryFormRunner({
                     onKeyDown={(e) => handleKeyDown(e, i)}
                     onPaste={(e) => e.preventDefault()}
                     onDrop={(e) => e.preventDefault()}
-                    className="w-full rounded-lg border-2 border-stone-400 bg-white px-3 py-1 font-mono text-lg focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
+                    className="w-full rounded-lg border-2 border-stone-400 bg-white px-3 py-1 font-mono text-lg placeholder:font-sans placeholder:text-base placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
                   />
                 </div>
               ))}
@@ -174,12 +190,12 @@ export default function EntryFormRunner({
               Same width as the inputs (lined up with them), result message on its own line below.
               The same scrollbar gutter as the fields above keeps both edges lined up.
             */}
-            <div className="mt-2 shrink-0 overflow-hidden px-1.5 py-1 [scrollbar-gutter:stable]">
+            <div className="mt-1 shrink-0 overflow-hidden px-1.5 py-1 [scrollbar-gutter:stable]">
               <Button type="submit" className="w-full">
                 <EnTl en="Submit" tl="Ipasa" />
               </Button>
               {/* min-h: the space is kept, so nothing jumps when a message appears. */}
-              <p role="status" className="mt-1 min-h-6 text-center font-bold">
+              <p role="status" className="mt-0.5 min-h-6 text-center font-bold">
                 {/* "#1" = the number of the item just submitted (same as its title, e.g. "Sales Invoice #1"). */}
                 {lastWrongFields === 0 && <span className="text-green-800">✓ #{submitted.length}: lahat tama!</span>}
                 {lastWrongFields !== null && lastWrongFields > 0 && (
@@ -192,19 +208,6 @@ export default function EntryFormRunner({
           </form>
         </div>
 
-        <div className="mt-3 flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-3">
-          <KeyTips
-            tips={[
-              { key: 'Tab', text: 'susunod na field' },
-              { key: 'Enter', text: `sa ${lastField.label} = ipasa` },
-            ]}
-          />
-          {allowFinishEarly && timer.started && (
-            <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              <EnTl en="Finish" tl="Tapusin na" />
-            </Button>
-          )}
-        </div>
       </Card>
     </>
   );
