@@ -24,7 +24,7 @@ import NumpadRunner from '../numpad/NumpadRunner';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
 import AssessmentReport from './AssessmentReport';
-import { DEV_TOOLS, DevJumpPanel, blankPart, type JumpTarget } from './DevJump'; // TEMPORARY (DevJump)
+import { DEV_TOOLS, DevJumpPanel, DevTimeUpButton, blankPart, samplePreset, type JumpTarget, type SamplePreset } from './DevJump'; // TEMPORARY (DevJump)
 import {
   ASSESSMENT,
   assessmentCopyKph,
@@ -265,19 +265,29 @@ export default function AssessmentPage() {
     const typing = blankPart('typing');
     const numpad = blankPart('numpad');
     const copy = blankPart('copy');
-    if (to === 'numpad') setStep({ name: 'numpad', typing });
+    if (to === 'typing') setStep({ name: 'typing' });
+    else if (to === 'break1') setStep({ name: 'break1', typing });
+    else if (to === 'numpad') setStep({ name: 'numpad', typing });
+    else if (to === 'break2') setStep({ name: 'break2', typing, numpad });
     else if (to === 'copy') setStep({ name: 'copy', typing, numpad });
-    else if (to === 'encoding') setStep({ name: 'encoding', typing, numpad, copy });
-    else setStep({ name: 'report', assessment: buildAssessmentSession(typing, numpad, copy, blankPart('encoding')), fromHistory: false });
+    else if (to === 'break3') setStep({ name: 'break3', typing, numpad, copy });
+    else setStep({ name: 'encoding', typing, numpad, copy });
+  }
+
+  // TEMPORARY (DevJump): a made-up report (not saved).
+  function sampleReport(preset: SamplePreset) {
+    setTestRun(true);
+    const p = samplePreset(preset);
+    setStep({ name: 'report', assessment: buildAssessmentSession(p.typing, p.numpad, p.copy, p.encoding), fromHistory: false });
   }
 
   if (step.name === 'report') {
     return (
       <>
         {/* TEMPORARY (DevJump) */}
-        {testRun && !step.fromHistory && (
+        {DEV_TOOLS && testRun && !step.fromHistory && (
           <Notice kind="warning" className="mb-4">
-            🧪 TEST run: hindi ito na-save. 0 ang mga nilaktawang bahagi.
+            🧪 TEST: hindi ito na-save.
           </Notice>
         )}
         <AssessmentReport
@@ -295,6 +305,7 @@ export default function AssessmentPage() {
     return (
       <PracticeFrame>
         <PartHeader icon={<KeyboardIcon className="h-6 w-6" />} title="Assessment: Typing" note="1 minuto" part={1} />
+        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <TypingRunner
           passage={passage}
           seconds={ASSESSMENT.typingSeconds}
@@ -337,6 +348,7 @@ export default function AssessmentPage() {
     return (
       <PracticeFrame>
         <PartHeader icon={<NumpadIcon className="h-6 w-6" />} title="Assessment: Numpad" note="1 minuto" part={2} />
+        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <NumpadRunner
           seconds={ASSESSMENT.numpadSeconds}
           difficulty={ASSESSMENT.numpadDifficulty}
@@ -381,6 +393,7 @@ export default function AssessmentPage() {
     return (
       <PracticeFrame>
         <PartHeader icon={<CopyIcon className="h-6 w-6" />} title="Assessment: Copy Test" note="2 minuto" part={3} />
+        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <CopyRunner
           seconds={ASSESSMENT.copySeconds}
           showLiveStats={false}
@@ -424,6 +437,7 @@ export default function AssessmentPage() {
     return (
       <PracticeFrame>
         <PartHeader icon={<DocumentIcon className="h-6 w-6" />} title="Assessment: Document Encoding" note="3 minuto" part={4} />
+        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <EntryFormRunner
           seconds={ASSESSMENT.encodingSeconds}
           showLiveStats={false}
@@ -454,7 +468,7 @@ export default function AssessmentPage() {
       />
 
       {/* TEMPORARY (DevJump): localhost only */}
-      {DEV_TOOLS && <DevJumpPanel onJump={jump} />}
+      {DEV_TOOLS && <DevJumpPanel onJump={jump} onSampleReport={sampleReport} />}
 
       <Card title="Paano ito gumagana">
         <Rules />

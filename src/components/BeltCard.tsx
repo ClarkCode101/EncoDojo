@@ -5,6 +5,7 @@
  * Collapsed sidebar: only the colored belt; the details show on hover.
  */
 import { Link } from 'react-router-dom';
+import { useBeltPreview, previewSessions } from '../features/assessment/DevJump'; // TEMPORARY (DevJump)
 import { beltStatus } from '../lib/belts';
 import { useAppData } from '../lib/useAppData';
 import { BeltIcon } from './icons';
@@ -14,7 +15,11 @@ const focusRing =
 
 export default function BeltCard({ collapsed }: { collapsed: boolean }) {
   const { sessions } = useAppData();
-  const s = beltStatus(sessions);
+  // TEMPORARY (DevJump): localhost-only belt preview; null = the real belt.
+  // import.meta.env.DEV is a build-time constant, so this is never called (and is removed) in the built site.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const preview = import.meta.env.DEV ? useBeltPreview() : null;
+  const s = beltStatus(preview ? previewSessions(preview) : sessions);
   const summary = s.next ? `${s.belt.label}. Susunod: ${s.next.label} — ${s.nextHint}` : `${s.belt.label}. ${s.nextHint}`;
 
   if (collapsed) {
@@ -40,7 +45,7 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
       <div className="flex items-center gap-3">
         <BeltIcon color={s.belt.color} className="h-11 w-11 shrink-0" />
         <div>
-          <div className="text-sm text-brand-200">Ang belt mo</div>
+          <div className="text-sm text-brand-200">Ang belt mo{preview && ' (test preview)'}</div>
           <div className="text-lg font-bold leading-tight text-white">{s.belt.label}</div>
         </div>
       </div>
