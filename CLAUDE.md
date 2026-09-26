@@ -20,7 +20,7 @@ The app must be easy for **older and non-techy users**:
   - The work itself looks like a real **English** hiring test/form: field labels and in-test buttons are English with the Taglish meaning smaller beside them, via `EnTl` (e.g. "Name (Pangalan)", "Submit (Ipasa)", "Finish (Tapusin na)"). Typing passages stay English; records use real-looking Filipino names/places.
   - Exception (owner's choice, 2026-09-26): **spreadsheet column headers are English only** + the format hint (e.g. "Date" + `mm/dd/yyyy`), no Taglish, to keep them short like a real sheet.
   - Code, comments, and commit messages stay in English.
-- Big readable text (root 17px; Settings → "Mas malaking text" = 19px via `html.large-text`, `settings.largeText`). Buttons at least 44px tall. No ALL-CAPS labels.
+- Big readable text (root 17px; "Mas malaking text" = 19px via `html.large-text`, `settings.largeText` — a switch at the bottom of the sidebar on every page, and in Settings). Buttons at least 44px tall. No ALL-CAPS labels.
 - Every page: icon + title + one-sentence explanation, then numbered steps (`Step` component) for what to do.
 - **Practice pages use two screens** (owner's decision, 2026-09-26, because one long page felt overwhelming) — `components/Practice.tsx`:
   1. `PracticeSetup`: choices, **at most 3** short "Tandaan" points (+ optional extra like the encoding rules), one big "Simulan" button (focused, so Enter starts).
@@ -29,7 +29,7 @@ The app must be easy for **older and non-techy users**:
 - Every number shown gets a plain explanation via `HelpTip` ("Ano ito?", click-to-open `<details>`, never hover-only). Explanations live in `lib/glossary.ts`.
 - Results screens start with a one-sentence plain summary + the main action buttons, then details.
 - Use shared pieces in `components/ui.tsx` (Button, Card, Step, HelpTip, Notice, Checkbox, LiveStatsBar, KeyTips, SegmentedPicker, ConfirmButton) and `components/icons.tsx` (hand-made SVG icons, no icon library).
-- Deletes always ask first (ConfirmButton). Sidebar shows only usable pages; "coming soon" features are listed on Home.
+- Deletes always ask first (ConfirmButton). Sidebar shows only usable pages; "coming soon" features are listed on Home. The current page in the sidebar is a white pill with a gold "belt" mark at the sidebar edge.
 
 ## Product Direction: Training + Assessment (decided 2026-09-26)
 - **Training (the "dojo")**: every feature (Typing, Numpad, Copy Test, Document Encoding, and later QC, Excel) is a training ground. User picks settings, can "Finish now", can retry. Results are saved by default but optional ("Don't save this result" / "Save it again"). A run ended with "Finish now" starts **unsaved** ("Save anyway") because short runs inflate WPM/KPH.

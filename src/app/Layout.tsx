@@ -10,7 +10,7 @@ import {
   NumpadIcon,
   SettingsIcon,
 } from '../components/icons';
-import { useAppData } from '../lib/useAppData';
+import { updateSettings, useAppData } from '../lib/useAppData';
 
 type NavItem = { to: string; label: string; icon: ReactNode };
 type NavGroup = { heading?: string; items: NavItem[] };
@@ -36,9 +36,46 @@ const groups: NavGroup[] = [
 
 function navClass({ isActive }: { isActive: boolean }) {
   return (
-    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-semibold transition-colors ' +
+    'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors ' +
     'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
-    (isActive ? 'bg-white text-brand-900 shadow' : 'text-brand-50 hover:bg-brand-800')
+    (isActive
+      ? // The page you're on: white pill + a gold "belt" mark at the sidebar's edge (brand accent).
+        'bg-white text-brand-900 shadow md:before:absolute md:before:-left-3 md:before:inset-y-1 md:before:w-1.5 md:before:rounded-r-full md:before:bg-belt-400'
+      : 'text-brand-50 hover:bg-brand-800')
+  );
+}
+
+/**
+ * "Mas malaking text" on every page (same setting as in Settings), so people
+ * who need bigger text don't have to look for it.
+ */
+function LargeTextToggle({ on }: { on: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => updateSettings({ largeText: !on })}
+      className={
+        'flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-base font-semibold transition-colors ' +
+        'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
+        (on ? 'border-belt-400 bg-brand-800 text-white' : 'border-brand-700 text-brand-50 hover:bg-brand-800')
+      }
+    >
+      <span>Mas malaking text</span>
+      {/* The switch: gold when on. */}
+      <span
+        aria-hidden="true"
+        className={'relative h-6 w-11 shrink-0 rounded-full transition-colors ' + (on ? 'bg-belt-400' : 'bg-brand-600')}
+      >
+        <span
+          className={
+            'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] motion-reduce:transition-none ' +
+            (on ? 'left-[1.375rem]' : 'left-0.5')
+          }
+        />
+      </span>
+    </button>
   );
 }
 
@@ -59,8 +96,8 @@ export default function Layout() {
         Lumaktaw sa nilalaman
       </a>
 
-      <aside className="bg-brand-900 text-white md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:overflow-y-auto">
-        <div className="flex items-center gap-3 px-5 py-6">
+      <aside className="bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto">
+        <div className="flex items-center gap-3 px-5 py-5">
           <Logo className="h-12 w-12 shrink-0" />
           <div>
             <div className="text-xl font-bold leading-tight">EncoDojo</div>
@@ -68,10 +105,10 @@ export default function Layout() {
           </div>
         </div>
 
-        <nav aria-label="Main" className="px-3 pb-6">
+        <nav aria-label="Main" className="px-3 pb-4">
           <div className="flex flex-wrap gap-1 md:block">
             {groups.map((group, i) => (
-              <div key={i} className="md:mb-5">
+              <div key={i} className="md:mb-4">
                 {group.heading && (
                   <div className="hidden px-3 pb-1 text-sm font-semibold text-brand-300 md:block">{group.heading}</div>
                 )}
@@ -89,6 +126,11 @@ export default function Layout() {
             ))}
           </div>
         </nav>
+
+        {/* Bottom of the sidebar on desktop; under the links on phones. */}
+        <div className="px-3 pb-4 md:mt-auto">
+          <LargeTextToggle on={largeText} />
+        </div>
       </aside>
 
       <main id="main" className="min-w-0 flex-1 px-4 py-6 md:px-10">
