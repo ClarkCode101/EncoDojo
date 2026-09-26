@@ -143,8 +143,8 @@ function numpadComments(m: Record<string, number>, mistakes: SessionMistake[]): 
 
 /** A tip for each Copy Test field, used when that field is wrong most often. */
 const FIELD_TIPS: Record<string, string> = {
-  name: 'Madalas mali ang Pangalan. Ingat sa "Ma.", "Jr.", "III", at sa "Dela Cruz" laban sa "De la Cruz".',
-  birthDate: 'Madalas mali ang Petsa. Tingnan ang ayos na mm/dd/yyyy at ang bawat "/".',
+  name: 'Madalas mali ang Name (Pangalan). Ingat sa "Ma.", "Jr.", "III", at sa "Dela Cruz" laban sa "De la Cruz".',
+  birthDate: 'Madalas mali ang Date of Birth (petsa ng kapanganakan). Tingnan ang ayos na mm/dd/yyyy at ang bawat "/".',
   address: 'Madalas mali ang Address. Ingat sa "Brgy.", "Blk", "Lot", mga comma, at pangalan ng lugar.',
   contactNo: 'Madalas mali ang Contact No. Tingnan ang panaklong ( ), space, gitling (-), at bawat digit.',
   idNo: 'Madalas mali ang ID No. Tingnan ang bawat digit, gitling (-), at letra sa dulo.',

@@ -2,12 +2,12 @@
  * One typing run: passage, input box, timer, and live stats.
  * Used by both the Typing Test (training) and the Assessment.
  *
- * It does NOT save anything. When time is up (or "Tapusin na" is pressed) it
+ * It does NOT save anything. When time is up (or "Finish" is pressed) it
  * builds a Session and hands it to `onFinish`. To start over, the parent
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, StatBadge, TimeLeft } from '../../components/ui';
+import { Button, Card, EnTl, StatBadge, TimeLeft } from '../../components/ui';
 import { accuracyPct, display, netWpm, wrongKeystrokes } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { makeId, type Session } from '../../lib/storage';
@@ -161,7 +161,7 @@ export default function TypingRunner({
           </span>
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              Tapusin na
+              <EnTl en="Finish" tl="Tapusin na" />
             </Button>
           )}
         </div>

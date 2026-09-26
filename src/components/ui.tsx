@@ -255,6 +255,19 @@ export function Step({
   );
 }
 
+/**
+ * English word with its Taglish meaning, e.g. "Submit (Ipasa)".
+ * Used inside tests so users learn the English words they'll see on real
+ * hiring tests and forms, while still understanding them.
+ */
+export function EnTl({ en, tl }: { en: string; tl: string }) {
+  return (
+    <>
+      {en} <span className="text-[0.85em] font-normal opacity-80">({tl})</span>
+    </>
+  );
+}
+
 /** A keyboard key, e.g. <Kbd>Tab</Kbd>, so people can see which key to press. */
 export function Kbd({ children }: { children: ReactNode }) {
   return (

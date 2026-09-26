@@ -15,7 +15,10 @@ The owner is learning while building. When you finish a task, **explain what you
 
 ## UI & Language Rules (decided 2026-09-26)
 The app must be easy for **older and non-techy users**:
-- **All UI text is Taglish** (simple, conversational). Keep job terms in English (WPM, KPH, Accuracy, Encoder, Assessment). Code, comments, and commit messages stay in English.
+- **"Taglish ang gabay, English ang trabaho"** (decided 2026-09-26):
+  - Guidance is **Taglish**: instructions, explanations ("Ano ito?"), results, comments, Settings. Keep job terms in English (WPM, KPH, Accuracy, Encoder, Assessment).
+  - The work itself looks like a real **English** hiring test/form: field labels and in-test buttons are English with the Taglish meaning smaller beside them, via `EnTl` (e.g. "Name (Pangalan)", "Submit (Ipasa)", "Finish (Tapusin na)"). Typing passages stay English; records use real-looking Filipino names/places.
+  - Code, comments, and commit messages stay in English.
 - Big readable text (root 17px; Settings → "Mas malaking text" = 19px via `html.large-text`, `settings.largeText`). Buttons at least 44px tall. No ALL-CAPS labels.
 - Every page: icon + title + one-sentence explanation, then numbered steps (`Step` component) for what to do.
 - Every number shown gets a plain explanation via `HelpTip` ("Ano ito?", click-to-open `<details>`, never hover-only). Explanations live in `lib/glossary.ts`.

@@ -78,7 +78,12 @@ function Rules() {
       <div>
         <h3 className="mb-2 text-lg font-bold text-stone-900">Mga paalala</h3>
         <ul className="list-disc space-y-1 pl-6 text-stone-800">
-          <li>Parang totoong exam: walang score habang nagta-type, walang &quot;Tapusin na&quot;, at walang ulitan kapag nasimulan na.</li>
+          <li>Parang totoong exam: walang score habang nagta-type, walang &quot;Finish&quot; (tapusin nang maaga), at walang ulitan kapag nasimulan na.</li>
+          <li>
+            Sa totoong hiring test, karaniwang <strong>English</strong> ang instructions at mga label. Kaya dito, English
+            ang mga label ng field at button (hal. <em>Name</em>, <em>Submit</em>), may Tagalog sa tabi para madaling
+            maintindihan.
+          </li>
           <li>Magsisimula ang oras sa unang pindot mo. May pahinga sa pagitan ng bawat bahagi.</li>
           <li>Huwag umalis sa page na ito hangga't hindi lumalabas ang resulta.</li>
           <li>Automatic na mase-save ang resulta. Puwede mo itong burahin mamaya sa listahan sa ibaba.</li>

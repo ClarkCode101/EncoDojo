@@ -7,12 +7,12 @@
  * a field also moves to the next one; Enter on the last field submits the
  * record and shows a new one.
  *
- * It does NOT save anything. When time is up (or "Tapusin na" is pressed) it
+ * It does NOT save anything. When time is up (or "Finish" is pressed) it
  * builds a Session and hands it to `onFinish`. To start over, the parent gives
  * it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, Kbd, StatBadge, TimeLeft } from '../../components/ui';
+import { Button, Card, EnTl, Kbd, StatBadge, TimeLeft } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
@@ -140,7 +140,9 @@ export default function CopyRunner({
             <dl className="space-y-4 px-5 py-5">
               {FIELDS.map((f) => (
                 <div key={f.key}>
-                  <dt className="text-sm font-medium text-stone-600">{f.label}</dt>
+                  <dt className="text-sm font-medium text-stone-600">
+                    <EnTl en={f.label} tl={f.tl} />
+                  </dt>
                   <dd className="select-none font-mono text-lg text-stone-900">{current[f.key]}</dd>
                 </div>
               ))}
@@ -167,8 +169,8 @@ export default function CopyRunner({
               {FIELDS.map((f, i) => (
                 <div key={f.key}>
                   <label htmlFor={`copy-${f.key}`} className="mb-1 block text-base font-semibold text-stone-800">
-                    {f.label}
-                    {f.hint && <span className="ml-2 text-sm font-normal text-stone-600">({f.hint})</span>}
+                    <EnTl en={f.label} tl={f.tl} />
+                    {f.hint && <span className="ml-2 text-sm font-normal text-stone-600">— {f.hint}</span>}
                   </label>
                   <input
                     id={`copy-${f.key}`}
@@ -192,7 +194,9 @@ export default function CopyRunner({
               ))}
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <Button type="submit">Ipasa ang record</Button>
+              <Button type="submit">
+                <EnTl en="Submit" tl="Ipasa" />
+              </Button>
               <span role="status" className="text-lg font-bold">
                 {lastWrongFields === 0 && <span className="text-green-800">✓ Lahat tama!</span>}
                 {lastWrongFields !== null && lastWrongFields > 0 && (
@@ -211,7 +215,7 @@ export default function CopyRunner({
           </span>
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              Tapusin na
+              <EnTl en="Finish" tl="Tapusin na" />
             </Button>
           )}
         </div>

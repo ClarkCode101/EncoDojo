@@ -113,7 +113,7 @@ export default function CopyResults({
         </p>
         <p className="mt-2 text-lg text-stone-700">
           {m.records === 0
-            ? 'Wala kang naipasang record. Tandaan: sa huling field (ID No.), pindutin ang Enter o ang "Ipasa ang record".'
+            ? 'Wala kang naipasang record. Tandaan: sa huling field (ID No.), pindutin ang Enter o ang "Submit".'
             : ready
               ? '🎉 Pasado ka sa target! Subukan ang Assessment para makasigurado.'
               : `Ang target ay ${t.fieldAccuracy}% na tamang field at ${t.kph.toLocaleString()} KPH. Unahin ang tamang pagkopya, saka ang bilis.`}

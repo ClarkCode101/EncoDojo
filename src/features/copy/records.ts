@@ -21,17 +21,22 @@ export type CopyRecord = {
 
 export type FieldKey = keyof CopyRecord;
 
-/** The form fields, in the order they are typed. */
-export const FIELDS: { key: FieldKey; label: string; hint?: string }[] = [
-  { key: 'name', label: 'Pangalan' },
-  { key: 'birthDate', label: 'Petsa ng kapanganakan', hint: 'mm/dd/yyyy' },
-  { key: 'address', label: 'Address' },
-  { key: 'contactNo', label: 'Contact No.' },
-  { key: 'idNo', label: 'ID No.' },
+/**
+ * The form fields, in the order they are typed.
+ * `label` is in ENGLISH, like on real forms and hiring tests; `tl` is the
+ * Taglish meaning shown smaller next to it, so users learn the English words.
+ */
+export const FIELDS: { key: FieldKey; label: string; tl: string; hint?: string }[] = [
+  { key: 'name', label: 'Name', tl: 'Pangalan' },
+  { key: 'birthDate', label: 'Date of Birth', tl: 'Petsa ng kapanganakan', hint: 'mm/dd/yyyy' },
+  { key: 'address', label: 'Address', tl: 'Tirahan' },
+  { key: 'contactNo', label: 'Contact No.', tl: 'Numero ng telepono' },
+  { key: 'idNo', label: 'ID No.', tl: 'Numero ng ID' },
 ];
 
+/** "Date of Birth (Petsa ng kapanganakan)" — for tables and tips. */
 export const FIELD_LABEL: Record<FieldKey, string> = Object.fromEntries(
-  FIELDS.map((f) => [f.key, f.label]),
+  FIELDS.map((f) => [f.key, `${f.label} (${f.tl})`]),
 ) as Record<FieldKey, string>;
 
 /** Made-up ID pattern, e.g. ED-2026-04517-K */

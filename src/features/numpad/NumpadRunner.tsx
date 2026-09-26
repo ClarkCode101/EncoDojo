@@ -2,12 +2,12 @@
  * One numpad run: the number to type, the input box, timer, and live stats.
  * Used by both the Numpad Drill (training) and the Assessment.
  *
- * It does NOT save anything. When time is up (or "Tapusin na" is pressed) it
+ * It does NOT save anything. When time is up (or "Finish" is pressed) it
  * builds a Session and hands it to `onFinish`. To start over, the parent
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, HelpTip, StatBadge, TimeLeft } from '../../components/ui';
+import { Button, Card, EnTl, HelpTip, StatBadge, TimeLeft } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display, entryAccuracyPct, isEntryCorrect, keystrokesForEntry, kph } from '../../lib/scoring';
@@ -181,7 +181,7 @@ export default function NumpadRunner({
           </span>
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              Tapusin na
+              <EnTl en="Finish" tl="Tapusin na" />
             </Button>
           )}
         </div>
