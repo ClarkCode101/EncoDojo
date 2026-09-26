@@ -20,7 +20,7 @@ EncoDojo has two modes:
 | --- | --- |
 | Dashboard | Latest assessment result, best Net WPM, latest accuracy, best KPH, total sessions, daily streak, recent sessions |
 | Assessment | Typing (1 min) + Numpad (1 min), no live stats or early finish; report card with job-ready targets, comments, change since last time, and history |
-| Typing Test | 30 sec or 1 min training, fresh passages every time (fake PH names, addresses, invoices, payroll), Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
+| Typing Test | 30 sec or 1 min training, fresh plain office-text passages every time, Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
 | Numpad Drill | 30 sec or 1 min training, integers → amounts → reference numbers, KPH, entry accuracy, job-ready check |
 | Settings | Name, difficulty 1–6, live stats, sound, export/import JSON, reset all data |
 

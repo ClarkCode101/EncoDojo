@@ -12,7 +12,7 @@ import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
 import { saveSession, useAppData } from '../../lib/useAppData';
 import NumpadRunner from '../numpad/NumpadRunner';
-import { buildMixedPassage, charsNeeded } from '../typing/buildPassage';
+import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
 import AssessmentReport from './AssessmentReport';
 import { ASSESSMENT, buildAssessmentSession, previousAssessment } from './evaluate';
@@ -28,7 +28,7 @@ function Rules() {
   return (
     <ul className="list-disc space-y-1 pl-5 text-slate-800">
       <li>
-        <strong>Part 1 — Typing, 1 minute.</strong> A mix of plain sentences, names and addresses, and numbers.
+        <strong>Part 1 — Typing, 1 minute.</strong> Plain office text, like most hiring typing tests.
       </li>
       <li>
         <strong>Part 2 — Numpad, 1 minute.</strong> A mix of whole numbers, amounts, and reference numbers.
@@ -95,7 +95,7 @@ export default function AssessmentPage() {
   const [seed, setSeed] = useState(randomSeed);
 
   const passage = useMemo(
-    () => buildMixedPassage(makeRng(seed), charsNeeded(ASSESSMENT.typingSeconds / 60)),
+    () => buildPassage(makeRng(seed), PLAIN_TEXT_LEVEL, charsNeeded(ASSESSMENT.typingSeconds / 60)),
     [seed],
   );
 
@@ -146,7 +146,7 @@ export default function AssessmentPage() {
         <TypingRunner
           passage={passage}
           seconds={ASSESSMENT.typingSeconds}
-          level={0}
+          level={PLAIN_TEXT_LEVEL}
           showLiveStats={false}
           allowFinishEarly={false}
           sound={sound}

@@ -2,13 +2,16 @@
  * Typing Test — TRAINING mode. Pick a duration, type, see results.
  * Results are saved by default (optional). The Assessment uses the same
  * TypingRunner with stricter rules.
+ *
+ * For now the Typing Test uses PLAIN office text only. Names, addresses,
+ * and numbers will be trained by upcoming features (Copy Test, Encoding).
  */
 import { useMemo, useState } from 'react';
 import { Button, PageHeader, SegmentedPicker } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
-import type { Session, TypingLevel } from '../../lib/storage';
+import type { Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
-import { TYPING_LEVEL_LABELS, buildPassage, charsNeeded } from './buildPassage';
+import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from './buildPassage';
 import { compareWithHistory, type TypingComparison } from './compare';
 import TypingResults from './TypingResults';
 import TypingRunner from './TypingRunner';
@@ -18,8 +21,6 @@ type Seconds = (typeof DURATIONS)[number];
 
 const durationLabel = (s: Seconds) => (s === 30 ? '30 sec' : '1 min');
 
-const LEVELS: TypingLevel[] = [1, 2, 3];
-
 type Result = {
   session: Session;
   comparison: TypingComparison;
@@ -28,7 +29,7 @@ type Result = {
 
 export default function TypingPage() {
   const data = useAppData();
-  const { typingLevel, showLiveStats, sound } = data.settings;
+  const { showLiveStats, sound } = data.settings;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [seed, setSeed] = useState(randomSeed);
@@ -38,8 +39,8 @@ export default function TypingPage() {
   const [saved, setSaved] = useState(false);
 
   const passage = useMemo(
-    () => buildPassage(makeRng(seed), typingLevel, charsNeeded(seconds / 60)),
-    [seed, typingLevel, seconds],
+    () => buildPassage(makeRng(seed), PLAIN_TEXT_LEVEL, charsNeeded(seconds / 60)),
+    [seed, seconds],
   );
 
   function handleFinish(session: Session, finishedEarly: boolean) {
@@ -91,15 +92,6 @@ export default function TypingPage() {
 
       <div className="mb-4 flex flex-wrap items-end gap-6">
         <SegmentedPicker
-          label="Level"
-          options={LEVELS}
-          value={typingLevel}
-          format={(l) => TYPING_LEVEL_LABELS[l]}
-          onChange={(l) => {
-            if (!running) updateSettings({ typingLevel: l });
-          }}
-        />
-        <SegmentedPicker
           label="Duration"
           options={DURATIONS}
           value={seconds}
@@ -123,10 +115,10 @@ export default function TypingPage() {
       </div>
 
       <TypingRunner
-        key={`${seed}-${seconds}-${typingLevel}-${attempt}`}
+        key={`${seed}-${seconds}-${attempt}`}
         passage={passage}
         seconds={seconds}
-        level={typingLevel}
+        level={PLAIN_TEXT_LEVEL}
         showLiveStats={showLiveStats}
         allowFinishEarly
         sound={sound}

@@ -2,9 +2,12 @@
  * Makes new typing paragraphs from fake Philippine data, so passages don't
  * repeat and can't be memorized.
  *
- *   Level 1: plain office sentences
+ *   Level 1: plain office sentences  <- the only level the Typing Test uses for now
  *   Level 2: names, addresses, dates
  *   Level 3: invoices, receipts, payroll, codes, amounts
+ *
+ * Levels 2 and 3 are kept (and tested) for upcoming features such as the
+ * Copy Test and Document Encoding.
  *
  * Amounts are computed in centavos so totals always add up (like a real
  * document), and written as "PHP 1,234.50" because keyboards have no peso key.
@@ -95,6 +98,30 @@ const level1Sentences: ((rng: Rng) => string)[] = [
   (r) => `The ${pick(r, ph.teams)} section needs the updated list before the ${pick(r, ph.periods)} ends.`,
   () => 'Write down every problem in the issue log so the next person knows what happened.',
   (r) => `Please follow the same format when you encode a ${pick(r, ph.documents)}.`,
+  (r) => `The ${pick(r, ph.teams)} team will have a short meeting on ${pick(r, ph.weekdays)} morning.`,
+  (r) => `Please make sure the ${pick(r, ph.officeTools)} is turned off before you go home.`,
+  (r) => `If the ${pick(r, ph.officeTools)} is not working, call the help desk and log the problem.`,
+  (r) => `Each ${pick(r, ph.documents)} should be encoded exactly as it is written on the source document.`,
+  () => 'Do not use shortcuts or abbreviations unless the guide allows them.',
+  () => 'When a name is hard to read, mark the record for checking instead of guessing.',
+  () => 'Double-check the spelling of every name before you save the record.',
+  (r) => `New staff members will be trained by the ${pick(r, ph.teams)} team starting ${pick(r, ph.weekdays)}.`,
+  () => 'Keep your desk clean and store all papers in the proper tray.',
+  () => 'Please read the updated guidelines before you start encoding today.',
+  (r) => `The quality check team will review a sample of your work every ${pick(r, ph.periods)}.`,
+  (r) => `Send the finished batch to the ${pick(r, ph.teams)} team before lunch.`,
+  () => 'Any record with missing information should be placed in the pending folder.',
+  () => 'Take a short break every hour to rest your eyes and hands.',
+  () => 'Sit up straight and keep your wrists relaxed while you type.',
+  () => 'Ask your team leader if you are not sure how to encode a field.',
+  (r) => `The ${pick(r, ph.teams)} office is closed on ${pick(r, ph.weekdays)} afternoon for inventory.`,
+  (r) => `Always compare the encoded data with the original ${pick(r, ph.documents)}.`,
+  (r) => `Late submissions must be approved by the head of the ${pick(r, ph.teams)} team.`,
+  (r) => `Please update the tracking sheet each time you finish a ${pick(r, ph.documents)}.`,
+  () => 'Never share your password or leave your account open on a shared computer.',
+  (r) => `The system will be down for maintenance on ${pick(r, ph.weekdays)} evening.`,
+  () => 'Use capital letters only where the source document uses them.',
+  () => 'Customers expect their records to be correct the first time.',
 ];
 
 function level1(rng: Rng): string {

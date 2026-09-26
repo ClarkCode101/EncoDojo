@@ -75,7 +75,7 @@ type AppData = {
   version: 2;
   profile: { displayName: string; createdAt: string };
   settings: {
-    typingLevel: 1 | 2 | 3;                  // chosen on the Typing Test page
+    typingLevel: 1 | 2 | 3;                  // currently UNUSED (Typing is plain text only); kept for later
     numpadDifficulty: 1 | 2 | 3 | 4 | 5 | 6; // chosen on the Numpad Drill page
     sound: boolean;
     showLiveStats: boolean;
@@ -113,7 +113,8 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 ### 2. Typing Test (`features/typing`)
 - Training modes: **30 sec** and **1 min** (changed from 1/3/5 min at the owner's request). Save rules: see "Product Direction".
 - Results also show: keystroke accuracy, comparison with the last saved test + personal best, and a job-ready check (targets in `lib/targets.ts`: 40 Net WPM, 95% accuracy).
-- Passages: ~75% generated from fake PH data (`features/typing/generatePassage.ts`, `data/ph/`), ~25% hand-written (`data/passages/`). Generated invoices/payroll must add up.
+- **Plain office text only for now** (owner's decision, 2026-09-26) in both training and the Assessment: hiring typing tests use plain prose, so the 40 WPM target stays fair. Names, addresses, and numbers will be trained by upcoming features (Copy Test, Document Encoding) instead.
+- Passages: ~75% generated (`features/typing/generatePassage.ts`, level 1 = ~36 office sentence templates), ~25% hand-written (`data/passages/`). Levels 2 (names/addresses/dates) and 3 (invoices/payroll/codes, totals must add up) still exist and are tested — reuse them for the Copy Test / Document Encoding.
 - Typed text is compared with the passage by **alignment** (edit distance, `features/typing/alignTyping.ts`), not position by position. Each wrong key, extra key (incl. double space or a space inside a word), or skipped letter = 1 mistake, and the following letters stay in sync (no "domino" of errors).
 - Show passage; highlight current character; mark correct (neutral) vs wrong (red) as the user types.
 - Timer starts on first keystroke. Backspace allowed.
@@ -135,7 +136,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Recent sessions list (last 10).
 
 ### 5. Settings (`features/settings`)
-- Display name, live stats toggle, sound. (Difficulty was moved to each training page at the owner's request: Typing = Level picker, Numpad = Difficulty 1–6 picker.)
+- Display name, live stats toggle, sound. (Difficulty was moved to each training page at the owner's request: Numpad = Difficulty 1–6 picker on the Numpad Drill page. Typing has no level picker while it is plain text only.)
 - Export progress, Import progress, Reset all data (with typed confirmation).
 
 ### 6. Tests
@@ -151,7 +152,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 
 ## Later Phases (do not build yet — for context only)
 
-**Assessment v1 — DONE (2026-09-26):** Typing (1 min, mixed passage) + Numpad (1 min, difficulty 6) with report card. Every later feature must also be added as a new Assessment part (see "Product Direction").
+**Assessment v1 — DONE (2026-09-26):** Typing (1 min, plain office text) + Numpad (1 min, difficulty 6) with report card. Every later feature must also be added as a new Assessment part (see "Product Direction").
 
 **Phase 2:** Alphanumeric Copy Test (timed list of fake names/addresses/IDs), Source Document Encoding (rendered fake invoices, receipts, application forms, delivery receipts, timesheets → form fields, per-field QC), Mistake Review screen with "Retry mistakes only".
 

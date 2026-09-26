@@ -97,3 +97,7 @@ export const documents = [
 export const teams = ['records', 'billing', 'payroll', 'encoding', 'quality check', 'processing', 'admin'];
 
 export const periods = ['shift', 'day', 'week', 'month'];
+
+export const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+export const officeTools = ['scanner', 'printer', 'keyboard', 'computer', 'headset', 'label printer'];

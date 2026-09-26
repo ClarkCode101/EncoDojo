@@ -40,6 +40,10 @@ export type Session = {
 };
 
 export type Settings = {
+  /**
+   * Not used right now: the Typing Test is plain text only for the time
+   * being. Kept so a level picker can come back without another migration.
+   */
   typingLevel: TypingLevel;
   numpadDifficulty: Difficulty;
   sound: boolean;

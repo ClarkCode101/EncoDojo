@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMixedPassage, buildPassage, charsNeeded } from './buildPassage';
+import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from './buildPassage';
 import { makeRng } from '../../lib/random';
 import { passages } from '../../data/passages';
 
@@ -18,12 +18,20 @@ describe('buildPassage', () => {
     expect(text).not.toMatch(/ {2}|\n/);
   });
 
-  it('mixed passage (assessment) includes all three kinds of text', () => {
-    const text = buildMixedPassage(makeRng(11), charsNeeded(1));
-    expect(text.length).toBeGreaterThanOrEqual(charsNeeded(1));
-    expect(text).toMatch(/PHP \d/); // level 3: amounts
-    expect(text).toMatch(/\d{2}\/\d{2}\/\d{4}/); // level 2/3: dates
-    expect(text).not.toMatch(/ {2}/);
+  it('plain text (used by the Typing Test) has no amounts, dates, or codes', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const text = buildPassage(makeRng(seed), PLAIN_TEXT_LEVEL, charsNeeded(1));
+      expect(text).not.toMatch(/\d/);
+    }
+  });
+
+  it('plain text rarely repeats a sentence within one 1-minute passage', () => {
+    let repeats = 0;
+    for (let seed = 1; seed <= 50; seed++) {
+      const sentences = buildPassage(makeRng(seed), PLAIN_TEXT_LEVEL, charsNeeded(1)).split(/(?<=\.) /);
+      repeats += sentences.length - new Set(sentences).size;
+    }
+    expect(repeats / 50).toBeLessThan(1); // on average less than one repeated sentence
   });
 
   it('only uses characters found on a normal keyboard', () => {

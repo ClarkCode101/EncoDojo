@@ -5,12 +5,11 @@ import { generateParagraph } from './generatePassage';
 /** Share of paragraphs taken from the hand-written passages (the rest are generated). */
 const HANDWRITTEN_SHARE = 0.25;
 
-/** Names of the typing levels, shown in the Level picker. */
-export const TYPING_LEVEL_LABELS: Record<PassageLevel, string> = {
-  1: 'Plain text',
-  2: 'Names & addresses',
-  3: 'Numbers & codes',
-};
+/**
+ * The Typing Test (training and Assessment) uses plain office text for now,
+ * like most hiring typing tests, so the 40 WPM target is a fair comparison.
+ */
+export const PLAIN_TEXT_LEVEL: PassageLevel = 1;
 
 /**
  * Enough characters that even a very fast typist (about 120 WPM) will not
@@ -18,23 +17,6 @@ export const TYPING_LEVEL_LABELS: Record<PassageLevel, string> = {
  */
 export function charsNeeded(minutes: number): number {
   return minutes * 120 * 5;
-}
-
-/**
- * For the Assessment: generated paragraphs that rotate through levels
- * 1 -> 2 -> 3 (plain sentences, then names/addresses, then numbers), so every
- * attempt tests the same mix of skills.
- */
-export function buildMixedPassage(rng: Rng, minChars: number): string {
-  const levels: PassageLevel[] = [1, 2, 3];
-  const parts: string[] = [];
-  let length = 0;
-  for (let i = 0; length < minChars; i++) {
-    const text = generateParagraph(rng, levels[i % levels.length]);
-    parts.push(text);
-    length += text.length + 1;
-  }
-  return parts.join(' ');
 }
 
 /**
