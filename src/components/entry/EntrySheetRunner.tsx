@@ -16,7 +16,7 @@ import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '..
 import { display } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { useCountdown } from '../../lib/useCountdown';
-import { Button, Card, EnTl, Kbd, StatBadge, TimeLeft } from '../ui';
+import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../ui';
 import { emptyValues, type EntryItem, type EntryRunnerProps } from './types';
 
 /** Excel-style column letters: A, B, C, ... */
@@ -116,16 +116,20 @@ export default function EntrySheetRunner({
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <TimeLeft seconds={timer.remainingSec} started={timer.started} waitingText="naghihintay sa unang letra" />
-        <StatBadge label="Natapos na row" value={submitted.length} />
-        {showLiveStats && (
-          <>
-            <StatBadge label="Bilis (KPH)" value={timer.started ? display(live.kph).toLocaleString() : '–'} />
-            <StatBadge label="Tamang field" value={`${display(live.fieldAccuracy)}%`} />
-          </>
-        )}
-      </div>
+      <LiveStatsBar
+        seconds={timer.remainingSec}
+        started={timer.started}
+        waitingText="magsisimula sa unang letra"
+        stats={[
+          { label: 'Natapos', value: submitted.length },
+          ...(showLiveStats
+            ? [
+                { label: 'Bilis (KPH)', value: timer.started ? display(live.kph).toLocaleString() : '–' },
+                { label: 'Tamang field', value: `${display(live.fieldAccuracy)}%` },
+              ]
+            : []),
+        ]}
+      />
 
       <Card>
         {/* The source to read from right now. */}
@@ -136,13 +140,6 @@ export default function EntrySheetRunner({
           <div className={scrollSource ? 'max-h-[28rem] overflow-y-auto rounded-sm' : ''}>{current.source}</div>
         </section>
 
-        {!timer.started && (
-          <p className="mt-5 rounded-lg bg-brand-50 px-4 py-2 text-brand-950">
-            I-type ang {unit} sa row na may <strong>dilaw na numero</strong>. Pindutin ang <Kbd>Tab</Kbd> para sa
-            susunod na cell (pakanan). Sa dulo ng row, pindutin ang <Kbd>Enter</Kbd> para bumaba sa susunod na row —
-            ganito sa Excel. Magsisimula ang oras sa unang letra.
-          </p>
-        )}
 
         {/* The spreadsheet. */}
         <div className="mt-5 overflow-x-auto rounded-md border border-stone-300">
@@ -228,6 +225,12 @@ export default function EntrySheetRunner({
         </div>
 
         <div className="mt-4 flex min-h-12 flex-wrap items-center justify-between gap-3">
+          <KeyTips
+            tips={[
+              { key: 'Tab', text: 'susunod na cell' },
+              { key: 'Enter', text: 'susunod na row' },
+            ]}
+          />
           <span role="status" className="text-lg font-bold">
             {message?.wrong === 0 && <span className="text-green-800">✓ Row {excelRow(message.row)}: lahat tama!</span>}
             {message && message.wrong > 0 && (
@@ -242,10 +245,6 @@ export default function EntrySheetRunner({
             </Button>
           )}
         </div>
-        <p className="mt-2 text-stone-700">
-          Puwede mong balikan at ayusin ang mga naunang row. Ang huling laman ng sheet ang iche-check. Walang
-          copy-paste.
-        </p>
       </Card>
     </>
   );

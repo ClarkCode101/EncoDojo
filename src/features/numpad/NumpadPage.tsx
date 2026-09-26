@@ -1,11 +1,13 @@
 /**
- * Numpad Practice — TRAINING mode. Pick a mode and duration, enter numbers,
- * see results. Results are saved by default (optional). The Assessment uses
+ * Numpad Practice — TRAINING mode. Two screens (components/Practice.tsx):
+ * setup (number type + duration + short tips + "Simulan"), then the drill. Results are saved by default (optional). The Assessment uses
  * the same NumpadRunner with stricter rules and the "mixed" numbers.
  */
 import { useState } from 'react';
 import { NumpadIcon } from '../../components/icons';
-import { Card, PageHeader, SegmentedPicker, Step } from '../../components/ui';
+import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { HelpTip, SegmentedPicker } from '../../components/ui';
+import { HELP } from '../../lib/glossary';
 import type { NumpadMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import NumpadResults from './NumpadResults';
@@ -27,6 +29,7 @@ export default function NumpadPage() {
   const difficulty = NUMPAD_MODES[mode].difficulty;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
+  const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -68,46 +71,51 @@ export default function NumpadPage() {
     );
   }
 
-  return (
-    <div>
-      <PageHeader
+  if (screen === 'setup') {
+    return (
+      <PracticeSetup
         icon={<NumpadIcon className="h-8 w-8" />}
         title="Numpad Practice"
-        description="Sanayin ang pag-type ng mga numero gamit ang numpad. Practice lang ito — puwede kang umulit hangga't gusto mo."
-      />
-
-      <Card className="mb-6">
-        <div className="space-y-6">
-          <Step number={1} title="Pumili ng klase ng numero at tagal">
+        description="Sanayin ang pag-type ng mga numero gamit ang numpad."
+        chooseTitle="Pumili ng klase ng numero at tagal"
+        choices={
+          <>
             <div className="flex flex-wrap items-end gap-6">
               <SegmentedPicker
                 label="Anong klase ng numero?"
                 options={MODES}
                 value={mode}
                 format={(m) => NUMPAD_MODES[m].label}
-                disabled={running}
                 onChange={(m) => updateSettings({ numpadMode: m })}
               />
-              <SegmentedPicker
-                label="Gaano katagal?"
-                options={DURATIONS}
-                value={seconds}
-                format={durationLabel}
-                disabled={running}
-                onChange={setSeconds}
-              />
+              <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
             </div>
-            <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">{NUMPAD_MODES[mode].description}</p>
-            {mode === 'beginner' && (
-              <p className="mt-2 text-stone-700">
-                Ang Pang-baguhan ay hindi kasama sa &quot;Pinakamabilis na numpad&quot; sa Home. Kapag komportable ka na,
-                lumipat sa Halo-halo.
-              </p>
-            )}
-          </Step>
-          <Step number={2} title="I-type ang bawat numero at pindutin ang Enter" />
-        </div>
-      </Card>
+            <p className="mt-3 text-stone-700">
+              {NUMPAD_MODES[mode].description}
+              {mode === 'beginner' && ' Hindi ito kasama sa "Pinakamabilis na numpad" sa Home.'}
+            </p>
+          </>
+        }
+        howTo={[
+          'I-ON ang Num Lock at ilagay ang mga daliri sa 4-5-6 ng numpad.',
+          'I-type ang numerong lalabas at pindutin ang Enter. Hindi kailangan ang comma.',
+          'Magsisimula ang oras sa unang numero na ita-type mo.',
+        ]}
+        extra={<HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>}
+        onStart={() => setScreen('practice')}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <PracticeHeader
+        icon={<NumpadIcon className="h-6 w-6" />}
+        title="Numpad Practice"
+        summary={`${NUMPAD_MODES[mode].label} · ${durationLabel(seconds)}`}
+        canChangeSettings={!running}
+        onChangeSettings={() => setScreen('setup')}
+      />
 
       <NumpadRunner
         key={`${seconds}-${mode}-${attempt}`}

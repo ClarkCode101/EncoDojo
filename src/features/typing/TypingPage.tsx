@@ -1,5 +1,6 @@
 /**
- * Typing Test — TRAINING mode. Pick a duration, type, see results.
+ * Typing Test — TRAINING mode. Two screens (components/Practice.tsx):
+ * setup (duration + short tips + "Simulan"), then the drill. Results after.
  * Results are saved by default (optional). The Assessment uses the same
  * TypingRunner with stricter rules.
  *
@@ -8,7 +9,8 @@
  */
 import { useMemo, useState } from 'react';
 import { KeyboardIcon } from '../../components/icons';
-import { Button, Card, PageHeader, SegmentedPicker, Step } from '../../components/ui';
+import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { Button, SegmentedPicker } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
 import { removeSession, saveSession, useAppData } from '../../lib/useAppData';
@@ -33,6 +35,7 @@ export default function TypingPage() {
   const { sound } = data.settings;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
+  const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [seed, setSeed] = useState(randomSeed);
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
   const [running, setRunning] = useState(false);
@@ -84,34 +87,40 @@ export default function TypingPage() {
     );
   }
 
-  return (
-    <div>
-      <PageHeader
+  if (screen === 'setup') {
+    return (
+      <PracticeSetup
         icon={<KeyboardIcon className="h-8 w-8" />}
         title="Typing Practice"
-        description="Sanayin ang bilis at tamang pagta-type. Practice lang ito — puwede kang umulit hangga't gusto mo."
+        description="Sanayin ang bilis at tamang pagta-type."
+        chooseTitle="Pumili ng tagal"
+        choices={
+          <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
+        }
+        howTo={[
+          'I-type ang text nang eksakto — pati malalaking titik, tuldok, at comma.',
+          'Magsisimula ang oras sa unang letra na ita-type mo.',
+          'Bawat maling, sobra, o nalaktawang letra ay isang mali. Puwede kang magbura gamit ang Backspace.',
+        ]}
+        onStart={() => setScreen('practice')}
       />
+    );
+  }
 
-      <Card className="mb-6">
-        <div className="space-y-6">
-          <Step number={1} title="Pumili ng tagal">
-            <div className="flex flex-wrap items-end gap-4">
-              <SegmentedPicker
-                label="Gaano katagal?"
-                options={DURATIONS}
-                value={seconds}
-                format={durationLabel}
-                disabled={running}
-                onChange={setSeconds}
-              />
-              <Button variant="secondary" disabled={running} onClick={() => restart(true)}>
-                Ibang text
-              </Button>
-            </div>
-          </Step>
-          <Step number={2} title="I-type ang text sa ibaba" />
-        </div>
-      </Card>
+  return (
+    <div>
+      <PracticeHeader
+        icon={<KeyboardIcon className="h-6 w-6" />}
+        title="Typing Practice"
+        summary={durationLabel(seconds)}
+        canChangeSettings={!running}
+        onChangeSettings={() => setScreen('setup')}
+        actions={
+          <Button variant="secondary" onClick={() => restart(true)}>
+            Ibang text
+          </Button>
+        }
+      />
 
       <TypingRunner
         key={`${seed}-${seconds}-${attempt}`}

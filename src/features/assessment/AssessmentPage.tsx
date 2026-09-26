@@ -419,7 +419,7 @@ export default function AssessmentPage() {
           description="I-encode ang bawat dokumento ayon sa patakaran. 3 minuto."
         />
         <PartProgress part={4} />
-        <EncodingRules className="mb-6" />
+        <EncodingRules compact className="mb-4" />
         <EntryFormRunner
           seconds={ASSESSMENT.encodingSeconds}
           showLiveStats={false}

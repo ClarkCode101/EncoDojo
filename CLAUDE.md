@@ -22,9 +22,12 @@ The app must be easy for **older and non-techy users**:
   - Code, comments, and commit messages stay in English.
 - Big readable text (root 17px; Settings → "Mas malaking text" = 19px via `html.large-text`, `settings.largeText`). Buttons at least 44px tall. No ALL-CAPS labels.
 - Every page: icon + title + one-sentence explanation, then numbered steps (`Step` component) for what to do.
+- **Practice pages use two screens** (owner's decision, 2026-09-26, because one long page felt overwhelming) — `components/Practice.tsx`:
+  1. `PracticeSetup`: choices, **at most 3** short "Tandaan" points (+ optional extra like the encoding rules), one big "Simulan" button (focused, so Enter starts).
+  2. Practice screen: `PracticeHeader` (title, chosen settings, "‹ Palitan ang settings" only before the first key) + the drill only: a sticky one-line `LiveStatsBar` and a one-line `KeyTips` reminder. No instruction boxes, and never repeat the same instruction in two places. "Ulitin" on results goes straight back to the practice screen.
 - Every number shown gets a plain explanation via `HelpTip` ("Ano ito?", click-to-open `<details>`, never hover-only). Explanations live in `lib/glossary.ts`.
 - Results screens start with a one-sentence plain summary + the main action buttons, then details.
-- Use shared pieces in `components/ui.tsx` (Button, Card, Step, HelpTip, Notice, Checkbox, TimeLeft, SegmentedPicker, ConfirmButton) and `components/icons.tsx` (hand-made SVG icons, no icon library).
+- Use shared pieces in `components/ui.tsx` (Button, Card, Step, HelpTip, Notice, Checkbox, LiveStatsBar, KeyTips, SegmentedPicker, ConfirmButton) and `components/icons.tsx` (hand-made SVG icons, no icon library).
 - Deletes always ask first (ConfirmButton). Sidebar shows only usable pages; "coming soon" features are listed on Home.
 
 ## Product Direction: Training + Assessment (decided 2026-09-26)

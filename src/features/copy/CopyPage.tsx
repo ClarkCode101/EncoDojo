@@ -6,10 +6,12 @@
  * Spreadsheet is the default (most encoder jobs use Excel / Google Sheets).
  * Results are saved by default (optional). The Assessment always uses the
  * form, like real alphanumeric data entry hiring tests.
+ * Two screens (components/Practice.tsx): setup, then the drill.
  */
 import { useState } from 'react';
 import { CopyIcon } from '../../components/icons';
-import { Card, Kbd, PageHeader, SegmentedPicker, Step } from '../../components/ui';
+import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { SegmentedPicker } from '../../components/ui';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import CopyResults from './CopyResults';
@@ -23,15 +25,9 @@ const durationLabel = (s: Seconds) => (s === 60 ? '1 minuto' : '2 minuto');
 
 /** Spreadsheet first: it's the default, since most encoder jobs use Excel / Google Sheets. */
 const MODES: CopyMode[] = ['sheet', 'form'];
-const MODE_INFO: Record<CopyMode, { label: string; description: string }> = {
-  form: {
-    label: 'Form (gaya ng hiring test)',
-    description: 'Isang record bawat form, gaya ng hiring test at ng software ng maraming kumpanya.',
-  },
-  sheet: {
-    label: 'Spreadsheet (gaya ng Excel)',
-    description: 'Isang row bawat record sa isang table, gaya ng pag-encode sa Excel o Google Sheets.',
-  },
+const MODE_LABEL: Record<CopyMode, string> = {
+  sheet: 'Spreadsheet (gaya ng Excel)',
+  form: 'Form (gaya ng hiring test)',
 };
 
 type Result = { session: Session; finishedEarly: boolean };
@@ -43,6 +39,7 @@ export default function CopyPage() {
   const mode: CopyMode = data.settings.copyMode ?? 'sheet';
 
   const [seconds, setSeconds] = useState<Seconds>(60);
+  const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -83,57 +80,46 @@ export default function CopyPage() {
     );
   }
 
-  return (
-    <div>
-      <PageHeader
+  if (screen === 'setup') {
+    return (
+      <PracticeSetup
         icon={<CopyIcon className="h-8 w-8" />}
         title="Copy Test"
-        description="Kopyahin ang mga record (pangalan, petsa, address, contact no., ID) sa spreadsheet — gaya ng Excel sa totoong trabaho — o sa form, gaya ng hiring test. Practice lang ito."
+        description="Kopyahin ang mga record nang eksakto — gaya ng pag-encode sa Excel o sa hiring test."
+        chooseTitle="Pumili kung saan mag-e-encode at gaano katagal"
+        choices={
+          <div className="flex flex-wrap items-end gap-6">
+            <SegmentedPicker
+              label="Saan ka mag-e-encode?"
+              options={MODES}
+              value={mode}
+              format={(m) => MODE_LABEL[m]}
+              onChange={(m) => updateSettings({ copyMode: m })}
+            />
+            <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
+          </div>
+        }
+        howTo={[
+          'Kopyahin ang bawat record nang eksakto — pati malalaking titik, tuldok, comma, at space.',
+          mode === 'sheet'
+            ? 'Tab = susunod na cell. Enter sa dulo ng row = susunod na record. Puwede mong balikan ang naunang row.'
+            : 'Tab = susunod na field. Enter sa huling field (ID No.) = ipasa ang record.',
+          'Kahit isang letra lang ang mali, mali na ang buong field.',
+        ]}
+        onStart={() => setScreen('practice')}
       />
+    );
+  }
 
-      <Card className="mb-6">
-        <div className="space-y-6">
-          <Step number={1} title="Pumili kung saan mag-e-encode at gaano katagal">
-            <div className="flex flex-wrap items-end gap-6">
-              <SegmentedPicker
-                label="Saan ka mag-e-encode?"
-                options={MODES}
-                value={mode}
-                format={(m) => MODE_INFO[m].label}
-                disabled={running}
-                onChange={(m) => updateSettings({ copyMode: m })}
-              />
-              <SegmentedPicker
-                label="Gaano katagal?"
-                options={DURATIONS}
-                value={seconds}
-                format={durationLabel}
-                disabled={running}
-                onChange={setSeconds}
-              />
-            </div>
-            <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">{MODE_INFO[mode].description}</p>
-          </Step>
-          <Step
-            number={2}
-            title={mode === 'form' ? 'Kopyahin ang bawat record sa form' : 'Kopyahin ang bawat record sa spreadsheet'}
-          >
-            <p className="text-stone-700">
-              Eksakto dapat: parehong malaking titik, tuldok, comma, at space. <Kbd>Tab</Kbd> para sa susunod na{' '}
-              {mode === 'form' ? 'field' : 'cell'},{' '}
-              {mode === 'form' ? (
-                <>
-                  <Kbd>Enter</Kbd> sa huling field para ipasa ang record.
-                </>
-              ) : (
-                <>
-                  <Kbd>Enter</Kbd> sa dulo ng row para bumaba sa susunod na row.
-                </>
-              )}
-            </p>
-          </Step>
-        </div>
-      </Card>
+  return (
+    <div>
+      <PracticeHeader
+        icon={<CopyIcon className="h-6 w-6" />}
+        title="Copy Test"
+        summary={`${MODE_LABEL[mode]} · ${durationLabel(seconds)}`}
+        canChangeSettings={!running}
+        onChangeSettings={() => setScreen('setup')}
+      />
 
       <CopyRunner
         key={`${mode}-${seconds}-${attempt}`}

@@ -7,8 +7,7 @@
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, EnTl, HelpTip, StatBadge, TimeLeft } from '../../components/ui';
-import { HELP } from '../../lib/glossary';
+import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display, entryAccuracyPct, isEntryCorrect, keystrokesForEntry, kph } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
@@ -107,22 +106,20 @@ export default function NumpadRunner({
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <TimeLeft seconds={timer.remainingSec} started={timer.started} waitingText="naghihintay sa unang numero" />
-        <StatBadge label="Natapos na numero" value={tally.entries} />
-        {showLiveStats && (
-          <>
-            <StatBadge
-              label="Bilis (KPH)"
-              value={timer.started ? display(kph(tally.keystrokes, elapsed)).toLocaleString() : '–'}
-            />
-            <StatBadge
-              label="Tamang numero"
-              value={`${display(entryAccuracyPct(tally.correctEntries, tally.entries))}%`}
-            />
-          </>
-        )}
-      </div>
+      <LiveStatsBar
+        seconds={timer.remainingSec}
+        started={timer.started}
+        waitingText="magsisimula sa unang numero"
+        stats={[
+          { label: 'Natapos', value: tally.entries },
+          ...(showLiveStats
+            ? [
+                { label: 'Bilis (KPH)', value: timer.started ? display(kph(tally.keystrokes, elapsed)).toLocaleString() : '–' },
+                { label: 'Tamang numero', value: `${display(entryAccuracyPct(tally.correctEntries, tally.entries))}%` },
+              ]
+            : []),
+        ]}
+      />
 
       <Card>
         <div className="rounded-md border border-stone-200 bg-white py-8 text-center shadow-paper">
@@ -145,12 +142,6 @@ export default function NumpadRunner({
           <label htmlFor="numpad-input" className="mb-2 block text-lg font-bold text-stone-900">
             Dito ka mag-type 👇
           </label>
-          {!timer.started && (
-            <p className="mb-2 rounded-lg bg-brand-50 px-4 py-2 text-brand-950">
-              I-type ang numero, tapos pindutin ang <strong>Enter</strong>. Magsisimula ang oras sa unang numero na
-              ita-type mo.
-            </p>
-          )}
           <input
             id="numpad-input"
             autoFocus
@@ -171,7 +162,9 @@ export default function NumpadRunner({
             placeholder="I-type dito…"
             className="w-full rounded-xl border-2 border-stone-400 bg-white p-4 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
           />
-          <p className="mt-2 text-center text-stone-600">Hindi kailangan ang comma (,). Pindutin ang Enter pagkatapos.</p>
+          <div className="mt-3 flex justify-center">
+            <KeyTips tips={[{ key: 'Enter', text: 'pagkatapos ng bawat numero' }, { text: 'Walang comma (,)' }]} />
+          </div>
         </form>
 
         <div className="mt-4 flex min-h-12 flex-wrap items-center justify-between gap-3">
@@ -186,10 +179,6 @@ export default function NumpadRunner({
           )}
         </div>
       </Card>
-
-      <div className="mt-4">
-        <HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>
-      </div>
     </>
   );
 }

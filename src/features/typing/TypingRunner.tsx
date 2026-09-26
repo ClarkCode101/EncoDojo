@@ -7,7 +7,7 @@
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, EnTl, StatBadge, TimeLeft } from '../../components/ui';
+import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { accuracyPct, display, netWpm, wrongKeystrokes } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { makeId, type Session } from '../../lib/storage';
@@ -107,21 +107,22 @@ export default function TypingRunner({
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <TimeLeft seconds={timer.remainingSec} started={timer.started} waitingText="naghihintay sa unang letra" />
-        {showLiveStats && (
-          <>
-            <StatBadge
-              label="Bilis (Net WPM)"
-              value={timer.started ? display(netWpm(typed.length, alignment.errors, elapsed)) : '–'}
-            />
-            <StatBadge
-              label="Accuracy (tama)"
-              value={`${display(accuracyPct(alignment.correctChars, alignment.correctChars + alignment.errors))}%`}
-            />
-          </>
-        )}
-      </div>
+      <LiveStatsBar
+        seconds={timer.remainingSec}
+        started={timer.started}
+        waitingText="magsisimula sa unang letra"
+        stats={
+          showLiveStats
+            ? [
+                { label: 'Bilis (Net WPM)', value: timer.started ? display(netWpm(typed.length, alignment.errors, elapsed)) : '–' },
+                {
+                  label: 'Accuracy (tama)',
+                  value: `${display(accuracyPct(alignment.correctChars, alignment.correctChars + alignment.errors))}%`,
+                },
+              ]
+            : []
+        }
+      />
 
       <Card>
         <PassageView passage={passage} alignment={alignment} />
@@ -130,12 +131,6 @@ export default function TypingRunner({
         <label htmlFor="typing-input" className="mb-2 mt-6 block text-lg font-bold text-stone-900">
           Dito ka mag-type 👇
         </label>
-        {!timer.started && (
-          <p className="mb-2 rounded-lg bg-brand-50 px-4 py-2 text-brand-950">
-            I-click ang kahon sa ibaba at simulan ang pag-type. <strong>Magsisimula ang oras sa unang letra</strong>{' '}
-            na ita-type mo.
-          </p>
-        )}
         <textarea
           id="typing-input"
           autoFocus
@@ -154,11 +149,8 @@ export default function TypingRunner({
           rows={3}
           className="w-full rounded-xl border-2 border-stone-400 bg-white p-4 font-mono text-xl placeholder:text-stone-500 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
         />
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-stone-700">
-          <span>
-            Puwede ang <kbd className="rounded border border-stone-400 bg-stone-100 px-1.5 text-sm">Backspace</kbd>{' '}
-            para magbura. Bawat maling, sobra, o nalaktawang letra ay isang mali.
-          </span>
+        <div className="mt-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
+          <KeyTips tips={[{ key: 'Backspace', text: 'para magbura' }]} />
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
               <EnTl en="Finish" tl="Tapusin na" />

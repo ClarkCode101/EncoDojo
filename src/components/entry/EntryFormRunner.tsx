@@ -15,7 +15,7 @@ import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '..
 import { display } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { useCountdown } from '../../lib/useCountdown';
-import { Button, Card, EnTl, Kbd, StatBadge, TimeLeft } from '../ui';
+import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../ui';
 import { emptyValues, type EntryItem, type EntryRunnerProps } from './types';
 
 export default function EntryFormRunner({
@@ -99,16 +99,20 @@ export default function EntryFormRunner({
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <TimeLeft seconds={timer.remainingSec} started={timer.started} waitingText="naghihintay sa unang letra" />
-        <StatBadge label={`Natapos na ${unit}`} value={submitted.length} />
-        {showLiveStats && (
-          <>
-            <StatBadge label="Bilis (KPH)" value={timer.started ? display(live.kph).toLocaleString() : '–'} />
-            <StatBadge label="Tamang field" value={`${display(live.fieldAccuracy)}%`} />
-          </>
-        )}
-      </div>
+      <LiveStatsBar
+        seconds={timer.remainingSec}
+        started={timer.started}
+        waitingText="magsisimula sa unang letra"
+        stats={[
+          { label: 'Natapos', value: submitted.length },
+          ...(showLiveStats
+            ? [
+                { label: 'Bilis (KPH)', value: timer.started ? display(live.kph).toLocaleString() : '–' },
+                { label: 'Tamang field', value: `${display(live.fieldAccuracy)}%` },
+              ]
+            : []),
+        ]}
+      />
 
       <Card>
         {/* Wide documents sit beside the form only when there is room; with large text they need a wider screen. */}
@@ -137,13 +141,6 @@ export default function EntryFormRunner({
             }}
           >
             <h3 className="mb-1 text-lg font-bold text-stone-900">Dito ka mag-type 👇</h3>
-            {!timer.started && (
-              <p className="mb-3 rounded-lg bg-brand-50 px-4 py-2 text-brand-950">
-                Pindutin ang <Kbd>Tab</Kbd> para lumipat sa susunod na field — ganito sa totoong form at software. Sa
-                huling field ({lastField.label}), pindutin ang <Kbd>Enter</Kbd> para ipasa. Magsisimula ang oras sa
-                unang letra.
-              </p>
-            )}
             <div className="space-y-3">
               {item.fields.map((f, i) => (
                 <div key={f.key}>
@@ -188,8 +185,13 @@ export default function EntryFormRunner({
           </form>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-4 text-stone-700">
-          <span>Kahit isang letra, tuldok, o space lang ang mali, mali na ang buong field. Walang copy-paste.</span>
+        <div className="mt-5 flex min-h-11 flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-4">
+          <KeyTips
+            tips={[
+              { key: 'Tab', text: 'susunod na field' },
+              { key: 'Enter', text: `sa huling field (${lastField.label}) = ipasa` },
+            ]}
+          />
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
               <EnTl en="Finish" tl="Tapusin na" />

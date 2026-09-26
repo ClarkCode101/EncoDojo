@@ -5,13 +5,16 @@
  * only). Into either a SPREADSHEET (default, like an invoice log in Excel) or
  * a FORM (like a hiring test). The layout choice is shared with the Copy Test.
  * Results are saved by default (optional).
+ * Two screens (components/Practice.tsx): setup (with the full rules), then
+ * the drill (with a one-line reminder of the rules).
  */
 import { useMemo, useState } from 'react';
 import EntryFormRunner from '../../components/entry/EntryFormRunner';
 import EntrySheetRunner from '../../components/entry/EntrySheetRunner';
 import type { EntryResult } from '../../components/entry/types';
 import { DocumentIcon } from '../../components/icons';
-import { Card, Kbd, PageHeader, SegmentedPicker, Step } from '../../components/ui';
+import { PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { SegmentedPicker } from '../../components/ui';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import { DOC_INFO, DOC_TYPES, type DocType } from './documents';
@@ -27,15 +30,9 @@ type Seconds = (typeof DURATIONS)[number];
 const durationLabel = (s: Seconds) => `${s / 60} minuto`;
 
 const MODES: CopyMode[] = ['sheet', 'form'];
-const MODE_INFO: Record<CopyMode, { label: string; description: string }> = {
-  form: {
-    label: 'Form (gaya ng hiring test)',
-    description: 'Isang dokumento bawat form, gaya ng hiring test at ng software ng maraming kumpanya.',
-  },
-  sheet: {
-    label: 'Spreadsheet (gaya ng Excel)',
-    description: 'Isang row bawat dokumento, gaya ng "invoice log" o masterlist sa Excel o Google Sheets.',
-  },
+const MODE_LABEL: Record<CopyMode, string> = {
+  sheet: 'Spreadsheet (gaya ng Excel)',
+  form: 'Form (gaya ng hiring test)',
 };
 
 /** Spreadsheet column widths per document (the widest values get the most room). */
@@ -55,6 +52,7 @@ export default function EncodingPage() {
 
   const [docType, setDocType] = useState<DocType>('invoice');
   const [seconds, setSeconds] = useState<Seconds>(180);
+  const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -112,64 +110,57 @@ export default function EncodingPage() {
   };
   const runKey = `${mode}-${docType}-${seconds}-${attempt}`;
 
-  return (
-    <div>
-      <PageHeader
+  if (screen === 'setup') {
+    return (
+      <PracticeSetup
         icon={<DocumentIcon className="h-8 w-8" />}
         title="Document Encoding"
-        description="Basahin ang dokumento (invoice, delivery receipt, application form), hanapin ang mahahalagang detalye, at i-encode ayon sa patakaran. Practice lang ito."
-      />
-
-      <Card className="mb-6">
-        <div className="space-y-6">
-          <Step number={1} title="Pumili ng dokumento, kung saan mag-e-encode, at gaano katagal">
+        description="Basahin ang dokumento at i-encode ang mahahalagang detalye ayon sa patakaran."
+        chooseTitle="Pumili ng dokumento, kung saan mag-e-encode, at gaano katagal"
+        choices={
+          <div className="space-y-4">
+            <SegmentedPicker
+              label="Anong dokumento?"
+              options={DOC_TYPES}
+              value={docType}
+              format={(t) => DOC_INFO[t].label}
+              onChange={setDocType}
+            />
             <div className="flex flex-wrap items-end gap-6">
-              <SegmentedPicker
-                label="Anong dokumento?"
-                options={DOC_TYPES}
-                value={docType}
-                format={(t) => DOC_INFO[t].label}
-                disabled={running}
-                onChange={setDocType}
-              />
               <SegmentedPicker
                 label="Saan ka mag-e-encode?"
                 options={MODES}
                 value={mode}
-                format={(m) => MODE_INFO[m].label}
-                disabled={running}
+                format={(m) => MODE_LABEL[m]}
                 onChange={(m) => updateSettings({ copyMode: m })}
               />
-              <SegmentedPicker
-                label="Gaano katagal?"
-                options={DURATIONS}
-                value={seconds}
-                format={durationLabel}
-                disabled={running}
-                onChange={setSeconds}
-              />
+              <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
             </div>
-            <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">{MODE_INFO[mode].description}</p>
-          </Step>
-          <Step number={2} title="Hanapin ang 5 detalye sa dokumento at i-encode ayon sa patakaran">
-            <p className="text-stone-700">
-              Hindi lahat ng nasa dokumento ay ie-encode — ang nasa {mode === 'form' ? 'form' : 'header ng sheet'} lang.{' '}
-              <Kbd>Tab</Kbd> para sa susunod na {mode === 'form' ? 'field' : 'cell'},{' '}
-              {mode === 'form' ? (
-                <>
-                  <Kbd>Enter</Kbd> sa huling field para ipasa ang dokumento.
-                </>
-              ) : (
-                <>
-                  <Kbd>Enter</Kbd> sa dulo ng row para sa susunod na dokumento.
-                </>
-              )}
-            </p>
-          </Step>
-        </div>
-      </Card>
+          </div>
+        }
+        howTo={[
+          `Hanapin sa dokumento ang 5 detalyeng hinihingi ng ${mode === 'form' ? 'form' : 'sheet'} — hindi lahat ng nasa papel ay ie-encode.`,
+          'Sundin ang mga patakaran sa ibaba, lalo na sa petsa at halaga.',
+          mode === 'sheet'
+            ? 'Tab = susunod na cell. Enter sa dulo ng row = susunod na dokumento.'
+            : 'Tab = susunod na field. Enter sa huling field = ipasa ang dokumento.',
+        ]}
+        extra={<EncodingRules />}
+        onStart={() => setScreen('practice')}
+      />
+    );
+  }
 
-      <EncodingRules className="mb-6" />
+  return (
+    <div>
+      <PracticeHeader
+        icon={<DocumentIcon className="h-6 w-6" />}
+        title="Document Encoding"
+        summary={`${DOC_INFO[docType].label} · ${MODE_LABEL[mode]} · ${durationLabel(seconds)}`}
+        canChangeSettings={!running}
+        onChangeSettings={() => setScreen('setup')}
+      />
+      <EncodingRules compact className="mb-4" />
 
       {mode === 'form' ? (
         <EntryFormRunner key={runKey} {...runnerProps} wideSource />

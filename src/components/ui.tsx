@@ -176,29 +176,59 @@ export function StatBadge({
   );
 }
 
-/** The countdown during a run. Turns amber in the last 10 seconds so it's noticed. */
-export function TimeLeft({
+/**
+ * One slim bar during a run: time left first (big), then the live numbers.
+ * Stays at the top of the screen while scrolling (long documents), and turns
+ * amber in the last 10 seconds so it's noticed.
+ */
+export function LiveStatsBar({
   seconds,
   started,
   waitingText,
+  stats,
 }: {
   seconds: number;
   started: boolean;
-  /** Shown before the first key, e.g. "naghihintay sa unang letra". */
+  /** Shown before the first key, e.g. "magsisimula sa unang letra". */
   waitingText: string;
+  stats: { label: string; value: ReactNode }[];
 }) {
   const almostDone = started && seconds <= 10;
   return (
     <div
       className={
-        'rounded-xl border-2 px-4 py-3 shadow-sm ' +
+        'sticky top-0 z-10 mb-4 flex flex-wrap items-center gap-x-8 gap-y-2 rounded-xl border-2 px-5 py-2.5 shadow-sm ' +
         (almostDone ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white')
       }
     >
-      <div className="text-sm font-medium text-stone-600">Natitirang oras</div>
-      <div className="mt-1 text-3xl font-bold tabular-nums text-stone-900">{formatClock(seconds)}</div>
-      {!started && <div className="mt-0.5 text-sm text-stone-600">{waitingText}</div>}
+      <div className="flex items-baseline gap-2">
+        <span className="text-sm font-medium text-stone-600">Oras</span>
+        <span className="text-3xl font-bold tabular-nums text-stone-900">{formatClock(seconds)}</span>
+        {!started && <span className="text-sm text-stone-600">({waitingText})</span>}
+      </div>
+      {stats.map((s) => (
+        <div key={s.label} className="flex items-baseline gap-2">
+          <span className="text-sm font-medium text-stone-600">{s.label}</span>
+          <span className="text-xl font-bold tabular-nums text-stone-900">{s.value}</span>
+        </div>
+      ))}
     </div>
+  );
+}
+
+/**
+ * A one-line keyboard reminder under the typing area, e.g.
+ * [Tab] susunod na cell · [Enter] susunod na row.
+ */
+export function KeyTips({ tips }: { tips: { key?: string; text: string }[] }) {
+  return (
+    <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-stone-700">
+      {tips.map((t) => (
+        <span key={t.text}>
+          {t.key && <Kbd>{t.key}</Kbd>} {t.text}
+        </span>
+      ))}
+    </p>
   );
 }
 
