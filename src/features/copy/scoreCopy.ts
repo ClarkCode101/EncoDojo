@@ -2,7 +2,7 @@
  * Scoring for the Copy Test: the shared field-by-field scoring
  * (lib/fieldScoring.ts) applied to the Copy Test's 5 fields.
  */
-import { scoreRecords } from '../../lib/fieldScoring';
+import { scoreRecords, type FieldSpec, type FilledRecord, type Values } from '../../lib/fieldScoring';
 import { makeId, type CopyMode, type Session } from '../../lib/storage';
 import { FIELDS, type CopyRecord } from './records';
 
@@ -19,9 +19,14 @@ export function copyKphOf(metrics: Record<string, number>): number {
   return typeof metrics.kph === 'number' ? metrics.kph : (metrics.netWpm ?? 0) * 300;
 }
 
+/** A record + what was typed, in the shape the shared scoring (and the entry runners) use. */
+export function copyRecord(expected: CopyRecord, typed: Values): FilledRecord {
+  return { fields: FIELDS, expected, typed };
+}
+
 export function scoreCopy(submitted: SubmittedRecord[], unfinished: CopyRecord | null, elapsedSec: number) {
   return scoreRecords(
-    submitted.map(({ expected, typed }) => ({ fields: FIELDS, expected, typed })),
+    submitted.map(({ expected, typed }) => copyRecord(expected, typed)),
     unfinished ? { fields: FIELDS, typed: unfinished } : null,
     elapsedSec,
   );
@@ -35,13 +40,13 @@ const MAX_SAVED_MISTAKES = 100;
  * spreadsheet layouts). `metrics.sheet` is 1 for the spreadsheet layout.
  */
 export function buildCopySession(
-  submitted: SubmittedRecord[],
-  unfinished: CopyRecord | null,
+  submitted: FilledRecord[],
+  unfinished: { fields: readonly FieldSpec[]; typed: Values } | null,
   elapsedSec: number,
   seconds: number,
   mode: CopyMode,
 ): Session {
-  const { metrics, mistakes } = scoreCopy(submitted, unfinished, elapsedSec);
+  const { metrics, mistakes } = scoreRecords(submitted, unfinished, elapsedSec);
   return {
     id: makeId(),
     type: 'copy',

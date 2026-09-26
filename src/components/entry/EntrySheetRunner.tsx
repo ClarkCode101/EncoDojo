@@ -131,7 +131,7 @@ export default function EntrySheetRunner({
         {/* The source to read from right now. */}
         <section aria-label={current.title}>
           <div className="mb-2 text-sm font-semibold text-brand-800">
-            📄 {current.title} → i-type sa row {excelRow(items.length - 1)}
+            📄 {current.title} #{items.length} → i-type sa row {excelRow(items.length - 1)}
           </div>
           <div className={scrollSource ? 'max-h-[28rem] overflow-y-auto rounded-sm' : ''}>{current.source}</div>
         </section>

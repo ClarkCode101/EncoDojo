@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { display } from '../../lib/scoring';
 import { makeRng } from '../../lib/random';
 import { FIELDS, contactNumber, emptyRecord, idNumber, makeRecord, type CopyRecord } from './records';
-import { buildCopySession, copyKphOf, fieldErrors, isFieldCorrect, scoreCopy } from './scoreCopy';
+import { buildCopySession, copyKphOf, copyRecord, fieldErrors, isFieldCorrect, scoreCopy } from './scoreCopy';
 
 const record: CopyRecord = {
   name: 'Ma. Kristina B. Dela Cruz',
@@ -97,8 +97,8 @@ describe('scoreCopy', () => {
   });
 
   it('buildCopySession marks the layout and saves the same scores', () => {
-    const form = buildCopySession([{ expected: record, typed: { ...record } }], null, 60, 60, 'form');
-    const sheet = buildCopySession([{ expected: record, typed: { ...record } }], null, 60, 60, 'sheet');
+    const form = buildCopySession([copyRecord(record, { ...record })], null, 60, 60, 'form');
+    const sheet = buildCopySession([copyRecord(record, { ...record })], null, 60, 60, 'sheet');
     expect(form.type).toBe('copy');
     expect(form.metrics.sheet).toBe(0);
     expect(sheet.metrics.sheet).toBe(1);

@@ -1,8 +1,8 @@
 /**
  * Copy Test — PRACTICE mode. Copy fake records (name, birth date, address,
  * contact no., ID) exactly as written, into either:
- * - a FORM (like a hiring test or company software) — CopyRunner, or
- * - a SPREADSHEET (like Excel: one row per record) — CopySheetRunner.
+ * - a FORM (like a hiring test or company software), or
+ * - a SPREADSHEET (like Excel: one row per record); both via CopyRunner.
  * Spreadsheet is the default (most encoder jobs use Excel / Google Sheets).
  * Results are saved by default (optional). The Assessment always uses the
  * form, like real alphanumeric data entry hiring tests.
@@ -14,7 +14,6 @@ import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import CopyResults from './CopyResults';
 import CopyRunner from './CopyRunner';
-import CopySheetRunner from './CopySheetRunner';
 
 /** A record takes about 20-40 seconds, so 30 seconds would be too short. */
 const DURATIONS = [60, 120] as const;
@@ -136,27 +135,16 @@ export default function CopyPage() {
         </div>
       </Card>
 
-      {mode === 'form' ? (
-        <CopyRunner
-          key={`form-${seconds}-${attempt}`}
-          seconds={seconds}
-          showLiveStats // always shown in practice (hidden in the Assessment)
-          allowFinishEarly
-          sound={sound}
-          onStart={() => setRunning(true)}
-          onFinish={handleFinish}
-        />
-      ) : (
-        <CopySheetRunner
-          key={`sheet-${seconds}-${attempt}`}
-          seconds={seconds}
-          showLiveStats // always shown in practice (hidden in the Assessment)
-          allowFinishEarly
-          sound={sound}
-          onStart={() => setRunning(true)}
-          onFinish={handleFinish}
-        />
-      )}
+      <CopyRunner
+        key={`${mode}-${seconds}-${attempt}`}
+        mode={mode}
+        seconds={seconds}
+        showLiveStats // always shown in practice (hidden in the Assessment)
+        allowFinishEarly
+        sound={sound}
+        onStart={() => setRunning(true)}
+        onFinish={handleFinish}
+      />
     </div>
   );
 }
