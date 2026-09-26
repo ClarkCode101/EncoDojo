@@ -184,32 +184,37 @@ export function StatBadge({
 export function LiveStatsBar({
   seconds,
   started,
-  waitingText,
   stats,
 }: {
   seconds: number;
+  /** Before the first key the clock waits (the setup screen explains why). */
   started: boolean;
-  /** Shown before the first key, e.g. "magsisimula sa unang letra". */
-  waitingText: string;
   stats: { label: string; value: ReactNode }[];
 }) {
   const almostDone = started && seconds <= 10;
+  // Equal cells, label on top and the number below, split by thin lines.
+  const cell = 'min-w-0 flex-1 px-5 py-2.5';
+  const label = 'truncate text-sm font-medium text-stone-600';
+  const value = 'text-2xl font-bold leading-tight tabular-nums text-stone-900';
   return (
     <div
       className={
-        'sticky top-0 z-10 mb-4 flex flex-wrap items-center gap-x-8 gap-y-2 rounded-xl border-2 px-5 py-2.5 shadow-sm ' +
-        (almostDone ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white')
+        'sticky top-0 z-10 mb-4 grid grid-cols-2 overflow-hidden rounded-xl border-2 shadow-sm ' +
+        'sm:flex sm:divide-x sm:divide-stone-200 ' +
+        (almostDone ? 'border-amber-400 bg-white' : 'border-stone-200 bg-white')
       }
     >
-      <div className="flex items-baseline gap-2">
-        <span className="text-sm font-medium text-stone-600">Oras</span>
-        <span className="text-3xl font-bold tabular-nums text-stone-900">{formatClock(seconds)}</span>
-        {!started && <span className="text-sm text-stone-600">({waitingText})</span>}
+      <div className={`${cell} ${almostDone ? 'bg-amber-100' : 'bg-brand-50'}`}>
+        <div className={label}>Natitirang oras</div>
+        <div className={value}>
+          {formatClock(seconds)}
+          {!started && <span className="ml-2 hidden whitespace-nowrap text-sm font-medium text-stone-600 sm:inline">hindi pa tumatakbo</span>}
+        </div>
       </div>
       {stats.map((s) => (
-        <div key={s.label} className="flex items-baseline gap-2">
-          <span className="text-sm font-medium text-stone-600">{s.label}</span>
-          <span className="text-xl font-bold tabular-nums text-stone-900">{s.value}</span>
+        <div key={s.label} className={cell}>
+          <div className={label}>{s.label}</div>
+          <div className={value}>{s.value}</div>
         </div>
       ))}
     </div>

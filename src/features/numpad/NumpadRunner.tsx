@@ -109,7 +109,6 @@ export default function NumpadRunner({
       <LiveStatsBar
         seconds={timer.remainingSec}
         started={timer.started}
-        waitingText="magsisimula sa unang numero"
         stats={[
           { label: 'Natapos', value: tally.entries },
           ...(showLiveStats

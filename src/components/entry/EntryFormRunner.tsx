@@ -102,7 +102,6 @@ export default function EntryFormRunner({
       <LiveStatsBar
         seconds={timer.remainingSec}
         started={timer.started}
-        waitingText="magsisimula sa unang letra"
         stats={[
           { label: 'Natapos', value: submitted.length },
           ...(showLiveStats

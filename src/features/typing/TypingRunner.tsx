@@ -110,7 +110,6 @@ export default function TypingRunner({
       <LiveStatsBar
         seconds={timer.remainingSec}
         started={timer.started}
-        waitingText="magsisimula sa unang letra"
         stats={
           showLiveStats
             ? [
