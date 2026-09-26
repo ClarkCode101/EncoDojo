@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Alignment } from './alignTyping';
+import type { Alignment } from '../../lib/alignTyping';
 
 /**
  * Shows the passage one <span> per character:

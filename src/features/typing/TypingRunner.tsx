@@ -13,7 +13,7 @@ import { errorBeep } from '../../lib/sound';
 import { makeId, type Session } from '../../lib/storage';
 import { useCountdown } from '../../lib/useCountdown';
 import PassageView from './PassageView';
-import { BAND, alignTyping } from './alignTyping';
+import { BAND, alignTyping } from '../../lib/alignTyping';
 import { scoreTyping } from './scoreTyping';
 
 /** Store at most this many mistakes per session (keeps localStorage small). */

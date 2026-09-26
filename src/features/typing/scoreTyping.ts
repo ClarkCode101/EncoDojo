@@ -3,7 +3,7 @@
  * TypingRunner calls this when time is up; tests call it directly.
  */
 import { accuracyPct, grossWpm, netWpm } from '../../lib/scoring';
-import { alignTyping, type Alignment } from './alignTyping';
+import { alignTyping, type Alignment } from '../../lib/alignTyping';
 
 export type KeyCount = { total: number; wrong: number };
 

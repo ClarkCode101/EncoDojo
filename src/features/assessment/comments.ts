@@ -6,7 +6,7 @@
 import { display, normalizeEntry } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
-import { mistakeKind } from '../typing/alignTyping';
+import { mistakeKind } from '../../lib/alignTyping';
 import { assessmentChecks, assessmentCopyKph, hasCopyPart } from './evaluate';
 
 /** A tip only counts as a "pattern" when it happens at least this often... */

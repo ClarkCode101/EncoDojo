@@ -6,7 +6,7 @@ import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { JOB_READY_COPY } from '../../lib/targets';
 import { formatClock } from '../../lib/useCountdown';
-import { alignTyping } from '../typing/alignTyping';
+import { alignTyping } from '../../lib/alignTyping';
 import { FIELD_LABEL, type FieldKey } from './records';
 import { copyKphOf } from './scoreCopy';
 

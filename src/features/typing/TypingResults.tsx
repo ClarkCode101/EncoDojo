@@ -6,7 +6,7 @@ import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { JOB_READY_TYPING } from '../../lib/targets';
 import { formatClock } from '../../lib/useCountdown';
-import { mistakeKind } from './alignTyping';
+import { mistakeKind } from '../../lib/alignTyping';
 import type { TypingComparison } from './compare';
 
 /** e.g. "↑3 kumpara sa huli · Best: 45" or "Bagong personal best! (dati: 42)". */

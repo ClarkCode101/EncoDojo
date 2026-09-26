@@ -18,7 +18,7 @@
  * characters ahead of or behind the passage (only a narrow strip of the
  * table is filled in).
  */
-import type { Mistake } from '../../lib/scoring';
+import type { Mistake } from './scoring';
 
 export type CharStatus = 'correct' | 'wrong' | 'skipped';
 
