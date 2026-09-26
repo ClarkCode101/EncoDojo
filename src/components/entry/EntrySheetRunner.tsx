@@ -168,6 +168,12 @@ export default function EntrySheetRunner({
                 {fields.map((f) => (
                   <th key={f.key} scope="col" className="border border-stone-300 bg-white px-2 py-1.5 font-sans text-sm font-bold text-stone-900">
                     <EnTl en={f.label} tl={f.tl} />
+                    {/* The format to use, like in the form (e.g. mm/dd/yyyy). */}
+                    {f.hint && (
+                      <div className="mt-1 inline-block rounded bg-belt-100 px-1.5 text-xs font-semibold text-stone-900">
+                        {f.hint}
+                      </div>
+                    )}
                   </th>
                 ))}
               </tr>
