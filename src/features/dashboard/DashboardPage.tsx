@@ -1,5 +1,5 @@
 /**
- * Home: where to start (3 steps), your progress, and recent sessions.
+ * Home: where to start (4 steps), your progress, and recent sessions.
  * Written for people who are new to computers: big cards, clear order, Taglish.
  */
 import type { ReactNode } from 'react';
@@ -8,6 +8,7 @@ import {
   ArrowRightIcon,
   AssessmentIcon,
   ClockIcon,
+  CopyIcon,
   HomeIcon,
   KeyboardIcon,
   NumpadIcon,
@@ -41,16 +42,20 @@ function summary(session: Session): string {
     const verdict = m.jobReady === 1 ? '✅ Job-ready' : `${m.targetsMet} sa ${m.targetsTotal} pasado`;
     return `${verdict} · ${display(m.typingNetWpm)} WPM · ${display(m.numpadKph).toLocaleString()} KPH`;
   }
+  if (session.type === 'copy') {
+    return `${display(m.fieldAccuracy)}% tamang field · ${display(m.netWpm)} WPM · ${m.records} record`;
+  }
   return `${display(m.kph).toLocaleString()} KPH · ${display(m.entryAccuracy)}% tama`;
 }
 
 const typeLabel: Record<Session['type'], string> = {
   typing: 'Typing Practice',
   numpad: 'Numpad Practice',
+  copy: 'Copy Test',
   assessment: 'Assessment',
 };
 
-/** One of the three big "where to start" cards. The whole card is a link. */
+/** One of the big "where to start" cards. The whole card is a link. */
 function StepCard({
   number,
   to,
@@ -94,7 +99,7 @@ function StepCard({
 }
 
 function assessmentStatus(latest: Session | null): string {
-  if (!latest) return 'Hindi mo pa ito nasusubukan. Mga 2 minuto lang.';
+  if (!latest) return 'Hindi mo pa ito nasusubukan. Mga 4 na minuto lang.';
   const m = latest.metrics;
   const when = new Date(latest.startedAt).toLocaleDateString(undefined, { dateStyle: 'medium' });
   return m.jobReady === 1
@@ -103,7 +108,6 @@ function assessmentStatus(latest: Session | null): string {
 }
 
 const comingSoon = [
-  { name: 'Copy Test', text: 'Pagkopya ng listahan ng pangalan, address, at ID.' },
   { name: 'Document Encoding', text: 'Pag-encode mula sa pekeng invoice, resibo, at form.' },
   { name: 'QC / Spot the Difference', text: 'Paghahanap ng mali sa na-encode na data.' },
   { name: 'Excel Practice', text: 'Mga basic na formula, sort, filter, at VLOOKUP.' },
@@ -130,7 +134,7 @@ export default function DashboardPage() {
         <h2 id="start-heading" className="mb-4 text-2xl font-bold text-stone-900">
           Paano magsimula
         </h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StepCard
             number={1}
             to="/typing"
@@ -149,6 +153,14 @@ export default function DashboardPage() {
           />
           <StepCard
             number={3}
+            to="/copy"
+            icon={<CopyIcon className="h-7 w-7" />}
+            title="Copy Test"
+            text="Kopyahin ang pangalan, petsa, address, at ID sa form — gaya ng totoong encoding."
+            action="Mag-practice"
+          />
+          <StepCard
+            number={4}
             to="/assessment"
             icon={<AssessmentIcon className="h-7 w-7" />}
             title="Assessment"
@@ -164,7 +176,7 @@ export default function DashboardPage() {
         <h2 id="progress-heading" className="mb-4 flex items-center gap-2 text-2xl font-bold text-stone-900">
           <StarIcon className="h-7 w-7 text-belt-500" /> Ang progress mo sa practice
         </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatBadge
             label="Pinakamabilis na typing"
             value={show(bestMetric(sessions, 'typing', 'netWpm'))}
@@ -182,6 +194,12 @@ export default function DashboardPage() {
             value={show(bestMetric(forNumpadBest(sessions), 'numpad', 'kph'))}
             hint="KPH (Halo-halo)"
             help={HELP.kph}
+          />
+          <StatBadge
+            label="Huling Copy Test"
+            value={show(latestMetric(sessions, 'copy', 'fieldAccuracy'), '%')}
+            hint="tamang field sa huling practice"
+            help={HELP.fieldAccuracy}
           />
           <StatBadge
             label="Sunod-sunod na araw"
@@ -259,7 +277,7 @@ export default function DashboardPage() {
                   : `Burahin lahat ng ${training.length} practice sessions?`
               }
               confirmLabel="Oo, burahin lahat"
-              onConfirm={() => clearSessions(['typing', 'numpad'])}
+              onConfirm={() => clearSessions(['typing', 'numpad', 'copy'])}
             />
           </div>
         )}

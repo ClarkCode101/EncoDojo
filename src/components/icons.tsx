@@ -71,7 +71,16 @@ export const NumpadIcon = (p: IconProps) => (
   </Icon>
 );
 
-export const SettingsIcon = (p: IconProps) => (
+/** Two sheets: copying from one record to another. */
+export const CopyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="8" y="8" width="12" height="13" rx="2" />
+    <path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2" />
+    <path d="M11 12h6M11 15h6M11 18h3" />
+  </Icon>
+);
+
+export const SettingsIcon =(p: IconProps) => (
   <Icon {...p}>
     <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
     <circle cx="15" cy="6" r="2" />

@@ -19,7 +19,7 @@ export const MAX_SESSIONS = 500;
 export type Difficulty = 1 | 2 | 3 | 4 | 5 | 6;
 /** Numpad Practice mode: "mixed" = same as the Assessment, "beginner" = short numbers only. */
 export type NumpadMode = 'mixed' | 'beginner';
-export const SESSION_TYPES = ['typing', 'numpad', 'assessment'] as const;
+export const SESSION_TYPES = ['typing', 'numpad', 'copy', 'assessment'] as const;
 export type SessionType = (typeof SESSION_TYPES)[number];
 
 export type SessionMistake = {
@@ -27,7 +27,9 @@ export type SessionMistake = {
   typed: string;
   index: number;
   /** Only in assessments: which part the mistake came from. */
-  section?: 'typing' | 'numpad';
+  section?: 'typing' | 'numpad' | 'copy';
+  /** Only in the Copy Test: which form field (e.g. "address"). */
+  field?: string;
 };
 
 export type Session = {

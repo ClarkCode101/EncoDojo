@@ -2,7 +2,7 @@
  * Plain-language (Taglish) explanations of every number the app shows.
  * Used by the "Ano ito?" buttons so every screen explains things the same way.
  */
-import { JOB_READY_NUMPAD, JOB_READY_TYPING } from './targets';
+import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from './targets';
 
 const kph = JOB_READY_NUMPAD.kph.toLocaleString('en-US');
 
@@ -24,7 +24,14 @@ export const HELP = {
     'Gabay lang ito — iba-iba ang bawat employer, kaya tingnan pa rin ang mismong job post. ' +
     'Mas maikli (1 minuto) ang practice dito kaysa sa karaniwang test, kaya tingnan ang average ng ilang subok.',
   entryAccuracy: `Entry accuracy = ilang porsyento ng mga numero ang buong tama. ${JOB_READY_NUMPAD.entryAccuracy}% pataas ang target.`,
-  streak: 'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
+  fieldAccuracy:
+    `Field accuracy = ilang porsyento ng mga field (pangalan, petsa, address, ID) ang EKSAKTONG tama. ` +
+    `Kahit isang letra, tuldok, o space lang ang mali, mali na ang buong field — ganyan sa totoong encoding. ` +
+    `${JOB_READY_COPY.fieldAccuracy}% pataas ang target.`,
+  copyWpm:
+    `Bilis ng pagkopya (Net WPM), bawas na ang mga mali. Mas mabagal talagang i-type ang pangalan, address, at ID ` +
+    `kaysa sa ordinaryong pangungusap, kaya ${JOB_READY_COPY.netWpm} WPM ang target dito.`,
+  streak:'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
   numpad:
     'Ang numpad ay ang mga number key sa KANAN ng keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +
     'Siguraduhing naka-ON ang Num Lock. Kung laptop na walang numpad, puwede ang number keys sa itaas.',

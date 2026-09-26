@@ -2,6 +2,7 @@ import { Suspense, useEffect, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   AssessmentIcon,
+  CopyIcon,
   HomeIcon,
   KeyboardIcon,
   Logo,
@@ -25,6 +26,7 @@ const groups: NavGroup[] = [
     items: [
       { to: '/typing', label: 'Typing Practice', icon: <KeyboardIcon /> },
       { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon /> },
+      { to: '/copy', label: 'Copy Test', icon: <CopyIcon /> },
     ],
   },
   { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },

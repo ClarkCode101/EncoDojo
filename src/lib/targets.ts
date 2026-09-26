@@ -17,7 +17,20 @@ export const JOB_READY_NUMPAD = {
   entryAccuracy: 95,
 } as const;
 
-export type KphLevel = { min: number; label: string; description: string };
+/**
+ * Copy Test targets. There is no widely published standard for copying
+ * records, so these are EncoDojo's own estimates:
+ * - Names, addresses, and IDs are slower to type than plain sentences, so the
+ *   speed target is lower than the Typing Test's 40 WPM.
+ * - 95% (not 98%) because a 1–2 minute test has only ~10–20 fields; at 98%
+ *   a single wrong field would already fail.
+ */
+export const JOB_READY_COPY = {
+  netWpm: 30,
+  fieldAccuracy: 95,
+} as const;
+
+export type KphLevel ={ min: number; label: string; description: string };
 
 /**
  * KPH levels shown on the results, lowest first. The first one is the

@@ -19,10 +19,10 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 
 // ---------- small building blocks ----------
 
-const digits = (rng: Rng, count: number) =>
+export const digits = (rng: Rng, count: number) =>
   String(intBetween(rng, 0, 10 ** count - 1)).padStart(count, '0');
 
-const upperLetter = (rng: Rng) => String.fromCharCode(65 + intBetween(rng, 0, 25));
+export const upperLetter = (rng: Rng) => String.fromCharCode(65 + intBetween(rng, 0, 25));
 
 const recentYear = (rng: Rng) => intBetween(rng, 2024, 2026);
 
@@ -31,7 +31,7 @@ function recentDate(rng: Rng, year = recentYear(rng)): string {
   return formatDate(year, intBetween(rng, 1, 12), intBetween(rng, 1, 28));
 }
 
-function birthDate(rng: Rng): string {
+export function birthDate(rng: Rng): string {
   return formatDate(intBetween(rng, 1965, 2005), intBetween(rng, 1, 12), intBetween(rng, 1, 28));
 }
 
