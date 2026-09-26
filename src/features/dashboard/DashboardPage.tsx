@@ -157,7 +157,7 @@ export default function DashboardPage() {
             to="/copy"
             icon={<CopyIcon className="h-7 w-7" />}
             title="Copy Test"
-            text="Kopyahin ang pangalan, petsa, address, contact no., at ID sa form — gaya ng hiring test."
+            text="Kopyahin ang pangalan, petsa, address, contact no., at ID sa spreadsheet (gaya ng Excel) o sa form."
             action="Mag-practice"
           />
           <StepCard

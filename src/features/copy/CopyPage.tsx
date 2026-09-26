@@ -3,8 +3,9 @@
  * contact no., ID) exactly as written, into either:
  * - a FORM (like a hiring test or company software) — CopyRunner, or
  * - a SPREADSHEET (like Excel: one row per record) — CopySheetRunner.
+ * Spreadsheet is the default (most encoder jobs use Excel / Google Sheets).
  * Results are saved by default (optional). The Assessment always uses the
- * form, like real alphanumeric data entry tests.
+ * form, like real alphanumeric data entry hiring tests.
  */
 import { useState } from 'react';
 import { CopyIcon } from '../../components/icons';
@@ -21,7 +22,8 @@ type Seconds = (typeof DURATIONS)[number];
 
 const durationLabel = (s: Seconds) => (s === 60 ? '1 minuto' : '2 minuto');
 
-const MODES: CopyMode[] = ['form', 'sheet'];
+/** Spreadsheet first: it's the default, since most encoder jobs use Excel / Google Sheets. */
+const MODES: CopyMode[] = ['sheet', 'form'];
 const MODE_INFO: Record<CopyMode, { label: string; description: string }> = {
   form: {
     label: 'Form (gaya ng hiring test)',
@@ -38,7 +40,8 @@ type Result = { session: Session; finishedEarly: boolean };
 export default function CopyPage() {
   const data = useAppData();
   const { showLiveStats, sound } = data.settings;
-  const mode: CopyMode = data.settings.copyMode ?? 'form';
+  // Default = spreadsheet (like most encoder jobs). The Assessment always uses the form.
+  const mode: CopyMode = data.settings.copyMode ?? 'sheet';
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
@@ -86,7 +89,7 @@ export default function CopyPage() {
       <PageHeader
         icon={<CopyIcon className="h-8 w-8" />}
         title="Copy Test"
-        description="Kopyahin ang mga record (pangalan, petsa, address, contact no., ID) sa form — gaya ng alphanumeric data entry test. Practice lang ito."
+        description="Kopyahin ang mga record (pangalan, petsa, address, contact no., ID) sa spreadsheet — gaya ng Excel sa totoong trabaho — o sa form, gaya ng hiring test. Practice lang ito."
       />
 
       <Card className="mb-6">

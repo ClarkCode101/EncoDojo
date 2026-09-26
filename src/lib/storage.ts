@@ -46,7 +46,8 @@ export type Session = {
 export type Settings = {
   numpadMode: NumpadMode;
   /**
-   * Optional (added without a schema version bump): missing means "form".
+   * Optional (added without a schema version bump): missing means "sheet"
+   * (the default layout in Copy Test practice).
    * Older data simply doesn't have it, so no migration is needed.
    */
   copyMode?: CopyMode;
