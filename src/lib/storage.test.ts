@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   MAX_SESSIONS,
+  PRACTICE_TYPES,
   STORAGE_KEY,
   addSession,
   defaultData,
@@ -96,6 +97,13 @@ describe('removeSessions', () => {
 
   it('clears training history but keeps assessments', () => {
     const left = removeSessions(data, (s) => s.type === 'typing' || s.type === 'numpad');
+    expect(left.sessions.map((s) => s.id)).toEqual(['a1']);
+  });
+
+  it('PRACTICE_TYPES covers every practice feature (incl. encoding) but not assessments', () => {
+    expect(PRACTICE_TYPES).toEqual(['typing', 'numpad', 'copy', 'encoding']);
+    const withEncoding = addSession(data, { ...sampleSession('e1'), type: 'encoding' });
+    const left = removeSessions(withEncoding, (s) => PRACTICE_TYPES.includes(s.type));
     expect(left.sessions.map((s) => s.id)).toEqual(['a1']);
   });
 

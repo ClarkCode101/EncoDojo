@@ -23,6 +23,8 @@ export type NumpadMode = 'mixed' | 'beginner';
 export type CopyMode = 'form' | 'sheet';
 export const SESSION_TYPES = ['typing', 'numpad', 'copy', 'encoding', 'assessment'] as const;
 export type SessionType = (typeof SESSION_TYPES)[number];
+/** Every practice (training) type — everything except the Assessment. New features are included automatically. */
+export const PRACTICE_TYPES: SessionType[] = SESSION_TYPES.filter((t) => t !== 'assessment');
 
 export type SessionMistake = {
   expected: string;

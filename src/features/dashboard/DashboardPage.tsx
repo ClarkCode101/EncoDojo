@@ -1,5 +1,5 @@
 /**
- * Home: where to start (4 steps), your progress, and recent sessions.
+ * Home: where to start (4 practice steps + the Assessment), your progress, and recent sessions.
  * Written for people who are new to computers: big cards, clear order, Taglish.
  */
 import type { ReactNode } from 'react';
@@ -9,6 +9,7 @@ import {
   AssessmentIcon,
   ClockIcon,
   CopyIcon,
+  DocumentIcon,
   HomeIcon,
   KeyboardIcon,
   NumpadIcon,
@@ -17,10 +18,12 @@ import {
 import { Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
-import type { Session } from '../../lib/storage';
+import { PRACTICE_TYPES, type Session } from '../../lib/storage';
 import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
 import { formatClock } from '../../lib/useCountdown';
 import { copyKphOf } from '../copy/scoreCopy';
+import { DOC_INFO } from '../encoding/documents';
+import { docTypeFromCode } from '../encoding/scoreEncoding';
 import {
   bestMetric,
   currentStreak,
@@ -52,6 +55,13 @@ function summary(session: Session): string {
   return `${display(m.kph).toLocaleString()} KPH · ${display(m.entryAccuracy)}% tama`;
 }
 
+/** "Sales Invoice · spreadsheet" — which document and layout. */
+function encodingDetail(session: Session): string {
+  const docType = docTypeFromCode(session.metrics.docType);
+  const doc = docType ? DOC_INFO[docType].label : 'Halo-halo';
+  return session.metrics.sheet === 1 ? `${doc} · spreadsheet` : doc;
+}
+
 const typeLabel: Record<Session['type'], string> = {
   typing: 'Typing Practice',
   numpad: 'Numpad Practice',
@@ -70,6 +80,7 @@ function StepCard({
   action,
   footer,
   highlight = false,
+  wide = false,
 }: {
   number: number;
   to: string;
@@ -79,7 +90,32 @@ function StepCard({
   action: string;
   footer?: ReactNode;
   highlight?: boolean;
+  /** Full width, with the text beside the icon (used for the Assessment, the last step). */
+  wide?: boolean;
 }) {
+  if (wide) {
+    return (
+      <Link
+        to={to}
+        className={
+          'group flex flex-col gap-4 rounded-2xl border-2 p-5 shadow-sm transition md:flex-row md:items-center ' +
+          'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 ' +
+          (highlight ? 'border-belt-400 bg-belt-50' : 'border-stone-200 bg-white hover:border-brand-400')
+        }
+      >
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-800">{icon}</div>
+        <div className="flex-1">
+          <div className="text-sm font-semibold text-stone-600">Hakbang {number}</div>
+          <h2 className="text-xl font-bold text-stone-900">{title}</h2>
+          <p className="mt-1 text-stone-700">{text}</p>
+          {footer && <div className="mt-2 text-sm font-medium text-stone-800">{footer}</div>}
+        </div>
+        <div className="inline-flex shrink-0 items-center gap-2 text-lg font-bold text-brand-800 group-hover:text-brand-950">
+          {action} <ArrowRightIcon className="h-5 w-5" />
+        </div>
+      </Link>
+    );
+  }
   return (
     <Link
       to={to}
@@ -113,7 +149,6 @@ function assessmentStatus(latest: Session | null): string {
 }
 
 const comingSoon = [
-  { name: 'Document Encoding', text: 'Pag-encode mula sa pekeng invoice, resibo, at form.' },
   { name: 'QC / Spot the Difference', text: 'Paghahanap ng mali sa na-encode na data.' },
   { name: 'Excel Practice', text: 'Mga basic na formula, sort, filter, at VLOOKUP.' },
   { name: 'Progress Reports', text: 'Chart ng pag-improve mo sa bawat linggo.' },
@@ -138,6 +173,7 @@ export default function DashboardPage() {
         <h2 id="start-heading" className="mb-4 text-2xl font-bold text-stone-900">
           Paano magsimula
         </h2>
+        <p className="mb-4 text-stone-700">Mag-practice sa Hakbang 1 hanggang 4, tapos subukan ang Assessment.</p>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StepCard
             number={1}
@@ -165,13 +201,24 @@ export default function DashboardPage() {
           />
           <StepCard
             number={4}
+            to="/encoding"
+            icon={<DocumentIcon className="h-7 w-7" />}
+            title="Document Encoding"
+            text="Basahin ang invoice, delivery receipt, o application form at i-encode ang mahahalagang detalye."
+            action="Mag-practice"
+          />
+        </div>
+        <div className="mt-4">
+          <StepCard
+            number={5}
             to="/assessment"
-            icon={<AssessmentIcon className="h-7 w-7" />}
+            icon={<AssessmentIcon className="h-8 w-8" />}
             title="Assessment"
-            text="Kapag handa ka na, subukan ito para malaman kung job-ready ka na."
+            text="Kapag handa ka na, subukan ang lahat ng 4 na skill sa isang exam para malaman kung job-ready ka na."
             action={latestAssessment ? 'Subukan ulit' : 'Simulan'}
             footer={assessmentStatus(latestAssessment)}
             highlight
+            wide
           />
         </div>
       </section>
@@ -202,6 +249,12 @@ export default function DashboardPage() {
           <StatBadge
             label="Huling Copy Test"
             value={show(latestMetric(sessions, 'copy', 'fieldAccuracy'), '%')}
+            hint="tamang field sa huling practice"
+            help={HELP.fieldAccuracy}
+          />
+          <StatBadge
+            label="Huling Document Encoding"
+            value={show(latestMetric(sessions, 'encoding', 'fieldAccuracy'), '%')}
             hint="tamang field sa huling practice"
             help={HELP.fieldAccuracy}
           />
@@ -249,6 +302,11 @@ export default function DashboardPage() {
                       {s.type === 'copy' && s.metrics.sheet === 1 && (
                         <span className="block text-sm font-normal text-stone-600">spreadsheet</span>
                       )}
+                      {s.type === 'encoding' && (
+                        <span className="block text-sm font-normal text-stone-600">
+                          {encodingDetail(s)}
+                        </span>
+                      )}
                       {isBeginnerNumpad(s) && (
                         <span className="block text-sm font-normal text-stone-600">pang-baguhan</span>
                       )}
@@ -284,7 +342,7 @@ export default function DashboardPage() {
                   : `Burahin lahat ng ${training.length} practice sessions?`
               }
               confirmLabel="Oo, burahin lahat"
-              onConfirm={() => clearSessions(['typing', 'numpad', 'copy'])}
+              onConfirm={() => clearSessions(PRACTICE_TYPES)}
             />
           </div>
         )}
@@ -295,7 +353,7 @@ export default function DashboardPage() {
           Parating pa sa EncoDojo
         </h2>
         <p className="mt-1 text-stone-600">Hindi pa ito magagamit, pero idadagdag sa mga susunod na update.</p>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {comingSoon.map((item) => (
             <li key={item.name} className="rounded-lg bg-white px-4 py-3">
               <div className="font-semibold text-stone-800">{item.name}</div>
