@@ -1,15 +1,19 @@
 /**
  * Copy Test — PRACTICE mode. Copy fake records (name, birth date, address,
- * ID) into a form, exactly as written. Results are saved by default
- * (optional). The Assessment uses the same CopyRunner with stricter rules.
+ * contact no., ID) exactly as written, into either:
+ * - a FORM (like a hiring test or company software) — CopyRunner, or
+ * - a SPREADSHEET (like Excel: one row per record) — CopySheetRunner.
+ * Results are saved by default (optional). The Assessment always uses the
+ * form, like real alphanumeric data entry tests.
  */
 import { useState } from 'react';
 import { CopyIcon } from '../../components/icons';
 import { Card, Checkbox, Kbd, PageHeader, SegmentedPicker, Step } from '../../components/ui';
-import type { Session } from '../../lib/storage';
+import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import CopyResults from './CopyResults';
 import CopyRunner from './CopyRunner';
+import CopySheetRunner from './CopySheetRunner';
 
 /** A record takes about 20-40 seconds, so 30 seconds would be too short. */
 const DURATIONS = [60, 120] as const;
@@ -17,11 +21,24 @@ type Seconds = (typeof DURATIONS)[number];
 
 const durationLabel = (s: Seconds) => (s === 60 ? '1 minuto' : '2 minuto');
 
+const MODES: CopyMode[] = ['form', 'sheet'];
+const MODE_INFO: Record<CopyMode, { label: string; description: string }> = {
+  form: {
+    label: 'Form (gaya ng hiring test)',
+    description: 'Isang record bawat form, gaya ng hiring test at ng software ng maraming kumpanya.',
+  },
+  sheet: {
+    label: 'Spreadsheet (gaya ng Excel)',
+    description: 'Isang row bawat record sa isang table, gaya ng pag-encode sa Excel o Google Sheets.',
+  },
+};
+
 type Result = { session: Session; finishedEarly: boolean };
 
 export default function CopyPage() {
   const data = useAppData();
   const { showLiveStats, sound } = data.settings;
+  const mode: CopyMode = data.settings.copyMode ?? 'form';
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
@@ -74,15 +91,26 @@ export default function CopyPage() {
 
       <Card className="mb-6">
         <div className="space-y-6">
-          <Step number={1} title="Pumili ng tagal">
-            <SegmentedPicker
-              label="Gaano katagal?"
-              options={DURATIONS}
-              value={seconds}
-              format={durationLabel}
-              disabled={running}
-              onChange={setSeconds}
-            />
+          <Step number={1} title="Pumili kung saan mag-e-encode at gaano katagal">
+            <div className="flex flex-wrap items-end gap-6">
+              <SegmentedPicker
+                label="Saan ka mag-e-encode?"
+                options={MODES}
+                value={mode}
+                format={(m) => MODE_INFO[m].label}
+                disabled={running}
+                onChange={(m) => updateSettings({ copyMode: m })}
+              />
+              <SegmentedPicker
+                label="Gaano katagal?"
+                options={DURATIONS}
+                value={seconds}
+                format={durationLabel}
+                disabled={running}
+                onChange={setSeconds}
+              />
+            </div>
+            <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">{MODE_INFO[mode].description}</p>
             <div className="mt-4">
               <Checkbox
                 label="Ipakita ang score habang nagta-type"
@@ -92,24 +120,48 @@ export default function CopyPage() {
               />
             </div>
           </Step>
-          <Step number={2} title="Kopyahin ang bawat record sa form">
+          <Step
+            number={2}
+            title={mode === 'form' ? 'Kopyahin ang bawat record sa form' : 'Kopyahin ang bawat record sa spreadsheet'}
+          >
             <p className="text-stone-700">
-              Eksakto dapat: parehong malaking titik, tuldok, comma, at space. <Kbd>Tab</Kbd> para sa susunod na
-              field, <Kbd>Enter</Kbd> sa huling field para ipasa ang record.
+              Eksakto dapat: parehong malaking titik, tuldok, comma, at space. <Kbd>Tab</Kbd> para sa susunod na{' '}
+              {mode === 'form' ? 'field' : 'cell'},{' '}
+              {mode === 'form' ? (
+                <>
+                  <Kbd>Enter</Kbd> sa huling field para ipasa ang record.
+                </>
+              ) : (
+                <>
+                  <Kbd>Enter</Kbd> sa dulo ng row para bumaba sa susunod na row.
+                </>
+              )}
             </p>
           </Step>
         </div>
       </Card>
 
-      <CopyRunner
-        key={`${seconds}-${attempt}`}
-        seconds={seconds}
-        showLiveStats={showLiveStats}
-        allowFinishEarly
-        sound={sound}
-        onStart={() => setRunning(true)}
-        onFinish={handleFinish}
-      />
+      {mode === 'form' ? (
+        <CopyRunner
+          key={`form-${seconds}-${attempt}`}
+          seconds={seconds}
+          showLiveStats={showLiveStats}
+          allowFinishEarly
+          sound={sound}
+          onStart={() => setRunning(true)}
+          onFinish={handleFinish}
+        />
+      ) : (
+        <CopySheetRunner
+          key={`sheet-${seconds}-${attempt}`}
+          seconds={seconds}
+          showLiveStats={showLiveStats}
+          allowFinishEarly
+          sound={sound}
+          onStart={() => setRunning(true)}
+          onFinish={handleFinish}
+        />
+      )}
     </div>
   );
 }

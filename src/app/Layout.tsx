@@ -89,7 +89,7 @@ export default function Layout() {
         </nav>
       </aside>
 
-      <main id="main" className="flex-1 px-4 py-8 md:px-10">
+      <main id="main" className="min-w-0 flex-1 px-4 py-8 md:px-10">
         <div className="mx-auto max-w-5xl">
           <Suspense fallback={<p className="text-lg text-stone-700">Naglo-load…</p>}>
             <Outlet />

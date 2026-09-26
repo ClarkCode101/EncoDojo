@@ -16,13 +16,10 @@ import { Button, Card, EnTl, Kbd, StatBadge, TimeLeft } from '../../components/u
 import { makeRng, randomSeed } from '../../lib/random';
 import { display } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
-import { makeId, type Session } from '../../lib/storage';
+import type { Session } from '../../lib/storage';
 import { useCountdown } from '../../lib/useCountdown';
 import { FIELDS, emptyRecord, makeRecord, type CopyRecord, type FieldKey } from './records';
-import { isFieldCorrect, scoreCopy, type SubmittedRecord } from './scoreCopy';
-
-/** Keep saved sessions small. */
-const MAX_SAVED_MISTAKES = 100;
+import { buildCopySession, isFieldCorrect, scoreCopy, type SubmittedRecord } from './scoreCopy';
 
 export default function CopyRunner({
   seconds,
@@ -63,16 +60,7 @@ export default function CopyRunner({
       if (finishedRef.current) return; // never finish the same run twice
       finishedRef.current = true;
 
-      const unfinished = valuesRef.current;
-      const { metrics, mistakes } = scoreCopy(submittedRef.current, unfinished, elapsedSec);
-      const session: Session = {
-        id: makeId(),
-        type: 'copy',
-        startedAt: new Date(Date.now() - elapsedSec * 1000).toISOString(),
-        durationSec: elapsedSec,
-        metrics: { ...metrics, seconds },
-        mistakes: mistakes.slice(0, MAX_SAVED_MISTAKES),
-      };
+      const session = buildCopySession(submittedRef.current, valuesRef.current, elapsedSec, seconds, 'form');
       onFinishRef.current(session, finishedEarly);
     },
     [seconds],

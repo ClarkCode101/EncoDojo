@@ -243,6 +243,9 @@ export default function DashboardPage() {
                     </td>
                     <td className="py-3 pr-4 font-medium">
                       {typeLabel[s.type]}
+                      {s.type === 'copy' && s.metrics.sheet === 1 && (
+                        <span className="block text-sm font-normal text-stone-600">spreadsheet</span>
+                      )}
                       {isBeginnerNumpad(s) && (
                         <span className="block text-sm font-normal text-stone-600">pang-baguhan</span>
                       )}

@@ -15,7 +15,7 @@
  *   and accuracy.
  */
 import { accuracyPct, grossWpm, kph, netWpm } from '../../lib/scoring';
-import type { SessionMistake } from '../../lib/storage';
+import { makeId, type CopyMode, type Session, type SessionMistake } from '../../lib/storage';
 import { alignTyping } from '../typing/alignTyping';
 import { FIELDS, type CopyRecord } from './records';
 
@@ -85,5 +85,30 @@ export function scoreCopy(submitted: SubmittedRecord[], unfinished: CopyRecord |
       typedChars,
     },
     mistakes,
+  };
+}
+
+/** Keep saved sessions small. */
+const MAX_SAVED_MISTAKES = 100;
+
+/**
+ * The finished Copy Test run as a Session (used by both the form and the
+ * spreadsheet layouts). `metrics.sheet` is 1 for the spreadsheet layout.
+ */
+export function buildCopySession(
+  submitted: SubmittedRecord[],
+  unfinished: CopyRecord | null,
+  elapsedSec: number,
+  seconds: number,
+  mode: CopyMode,
+): Session {
+  const { metrics, mistakes } = scoreCopy(submitted, unfinished, elapsedSec);
+  return {
+    id: makeId(),
+    type: 'copy',
+    startedAt: new Date(Date.now() - elapsedSec * 1000).toISOString(),
+    durationSec: elapsedSec,
+    metrics: { ...metrics, seconds, sheet: mode === 'sheet' ? 1 : 0 },
+    mistakes: mistakes.slice(0, MAX_SAVED_MISTAKES),
   };
 }

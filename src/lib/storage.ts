@@ -19,6 +19,8 @@ export const MAX_SESSIONS = 500;
 export type Difficulty = 1 | 2 | 3 | 4 | 5 | 6;
 /** Numpad Practice mode: "mixed" = same as the Assessment, "beginner" = short numbers only. */
 export type NumpadMode = 'mixed' | 'beginner';
+/** Copy Test layout: "form" = like a hiring test / company software, "sheet" = like Excel. */
+export type CopyMode = 'form' | 'sheet';
 export const SESSION_TYPES = ['typing', 'numpad', 'copy', 'assessment'] as const;
 export type SessionType = (typeof SESSION_TYPES)[number];
 
@@ -43,6 +45,11 @@ export type Session = {
 
 export type Settings = {
   numpadMode: NumpadMode;
+  /**
+   * Optional (added without a schema version bump): missing means "form".
+   * Older data simply doesn't have it, so no migration is needed.
+   */
+  copyMode?: CopyMode;
   sound: boolean;
   showLiveStats: boolean;
   /** Bigger text and buttons everywhere (for people who find the normal size hard to read). */
@@ -77,6 +84,10 @@ function isDifficulty(value: unknown): value is Difficulty {
 
 function isTypingLevel(value: unknown): boolean {
   return typeof value === 'number' && [1, 2, 3].includes(value);
+}
+
+function isCopyModeOrMissing(value: unknown): boolean {
+  return value === undefined || value === 'form' || value === 'sheet';
 }
 
 function isNumpadMode(value: unknown): value is NumpadMode {
@@ -115,7 +126,11 @@ function hasValidCommonParts(value: Record<string, unknown>): boolean {
 export function isAppData(value: unknown): value is AppData {
   if (!isObject(value) || value.version !== CURRENT_VERSION || !hasValidCommonParts(value)) return false;
   const settings = value.settings as Record<string, unknown>;
-  return isNumpadMode(settings.numpadMode) && typeof settings.largeText === 'boolean';
+  return (
+    isNumpadMode(settings.numpadMode) &&
+    typeof settings.largeText === 'boolean' &&
+    isCopyModeOrMissing(settings.copyMode)
+  );
 }
 
 /**

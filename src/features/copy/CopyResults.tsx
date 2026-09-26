@@ -99,7 +99,11 @@ export default function CopyResults({
 
   return (
     <div>
-      <PageHeader icon={<CopyIcon className="h-8 w-8" />} title="Resulta ng Copy Test" />
+      <PageHeader
+        icon={<CopyIcon className="h-8 w-8" />}
+        title="Resulta ng Copy Test"
+        description={m.sheet === 1 ? 'Spreadsheet (gaya ng Excel)' : 'Form (gaya ng hiring test)'}
+      />
 
       <section
         aria-label="Buod ng resulta"

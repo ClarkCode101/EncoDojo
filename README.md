@@ -24,7 +24,7 @@ EncoDojo has two modes:
 | Assessment | Typing (1 min) + Numpad (1 min) + Copy Test (2 min), no live stats or early finish; report card with a PASADO / HINDI PA stamp, job-ready targets, KPH levels, tips, change since last time, and history |
 | Typing Practice | 30 sec or 1 min, fresh plain office-text passages every time, Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
 | Numpad Practice | 30 sec or 1 min, **Halo-halo** (same numbers as the Assessment) or **Pang-baguhan** (short numbers), KPH, entry accuracy, job-ready check, KPH levels (8,000 / 10,000 / 12,000) |
-| Copy Test | 1 or 2 min: copy fake records (name, birth date, address, contact no., ID) into a form exactly, like an alphanumeric data entry test (Tab between fields); field accuracy, net KPH, targets, and wrong fields with the exact wrong characters highlighted |
+| Copy Test | 1 or 2 min: copy fake records (name, birth date, address, contact no., ID) into a form exactly, in a **Form** (like an alphanumeric data entry test) or a **Spreadsheet** (like Excel: one row per record, Tab between cells, Enter for the next row); field accuracy, net KPH, targets, and wrong fields with the exact wrong characters highlighted |
 | Settings | Name, larger text, live stats, sound, backup / restore (JSON), delete everything |
 
 ### How scores are calculated

@@ -130,6 +130,16 @@ describe('migrate', () => {
     expect(parseImport(text).ok).toBe(false);
   });
 
+  it('accepts an optional copy mode, rejects an invalid one', () => {
+    const sheet = defaultData();
+    sheet.settings.copyMode = 'sheet';
+    expect(migrate(sheet)).toEqual(sheet);
+
+    const bad = defaultData();
+    (bad.settings as { copyMode: string }).copyMode = 'word';
+    expect(migrate(bad)).toBeNull();
+  });
+
   it('rejects an invalid numpad mode', () => {
     const bad = defaultData();
     (bad.settings as { numpadMode: string }).numpadMode = 'turbo';
