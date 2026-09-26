@@ -6,23 +6,25 @@ A free, browser-only practice app for **Encoder / Data Entry** job skills in the
 typing speed & accuracy and numpad (10-key) speed, with more drills planned.
 
 - No login, no server, no ads, no cost.
-- Your progress is saved in your browser (localStorage). Use **Settings → Export progress** to back it up.
+- Made for everyone, including older and non-techy users: simple **Taglish** UI, big text and buttons
+  (plus a "Mas malaking text" option), numbered steps, and an "Ano ito?" explanation for every number.
+- Your progress is saved in your browser (localStorage). Use **Settings → I-download ang backup** to back it up.
 - All names, addresses, and numbers in the drills are fake.
 
-## Features (Phase 1)
+## Features
 
 EncoDojo has two modes:
 
-- **Training** — practice any skill as often as you like; saving results is optional.
+- **Practice (training)** — practice any skill as often as you like; saving results is optional.
 - **Assessment** — every skill in a row under exam rules, then a report card that says whether you're job-ready, with tips.
 
 | Screen | What it does |
 | --- | --- |
-| Dashboard | Latest assessment result, best Net WPM, latest accuracy, best KPH, total sessions, daily streak, recent sessions |
-| Assessment | Typing (1 min) + Numpad (1 min), no live stats or early finish; report card with job-ready targets, comments, change since last time, and history |
-| Typing Test | 30 sec or 1 min training, fresh plain office-text passages every time, Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
-| Numpad Drill | 30 sec or 1 min training, integers → amounts → reference numbers, KPH, entry accuracy, job-ready check |
-| Settings | Name, difficulty 1–6, live stats, sound, export/import JSON, reset all data |
+| Home | 3 steps to start (Typing → Numpad → Assessment), your best scores, daily streak, recent sessions (delete one or clear all), coming-soon features |
+| Assessment | Typing (1 min) + Numpad (1 min), no live stats or early finish; report card with a PASADO / HINDI PA stamp, job-ready targets, KPH levels, tips, change since last time, and history |
+| Typing Practice | 30 sec or 1 min, fresh plain office-text passages every time, Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
+| Numpad Practice | 30 sec or 1 min, **Halo-halo** (same numbers as the Assessment) or **Pang-baguhan** (short numbers), KPH, entry accuracy, job-ready check, KPH levels (8,000 / 10,000 / 12,000) |
+| Settings | Name, larger text, live stats, sound, backup / restore (JSON), delete everything |
 
 ### How scores are calculated
 
