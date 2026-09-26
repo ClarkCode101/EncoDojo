@@ -24,7 +24,6 @@ export default function EntryFormRunner({
   allowFinishEarly,
   sound,
   nextItem,
-  unit,
   onStart,
   onFinish,
   wideSource = false,
@@ -143,7 +142,7 @@ export default function EntryFormRunner({
             }}
           >
             {/* Only the fields scroll (on small screens); Submit always stays right under them. */}
-            <div className="min-h-0 space-y-2 overflow-y-auto px-1 pb-1">
+            <div className="min-h-0 space-y-2 overflow-y-auto px-1.5 pb-1 [scrollbar-gutter:stable]">
               {item.fields.map((f, i) => (
                 <div key={f.key}>
                   <label htmlFor={`entry-${f.key}`} className="mb-0.5 block text-base font-semibold text-stone-800">
@@ -171,18 +170,24 @@ export default function EntryFormRunner({
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-1">
-              <Button type="submit">
+            {/*
+              Same width as the inputs (lined up with them), result message on its own line below.
+              The same scrollbar gutter as the fields above keeps both edges lined up.
+            */}
+            <div className="mt-2 shrink-0 overflow-hidden px-1.5 py-1 [scrollbar-gutter:stable]">
+              <Button type="submit" className="w-full">
                 <EnTl en="Submit" tl="Ipasa" />
               </Button>
-              <span role="status" className="font-bold">
-                {lastWrongFields === 0 && <span className="text-green-800">✓ Lahat tama!</span>}
+              {/* min-h: the space is kept, so nothing jumps when a message appears. */}
+              <p role="status" className="mt-1 min-h-6 text-center font-bold">
+                {/* "#1" = the number of the item just submitted (same as its title, e.g. "Sales Invoice #1"). */}
+                {lastWrongFields === 0 && <span className="text-green-800">✓ #{submitted.length}: lahat tama!</span>}
                 {lastWrongFields !== null && lastWrongFields > 0 && (
                   <span className="text-red-700">
-                    ✗ {lastWrongFields} field ang mali sa huling {unit}
+                    ✗ #{submitted.length}: {lastWrongFields} field ang mali
                   </span>
                 )}
-              </span>
+              </p>
             </div>
           </form>
         </div>
