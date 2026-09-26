@@ -15,7 +15,7 @@ import {
   NumpadIcon,
   StarIcon,
 } from '../../components/icons';
-import { Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
+import { Card, ConfirmButton, HelpTip, PageHeader } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
@@ -144,6 +144,17 @@ function StepCard({
   );
 }
 
+/** A small number tile for Home (label, number, one short line). */
+function MiniStat({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
+      <div className="truncate text-sm font-medium text-stone-600">{label}</div>
+      <div className="mt-0.5 text-2xl font-bold tabular-nums text-stone-900">{value}</div>
+      <div className="truncate text-sm text-stone-600">{sub}</div>
+    </div>
+  );
+}
+
 function assessmentStatus(latest: Session | null): string {
   if (!latest) return 'Hindi mo pa ito nasusubukan. Mga 8–10 minuto lang.';
   const m = latest.metrics;
@@ -153,11 +164,7 @@ function assessmentStatus(latest: Session | null): string {
     : `Huling resulta (${when}): ${m.targetsMet} sa ${m.targetsTotal} target ang pasado.`;
 }
 
-const comingSoon = [
-  { name: 'QC / Spot the Difference', text: 'Paghahanap ng mali sa na-encode na data.' },
-  { name: 'Excel Practice', text: 'Mga basic na formula, sort, filter, at VLOOKUP.' },
-  { name: 'Progress Reports', text: 'Chart ng pag-improve mo sa bawat linggo.' },
-];
+const comingSoon = ['QC / Spot the Difference', 'Excel Practice', 'Progress Reports'];
 
 export default function DashboardPage() {
   const { profile, sessions } = useAppData();
@@ -171,25 +178,24 @@ export default function DashboardPage() {
   const latestAssessment = recentSessions(sessions.filter((s) => s.type === 'assessment'), 1)[0] ?? null;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <PageHeader
         icon={<HomeIcon className="h-8 w-8" />}
         title={profile.displayName ? `Magandang araw, ${profile.displayName}!` : 'Maligayang pagdating sa EncoDojo!'}
-        description="Dito ka magpa-practice para sa trabahong Encoder o Data Entry. Sundan lang ang mga hakbang sa ibaba."
+        description="Mag-practice sa Hakbang 1–4, tapos subukan ang Assessment."
       />
 
       <section aria-labelledby="start-heading">
         <h2 id="start-heading" className="mb-4 text-2xl font-bold text-stone-900">
           Paano magsimula
         </h2>
-        <p className="mb-4 text-stone-700">Mag-practice sa Hakbang 1 hanggang 4, tapos subukan ang Assessment.</p>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StepCard
             number={1}
             to="/typing"
             icon={<KeyboardIcon className="h-7 w-7" />}
             title="Typing Practice"
-            text="Sanayin ang bilis at tamang pagta-type ng mga pangungusap."
+            text="Bilis at tamang pagta-type."
             action="Mag-practice"
           />
           <StepCard
@@ -197,7 +203,7 @@ export default function DashboardPage() {
             to="/numpad"
             icon={<NumpadIcon className="h-7 w-7" />}
             title="Numpad Practice"
-            text="Sanayin ang pag-type ng mga numero gamit ang numpad sa kanan ng keyboard."
+            text="Mga numero gamit ang numpad."
             action="Mag-practice"
           />
           <StepCard
@@ -205,7 +211,7 @@ export default function DashboardPage() {
             to="/copy"
             icon={<CopyIcon className="h-7 w-7" />}
             title="Copy Test"
-            text="Kopyahin ang pangalan, petsa, address, contact no., at ID sa spreadsheet (gaya ng Excel) o sa form."
+            text="Kopyahin ang mga record nang eksakto."
             action="Mag-practice"
           />
           <StepCard
@@ -213,7 +219,7 @@ export default function DashboardPage() {
             to="/encoding"
             icon={<DocumentIcon className="h-7 w-7" />}
             title="Document Encoding"
-            text="Basahin ang invoice, delivery receipt, o application form at i-encode ang mahahalagang detalye."
+            text="I-encode mula sa invoice at form."
             action="Mag-practice"
           />
         </div>
@@ -223,7 +229,7 @@ export default function DashboardPage() {
             to="/assessment"
             icon={<AssessmentIcon className="h-8 w-8" />}
             title="Assessment"
-            text="Kapag handa ka na, subukan ang lahat ng 4 na skill sa isang exam para malaman kung job-ready ka na."
+            text="Lahat ng 4 na skill sa isang exam: job-ready ka na ba?"
             action={latestAssessment ? 'Subukan ulit' : 'Simulan'}
             footer={assessmentStatus(latestAssessment)}
             highlight
@@ -233,46 +239,46 @@ export default function DashboardPage() {
       </section>
 
       <section aria-labelledby="progress-heading">
-        <h2 id="progress-heading" className="mb-4 flex items-center gap-2 text-2xl font-bold text-stone-900">
-          <StarIcon className="h-7 w-7 text-belt-500" /> Ang progress mo sa practice
-        </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <StatBadge
-            label="Pinakamabilis na typing"
-            value={show(bestMetric(sessions, 'typing', 'netWpm'))}
-            hint="Net WPM"
-            help={HELP.netWpm}
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4">
+          <h2 id="progress-heading" className="flex items-center gap-2 text-2xl font-bold text-stone-900">
+            <StarIcon className="h-7 w-7 text-belt-500" /> Ang progress mo
+          </h2>
+          {/* One explanation for all the numbers, instead of one per box (less text on Home). */}
+          <HelpTip label="Ano ang mga numerong ito?">
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <strong>Typing:</strong> pinakamabilis mong Net WPM, at ang accuracy sa huling practice.
+              </li>
+              <li>
+                <strong>Numpad:</strong> pinakamabilis mong KPH (Halo-halo lang ang binibilang).
+              </li>
+              <li>
+                <strong>Copy Test / Document Encoding:</strong> ilang % ng field ang eksaktong tama sa huling practice.
+              </li>
+              <li>
+                <strong>Sunod-sunod:</strong> {HELP.streak}
+              </li>
+            </ul>
+          </HelpTip>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+          <MiniStat
+            label="Typing"
+            value={`${show(bestMetric(sessions, 'typing', 'netWpm'))} WPM`}
+            sub={`${show(latestMetric(sessions, 'typing', 'accuracy'), '%')} tama`}
           />
-          <StatBadge
-            label="Huling typing accuracy"
-            value={show(latestMetric(sessions, 'typing', 'accuracy'), '%')}
-            hint="tama sa huling practice"
-            help={HELP.accuracy}
-          />
-          <StatBadge
-            label="Pinakamabilis na numpad"
-            value={show(bestMetric(forNumpadBest(sessions), 'numpad', 'kph'))}
-            hint="KPH (Halo-halo)"
-            help={HELP.kph}
-          />
-          <StatBadge
-            label="Huling Copy Test"
+          <MiniStat label="Numpad" value={`${show(bestMetric(forNumpadBest(sessions), 'numpad', 'kph'))} KPH`} sub="pinakamabilis" />
+          <MiniStat
+            label="Copy Test"
             value={show(latestMetric(withFinishedItems, 'copy', 'fieldAccuracy'), '%')}
-            hint="tamang field sa huling practice"
-            help={HELP.fieldAccuracy}
+            sub="tamang field"
           />
-          <StatBadge
-            label="Huling Document Encoding"
+          <MiniStat
+            label="Document Encoding"
             value={show(latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy'), '%')}
-            hint="tamang field sa huling practice"
-            help={HELP.fieldAccuracy}
+            sub="tamang field"
           />
-          <StatBadge
-            label="Sunod-sunod na araw"
-            value={`${streak} araw`}
-            hint={`${training.length} practice session lahat`}
-            help={HELP.streak}
-          />
+          <MiniStat label="Sunod-sunod" value={`${streak} araw`} sub={`${training.length} practice lahat`} />
         </div>
       </section>
 
@@ -345,17 +351,12 @@ export default function DashboardPage() {
         )}
 
         {training.length > 0 && (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-5">
-            <p className="max-w-md text-sm text-stone-600">
-              Kapag nagbura ka, magbabago rin ang pinakamabilis mong score at streak. Ang assessments ay
-              binubura sa Assessment page.
-            </p>
+          <div className="mt-4 flex justify-end">
             <ConfirmButton
               label="Burahin lahat ng practice"
               question={
-                training.length === 1
-                  ? 'Burahin ang 1 practice session?'
-                  : `Burahin lahat ng ${training.length} practice sessions?`
+                // The warning shows only when it matters: right before deleting. (Assessments stay.)
+                `Burahin lahat ng ${training.length} practice? Magbabago rin ang best scores at streak.`
               }
               confirmLabel="Oo, burahin lahat"
               onConfirm={() => clearSessions(PRACTICE_TYPES)}
@@ -364,20 +365,9 @@ export default function DashboardPage() {
         )}
       </Card>
 
-      <section aria-labelledby="soon-heading" className="rounded-2xl border-2 border-dashed border-stone-300 p-6">
-        <h2 id="soon-heading" className="text-xl font-bold text-stone-800">
-          Parating pa sa EncoDojo
-        </h2>
-        <p className="mt-1 text-stone-600">Hindi pa ito magagamit, pero idadagdag sa mga susunod na update.</p>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {comingSoon.map((item) => (
-            <li key={item.name} className="rounded-lg bg-white px-4 py-3">
-              <div className="font-semibold text-stone-800">{item.name}</div>
-              <div className="text-sm text-stone-600">{item.text}</div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <p className="rounded-xl border-2 border-dashed border-stone-300 px-5 py-3 text-stone-700">
+        <strong className="text-stone-800">Parating pa sa EncoDojo:</strong> {comingSoon.join(' · ')}
+      </p>
     </div>
   );
 }
