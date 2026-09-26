@@ -255,6 +255,15 @@ export function Step({
   );
 }
 
+/** A keyboard key, e.g. <Kbd>Tab</Kbd>, so people can see which key to press. */
+export function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="mx-0.5 inline-block rounded-md border border-b-[3px] border-stone-400 bg-white px-1.5 py-0.5 font-mono text-[0.85em] font-semibold text-stone-800">
+      {children}
+    </kbd>
+  );
+}
+
 /** A big, easy-to-click checkbox with a label (and optional description). */
 export function Checkbox({
   label,

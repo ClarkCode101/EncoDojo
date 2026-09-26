@@ -18,15 +18,15 @@ export const JOB_READY_NUMPAD = {
 } as const;
 
 /**
- * Copy Test targets. There is no widely published standard for copying
- * records, so these are EncoDojo's own estimates:
- * - Names, addresses, and IDs are slower to type than plain sentences, so the
- *   speed target is lower than the Typing Test's 40 WPM.
- * - 95% (not 98%) because a 1–2 minute test has only ~10–20 fields; at 98%
- *   a single wrong field would already fail.
+ * Copy Test targets (like an "alphanumeric data entry" hiring test).
+ * - Speed: about 8,000 net KPH with 95%+ accuracy is the commonly quoted
+ *   minimum for alphanumeric data entry tests (checked 2026-09).
+ * - Accuracy is counted per FIELD (stricter than per character). 95%, not
+ *   98%, because a 1–2 minute test has only ~10–25 fields; at 98% a single
+ *   wrong field would already fail.
  */
 export const JOB_READY_COPY = {
-  netWpm: 30,
+  kph: 8000,
   fieldAccuracy: 95,
 } as const;
 

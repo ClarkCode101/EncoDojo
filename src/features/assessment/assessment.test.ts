@@ -31,7 +31,7 @@ function copySession(metrics: Partial<Record<string, number>>, mistakes: Session
     type: 'copy',
     startedAt: '2026-09-26T08:04:00.000Z',
     durationSec: 120,
-    metrics: { netWpm: 35, grossWpm: 36, fieldAccuracy: 100, records: 4, correctFields: 16, totalFields: 16, ...metrics } as Record<string, number>,
+    metrics: { kph: 9000, netWpm: 35, grossWpm: 36, fieldAccuracy: 100, records: 4, correctFields: 20, totalFields: 20, ...metrics } as Record<string, number>,
     mistakes,
   };
 }
@@ -50,6 +50,7 @@ describe('buildAssessmentSession', () => {
       typingNetWpm: 45,
       numpadKph: 9000,
       copyFieldAccuracy: 100,
+      copyKph: 9000,
       copyNetWpm: 35,
       targetsMet: 6,
       targetsTotal: 6,
@@ -58,7 +59,7 @@ describe('buildAssessmentSession', () => {
   });
 
   it('a copy part with no records counts as 0% (not "100% of nothing")', () => {
-    const a = build(typingSession({}), numpadSession({}), copySession({ records: 0, totalFields: 0, correctFields: 0, netWpm: 0 }));
+    const a = build(typingSession({}), numpadSession({}), copySession({ records: 0, totalFields: 0, correctFields: 0, netWpm: 0, kph: 0 }));
     expect(a.metrics.copyFieldAccuracy).toBe(0);
     expect(a.metrics.jobReady).toBe(0);
   });

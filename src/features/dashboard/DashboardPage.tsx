@@ -20,6 +20,7 @@ import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
 import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
 import { formatClock } from '../../lib/useCountdown';
+import { copyKphOf } from '../copy/scoreCopy';
 import {
   bestMetric,
   currentStreak,
@@ -43,7 +44,7 @@ function summary(session: Session): string {
     return `${verdict} · ${display(m.typingNetWpm)} WPM · ${display(m.numpadKph).toLocaleString()} KPH`;
   }
   if (session.type === 'copy') {
-    return `${display(m.fieldAccuracy)}% tamang field · ${display(m.netWpm)} WPM · ${m.records} record`;
+    return `${display(m.fieldAccuracy)}% tamang field · ${display(copyKphOf(m)).toLocaleString()} KPH · ${m.records} record`;
   }
   return `${display(m.kph).toLocaleString()} KPH · ${display(m.entryAccuracy)}% tama`;
 }
@@ -156,7 +157,7 @@ export default function DashboardPage() {
             to="/copy"
             icon={<CopyIcon className="h-7 w-7" />}
             title="Copy Test"
-            text="Kopyahin ang pangalan, petsa, address, at ID sa form — gaya ng totoong encoding."
+            text="Kopyahin ang pangalan, petsa, address, contact no., at ID sa form — gaya ng hiring test."
             action="Mag-practice"
           />
           <StepCard

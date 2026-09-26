@@ -28,9 +28,12 @@ export const HELP = {
     `Field accuracy = ilang porsyento ng mga field (pangalan, petsa, address, ID) ang EKSAKTONG tama. ` +
     `Kahit isang letra, tuldok, o space lang ang mali, mali na ang buong field — ganyan sa totoong encoding. ` +
     `${JOB_READY_COPY.fieldAccuracy}% pataas ang target.`,
+  copyKph:
+    `Bilis ng pagkopya (net KPH) = ilang tamang pindot kada oras, bawas na ang mga mali. ` +
+    `${JOB_READY_COPY.kph.toLocaleString('en-US')} pataas ang target — ito ang karaniwang minimum sa "alphanumeric data entry test" ng mga employer.`,
   copyWpm:
-    `Bilis ng pagkopya (Net WPM), bawas na ang mga mali. Mas mabagal talagang i-type ang pangalan, address, at ID ` +
-    `kaysa sa ordinaryong pangungusap, kaya ${JOB_READY_COPY.netWpm} WPM ang target dito.`,
+    'Ang Net WPM dito ay para lang maikumpara sa Typing Practice. Ang KPH ang target sa Copy Test. ' +
+    'Mas mabagal talagang i-type ang pangalan, address, at ID kaysa sa ordinaryong pangungusap.',
   streak:'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
   numpad:
     'Ang numpad ay ang mga number key sa KANAN ng keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +

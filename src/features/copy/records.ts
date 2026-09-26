@@ -2,16 +2,20 @@
  * The fake records shown in the Copy Test. All values are random combinations
  * of common names and places (see data/ph), never real people.
  *
- * The ID number follows a MADE-UP pattern ("ED-2026-04517-K") that is not
- * shaped like any real government ID (SSS, TIN, PhilHealth, etc.).
+ * Made-up patterns, on purpose:
+ * - ID number "ED-2026-04517-K": not shaped like any real government ID
+ *   (SSS, TIN, PhilHealth, etc.).
+ * - Contact number "(049) 000-1234": the local number starts with 0, which no
+ *   real Philippine landline does, so it can never be someone's real number.
  */
-import { intBetween, type Rng } from '../../lib/random';
+import { intBetween, pick, type Rng } from '../../lib/random';
 import { address, birthDate, digits, fullName, upperLetter } from '../typing/generatePassage';
 
 export type CopyRecord = {
   name: string;
   birthDate: string;
   address: string;
+  contactNo: string;
   idNo: string;
 };
 
@@ -22,6 +26,7 @@ export const FIELDS: { key: FieldKey; label: string; hint?: string }[] = [
   { key: 'name', label: 'Pangalan' },
   { key: 'birthDate', label: 'Petsa ng kapanganakan', hint: 'mm/dd/yyyy' },
   { key: 'address', label: 'Address' },
+  { key: 'contactNo', label: 'Contact No.' },
   { key: 'idNo', label: 'ID No.' },
 ];
 
@@ -34,10 +39,24 @@ export function idNumber(rng: Rng): string {
   return `ED-${intBetween(rng, 2019, 2026)}-${digits(rng, 5)}-${upperLetter(rng)}`;
 }
 
+/** Common 3-digit provincial area codes (only the format matters here). */
+const AREA_CODES = ['032', '033', '034', '036', '038', '042', '043', '044', '045', '046', '047', '049', '052', '054', '074', '082', '088'];
+
+/** Fake landline that can't be real: the local part starts with "000". e.g. (049) 000-1234 */
+export function contactNumber(rng: Rng): string {
+  return `(${pick(rng, AREA_CODES)}) 000-${digits(rng, 4)}`;
+}
+
 export function makeRecord(rng: Rng): CopyRecord {
-  return { name: fullName(rng), birthDate: birthDate(rng), address: address(rng), idNo: idNumber(rng) };
+  return {
+    name: fullName(rng),
+    birthDate: birthDate(rng),
+    address: address(rng),
+    contactNo: contactNumber(rng),
+    idNo: idNumber(rng),
+  };
 }
 
 export function emptyRecord(): CopyRecord {
-  return { name: '', birthDate: '', address: '', idNo: '' };
+  return { name: '', birthDate: '', address: '', contactNo: '', idNo: '' };
 }

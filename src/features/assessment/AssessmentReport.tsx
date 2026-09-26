@@ -12,7 +12,7 @@ import { CopyMistakesCard } from '../copy/CopyResults';
 import { NumpadMistakesCard } from '../numpad/NumpadResults';
 import { TypingMistakesCard } from '../typing/TypingResults';
 import { assessmentComments } from './comments';
-import { assessmentChecks, hasCopyPart, type Check } from './evaluate';
+import { assessmentChecks, assessmentCopyKph, hasCopyPart, type Check } from './evaluate';
 
 /** "↑3 mula sa huli" / "↓2 mula sa huli" / "pareho sa huli" (rounded values). */
 function change(now: number, before: number | undefined, unit = ''): string | undefined {
@@ -165,7 +165,7 @@ export default function AssessmentReport({
       {/* Older assessments were only typing + numpad, so this part may be missing. */}
       {hasCopyPart(m) && (
         <Card title="Bahagi 3: Copy Test" icon={<CopyIcon />} className="mb-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatBadge
               label="Tamang field"
               value={`${display(m.copyFieldAccuracy)}%`}
@@ -173,11 +173,12 @@ export default function AssessmentReport({
               help={HELP.fieldAccuracy}
             />
             <StatBadge
-              label="Bilis (Net WPM)"
-              value={display(m.copyNetWpm)}
-              hint={change(m.copyNetWpm, p?.copyNetWpm)}
-              help={HELP.copyWpm}
+              label="Bilis (KPH)"
+              value={display(assessmentCopyKph(m)).toLocaleString()}
+              hint={p && hasCopyPart(p) ? change(assessmentCopyKph(m), assessmentCopyKph(p)) : undefined}
+              help={HELP.copyKph}
             />
+            <StatBadge label="Net WPM" value={display(m.copyNetWpm)} help={HELP.copyWpm} />
             <StatBadge
               label="Natapos na record"
               value={m.copyRecords}

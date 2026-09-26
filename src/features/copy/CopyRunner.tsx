@@ -2,15 +2,17 @@
  * One Copy Test run: a record card (the "source document") and a form to copy
  * it into. Used by both Copy Test practice and the Assessment.
  *
- * Keyboard: Enter moves to the next field; Enter on the last field submits the
- * record and shows a new one. Tab / Shift+Tab also move between fields.
+ * Keyboard: Tab / Shift+Tab move between fields (the standard in real forms
+ * and data entry software, so that is what we teach). For beginners, Enter in
+ * a field also moves to the next one; Enter on the last field submits the
+ * record and shows a new one.
  *
  * It does NOT save anything. When time is up (or "Tapusin na" is pressed) it
  * builds a Session and hands it to `onFinish`. To start over, the parent gives
  * it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, StatBadge, TimeLeft } from '../../components/ui';
+import { Button, Card, Kbd, StatBadge, TimeLeft } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
@@ -119,7 +121,7 @@ export default function CopyRunner({
         <StatBadge label="Natapos na record" value={submitted.length} />
         {showLiveStats && (
           <>
-            <StatBadge label="Bilis (Net WPM)" value={timer.started ? display(live.netWpm) : '–'} />
+            <StatBadge label="Bilis (KPH)" value={timer.started ? display(live.kph).toLocaleString() : '–'} />
             <StatBadge label="Tamang field" value={`${display(live.fieldAccuracy)}%`} />
           </>
         )}
@@ -156,8 +158,9 @@ export default function CopyRunner({
             <h3 className="mb-1 text-lg font-bold text-stone-900">Dito ka mag-type 👇</h3>
             {!timer.started && (
               <p className="mb-3 rounded-lg bg-brand-50 px-4 py-2 text-brand-950">
-                Kopyahin ang bawat field. Pindutin ang <strong>Enter</strong> para lumipat sa susunod na field. Sa
-                huling field, ang Enter ay magpapasa ng record. Magsisimula ang oras sa unang letra.
+                Kopyahin ang bawat field. Pindutin ang <Kbd>Tab</Kbd> para lumipat sa susunod na field — ganito sa
+                totoong form at software. Sa huling field, pindutin ang <Kbd>Enter</Kbd> para ipasa ang record.
+                Magsisimula ang oras sa unang letra.
               </p>
             )}
             <div className="space-y-3">

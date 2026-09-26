@@ -6,16 +6,28 @@
  *   ignored because they can't be seen. This is how encoding QC works: one
  *   wrong character makes the whole field wrong.
  * - Field accuracy = correct fields / submitted fields.
- * - Speed uses the same WPM formulas as the Typing Test. Characters typed in the
- *   record that was still unfinished when time ran out count toward speed, but
- *   only SUBMITTED records count toward mistakes and accuracy.
+ * - Speed is shown two ways:
+ *   - Net KPH (like alphanumeric hiring tests): characters typed minus
+ *     character mistakes, per hour. This is the speed target.
+ *   - Net WPM, the same formula as the Typing Test (extra info).
+ *   Characters typed in the record that was still unfinished when time ran
+ *   out count toward speed, but only SUBMITTED records count toward mistakes
+ *   and accuracy.
  */
-import { accuracyPct, grossWpm, netWpm } from '../../lib/scoring';
+import { accuracyPct, grossWpm, kph, netWpm } from '../../lib/scoring';
 import type { SessionMistake } from '../../lib/storage';
 import { alignTyping } from '../typing/alignTyping';
 import { FIELDS, type CopyRecord } from './records';
 
 export type SubmittedRecord = { expected: CopyRecord; typed: CopyRecord };
+
+/**
+ * Net KPH of a saved copy result. The first Copy Test sessions (before KPH was
+ * added) only have Net WPM; 1 WPM is about 300 KPH (5 characters x 60 minutes).
+ */
+export function copyKphOf(metrics: Record<string, number>): number {
+  return typeof metrics.kph === 'number' ? metrics.kph : (metrics.netWpm ?? 0) * 300;
+}
 
 /** Leading/trailing spaces are invisible, so they don't count as mistakes. */
 export function cleanField(value: string): string {
@@ -62,6 +74,7 @@ export function scoreCopy(submitted: SubmittedRecord[], unfinished: CopyRecord |
 
   return {
     metrics: {
+      kph: kph(Math.max(0, typedChars - errors), elapsedSec),
       grossWpm: grossWpm(typedChars, elapsedSec),
       netWpm: netWpm(typedChars, errors, elapsedSec),
       fieldAccuracy: accuracyPct(correctFields, totalFields),

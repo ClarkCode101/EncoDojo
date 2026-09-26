@@ -7,7 +7,7 @@ import { display, normalizeEntry } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
 import { mistakeKind } from '../typing/alignTyping';
-import { assessmentChecks, hasCopyPart } from './evaluate';
+import { assessmentChecks, assessmentCopyKph, hasCopyPart } from './evaluate';
 
 /** A tip only counts as a "pattern" when it happens at least this often... */
 const MIN_PATTERN_COUNT = 3;
@@ -146,6 +146,7 @@ const FIELD_TIPS: Record<string, string> = {
   name: 'Madalas mali ang Pangalan. Ingat sa "Ma.", "Jr.", "III", at sa "Dela Cruz" laban sa "De la Cruz".',
   birthDate: 'Madalas mali ang Petsa. Tingnan ang ayos na mm/dd/yyyy at ang bawat "/".',
   address: 'Madalas mali ang Address. Ingat sa "Brgy.", "Blk", "Lot", mga comma, at pangalan ng lugar.',
+  contactNo: 'Madalas mali ang Contact No. Tingnan ang panaklong ( ), space, gitling (-), at bawat digit.',
   idNo: 'Madalas mali ang ID No. Tingnan ang bawat digit, gitling (-), at letra sa dulo.',
 };
 
@@ -154,26 +155,27 @@ function copyComments(m: Record<string, number>, mistakes: SessionMistake[]): st
   if (m.copyRecords === 0) {
     return ['Copy Test: walang naipasang record. Tandaan: pindutin ang Enter sa huling field (ID No.) para maipasa.'];
   }
-  const net = display(m.copyNetWpm);
+  const speed = display(assessmentCopyKph(m));
+  const speedText = `${speed.toLocaleString('en-US')} KPH`;
   const acc = display(m.copyFieldAccuracy);
-  const speedOk = net >= t.netWpm;
+  const speedOk = speed >= t.kph;
   const accOk = acc >= t.fieldAccuracy;
   const out: string[] = [];
 
   if (speedOk && accOk) {
-    out.push(`Copy Test: pasado ka sa tamang field at bilis (${acc}% tama, ${net} WPM). Ang galing!`);
+    out.push(`Copy Test: pasado ka sa tamang field at bilis (${acc}% tama, ${speedText}). Ang galing!`);
   } else if (speedOk) {
     out.push(
-      `Copy Test: sapat ang bilis mo (${net} WPM), pero ${acc}% lang ng field ang eksaktong tama (target: ${t.fieldAccuracy}%). ` +
+      `Copy Test: sapat ang bilis mo (${speedText}), pero ${acc}% lang ng field ang eksaktong tama (target: ${t.fieldAccuracy}%). ` +
         'Tingnang mabuti ang malalaking titik, tuldok, at space bago ipasa ang record.',
     );
   } else if (accOk) {
     out.push(
-      `Copy Test: tama ang pagkopya mo (${acc}%). Bilisan pa nang kaunti — ${t.netWpm - net} WPM pa para sa target.`,
+      `Copy Test: tama ang pagkopya mo (${acc}%). Bilisan pa nang kaunti — ${(t.kph - speed).toLocaleString('en-US')} KPH pa para sa target.`,
     );
   } else {
     out.push(
-      `Copy Test: unahin muna ang eksaktong pagkopya (${acc}% tama, target: ${t.fieldAccuracy}%), saka ang bilis (${net} WPM).`,
+      `Copy Test: unahin muna ang eksaktong pagkopya (${acc}% tama, target: ${t.fieldAccuracy}%), saka ang bilis (${speedText}).`,
     );
   }
 

@@ -8,6 +8,7 @@
 import { display } from '../../lib/scoring';
 import { makeId, type Session } from '../../lib/storage';
 import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { copyKphOf } from '../copy/scoreCopy';
 import { MIXED_DIFFICULTY } from '../numpad/entries';
 
 /** Fixed rules, so every attempt is comparable. */
@@ -47,6 +48,7 @@ export function buildAssessmentSession(typing: Session, numpad: Session, copy: S
     numpadCorrectEntries: numpad.metrics.correctEntries,
     // No records submitted = nothing was copied correctly (not "100% of nothing").
     copyFieldAccuracy: copy.metrics.records > 0 ? copy.metrics.fieldAccuracy : 0,
+    copyKph: copyKphOf(copy.metrics),
     copyNetWpm: copy.metrics.netWpm,
     copyRecords: copy.metrics.records,
     copyCorrectFields: copy.metrics.correctFields,
@@ -69,6 +71,11 @@ export function buildAssessmentSession(typing: Session, numpad: Session, copy: S
       ...copy.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'copy' as const })),
     ],
   };
+}
+
+/** Copy Test speed (net KPH) of an assessment; early ones only saved WPM (1 WPM ~ 300 KPH). */
+export function assessmentCopyKph(m: Record<string, number>): number {
+  return typeof m.copyKph === 'number' ? m.copyKph : (m.copyNetWpm ?? 0) * 300;
 }
 
 /** True when the assessment includes the Copy Test part (older ones had only typing + numpad). */
@@ -95,7 +102,7 @@ export function assessmentChecks(m: Record<string, number>): Check[] {
   if (hasCopyPart(m)) {
     checks.push(
       check('copy', 'Tamang field', m.copyFieldAccuracy, JOB_READY_COPY.fieldAccuracy, '%'),
-      check('copy', 'Bilis (Net WPM)', m.copyNetWpm, JOB_READY_COPY.netWpm),
+      check('copy', 'Bilis (KPH)', assessmentCopyKph(m), JOB_READY_COPY.kph),
     );
   }
   return checks;

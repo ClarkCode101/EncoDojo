@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { CopyIcon } from '../../components/icons';
-import { Card, Checkbox, PageHeader, SegmentedPicker, Step } from '../../components/ui';
+import { Card, Checkbox, Kbd, PageHeader, SegmentedPicker, Step } from '../../components/ui';
 import type { Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import CopyResults from './CopyResults';
@@ -69,7 +69,7 @@ export default function CopyPage() {
       <PageHeader
         icon={<CopyIcon className="h-8 w-8" />}
         title="Copy Test"
-        description="Kopyahin ang mga record (pangalan, petsa, address, ID) sa form — gaya ng totoong encoding. Practice lang ito."
+        description="Kopyahin ang mga record (pangalan, petsa, address, contact no., ID) sa form — gaya ng alphanumeric data entry test. Practice lang ito."
       />
 
       <Card className="mb-6">
@@ -94,7 +94,8 @@ export default function CopyPage() {
           </Step>
           <Step number={2} title="Kopyahin ang bawat record sa form">
             <p className="text-stone-700">
-              Eksakto dapat: parehong malaking titik, tuldok, comma, at space. Enter para sa susunod na field.
+              Eksakto dapat: parehong malaking titik, tuldok, comma, at space. <Kbd>Tab</Kbd> para sa susunod na
+              field, <Kbd>Enter</Kbd> sa huling field para ipasa ang record.
             </p>
           </Step>
         </div>

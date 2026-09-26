@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { AssessmentIcon, ClockIcon, CopyIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
-import { Button, Card, ConfirmButton, HelpTip, PageHeader } from '../../components/ui';
+import { Button, Card, ConfirmButton, HelpTip, Kbd, PageHeader } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { makeRng, randomSeed } from '../../lib/random';
@@ -19,7 +19,7 @@ import NumpadRunner from '../numpad/NumpadRunner';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
 import AssessmentReport from './AssessmentReport';
-import { ASSESSMENT, buildAssessmentSession, hasCopyPart, previousAssessment } from './evaluate';
+import { ASSESSMENT, assessmentCopyKph, buildAssessmentSession, hasCopyPart, previousAssessment } from './evaluate';
 
 type Step =
   | { name: 'intro' }
@@ -70,7 +70,7 @@ function Rules() {
           <CopyIcon className="h-8 w-8 shrink-0 text-brand-700" />
           <div>
             <div className="text-lg font-bold">Bahagi 3: Copy Test (2 minuto)</div>
-            <div className="text-stone-700">Kopyahin ang pangalan, petsa, address, at ID sa form.</div>
+            <div className="text-stone-700">Kopyahin ang pangalan, petsa, address, contact no., at ID sa form.</div>
           </div>
         </div>
       </div>
@@ -127,7 +127,7 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
                 </td>
                 <td className="py-3 pr-4">
                   {hasCopyPart(s.metrics)
-                    ? `${display(s.metrics.copyFieldAccuracy)}% · ${display(s.metrics.copyNetWpm)} WPM`
+                    ? `${display(s.metrics.copyFieldAccuracy)}% · ${display(assessmentCopyKph(s.metrics)).toLocaleString()} KPH`
                     : '—'}
                 </td>
                 <td className="py-3">
@@ -298,11 +298,11 @@ export default function AssessmentPage() {
         <PartProgress part={3} />
         <Card title="Susunod: Bahagi 3, Copy Test (2 minuto)" icon={<CopyIcon />}>
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
-            <li>Makikita mo ang isang record (pangalan, petsa, address, ID).</li>
+            <li>Makikita mo ang isang record (pangalan, petsa, address, contact no., ID).</li>
             <li>Kopyahin ito nang EKSAKTO sa form — pati malalaking titik, tuldok, at comma.</li>
             <li>
-              Pindutin ang <strong>Enter</strong> para lumipat sa susunod na field. Sa huling field, ang Enter ay
-              magpapasa ng record at lalabas ang susunod.
+              Pindutin ang <Kbd>Tab</Kbd> para lumipat sa susunod na field. Sa huling field, pindutin ang{' '}
+              <Kbd>Enter</Kbd> para ipasa ang record at lalabas ang susunod.
             </li>
           </ol>
           <HelpTip label="Ano ang field accuracy?">{HELP.fieldAccuracy}</HelpTip>

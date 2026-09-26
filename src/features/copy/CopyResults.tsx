@@ -8,6 +8,7 @@ import { JOB_READY_COPY } from '../../lib/targets';
 import { formatClock } from '../../lib/useCountdown';
 import { alignTyping } from '../typing/alignTyping';
 import { FIELD_LABEL, type FieldKey } from './records';
+import { copyKphOf } from './scoreCopy';
 
 /**
  * The correct value, with the characters the user got wrong highlighted:
@@ -91,9 +92,10 @@ export default function CopyResults({
 }) {
   const m = session.metrics;
   const t = JOB_READY_COPY;
-  const net = display(m.netWpm);
+  const speed = copyKphOf(m);
+  const shownSpeed = display(speed);
   const acc = display(m.fieldAccuracy);
-  const ready = m.records > 0 && net >= t.netWpm && acc >= t.fieldAccuracy;
+  const ready = m.records > 0 && shownSpeed >= t.kph && acc >= t.fieldAccuracy;
 
   return (
     <div>
@@ -107,14 +109,14 @@ export default function CopyResults({
       >
         <p className="text-2xl leading-relaxed text-stone-900">
           <strong>{m.correctFields}</strong> sa <strong>{m.totalFields}</strong> na field ang eksaktong tama (
-          {m.records} record), sa bilis na <strong>{net} WPM</strong>.
+          {m.records} record), sa bilis na <strong>{shownSpeed.toLocaleString()} KPH</strong>.
         </p>
         <p className="mt-2 text-lg text-stone-700">
           {m.records === 0
-            ? 'Wala kang naipasang record. Tandaan: pindutin ang Enter sa huling field para maipasa ang record.'
+            ? 'Wala kang naipasang record. Tandaan: sa huling field (ID No.), pindutin ang Enter o ang "Ipasa ang record".'
             : ready
               ? '🎉 Pasado ka sa target! Subukan ang Assessment para makasigurado.'
-              : `Ang target ay ${t.fieldAccuracy}% na tamang field at ${t.netWpm} WPM. Unahin ang tamang pagkopya, saka ang bilis.`}
+              : `Ang target ay ${t.fieldAccuracy}% na tamang field at ${t.kph.toLocaleString()} KPH. Unahin ang tamang pagkopya, saka ang bilis.`}
         </p>
         <div className="mt-5">
           <Button size="lg" onClick={onRetry} autoFocus>
@@ -126,17 +128,18 @@ export default function CopyResults({
       <SaveBanner saved={saved} finishedEarly={finishedEarly} onToggle={onToggleSaved} />
 
       <h2 className="mb-3 text-xl font-bold text-stone-900">Mga detalye</h2>
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StatBadge label="Tamang field" value={`${acc}%`} help={HELP.fieldAccuracy} />
-        <StatBadge label="Bilis (Net WPM)" value={net} help={HELP.copyWpm} />
+        <StatBadge label="Bilis (KPH)" value={shownSpeed.toLocaleString()} help={HELP.copyKph} />
         <StatBadge label="Natapos na record" value={m.records} hint={`${m.totalFields} field lahat`} />
+        <StatBadge label="Net WPM" value={display(m.netWpm)} hint="para maikumpara sa Typing" help={HELP.copyWpm} />
         <StatBadge label="Tagal" value={formatClock(session.durationSec)} hint={`${m.typedChars} letra ang na-type`} />
       </div>
 
       <Card title="Target" className="mb-6">
         <ul className="space-y-2">
           <TargetRow label="Tamang field" value={m.fieldAccuracy} target={t.fieldAccuracy} unit="%" />
-          <TargetRow label="Bilis (Net WPM)" value={m.netWpm} target={t.netWpm} />
+          <TargetRow label="Bilis (KPH)" value={speed} target={t.kph} />
         </ul>
       </Card>
 
