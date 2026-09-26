@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanNumpadInput, formatAmount, makeEntry } from './entries';
+import { cleanNumpadInput, makeEntry } from './entries';
 import { makeRng } from '../../lib/random';
 import type { Difficulty } from '../../lib/storage';
 
@@ -7,15 +7,6 @@ function sample(difficulty: Difficulty, count = 200): string[] {
   const rng = makeRng(difficulty * 1000);
   return Array.from({ length: count }, () => makeEntry(rng, difficulty));
 }
-
-describe('formatAmount', () => {
-  it('adds commas and 2 decimals', () => {
-    expect(formatAmount(12450.75)).toBe('12,450.75');
-    expect(formatAmount(1234567.5)).toBe('1,234,567.50');
-    expect(formatAmount(5)).toBe('5.00');
-    expect(formatAmount(999.99)).toBe('999.99');
-  });
-});
 
 describe('makeEntry', () => {
   it('level 1 gives 1-3 digit integers', () => {

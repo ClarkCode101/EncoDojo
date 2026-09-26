@@ -1,6 +1,10 @@
 import { passages, type PassageLevel } from '../../data/passages';
 import type { Difficulty } from '../../lib/storage';
 import { shuffle, type Rng } from '../../lib/random';
+import { generateParagraph } from './generatePassage';
+
+/** Share of paragraphs taken from the hand-written passages (the rest are generated). */
+const HANDWRITTEN_SHARE = 0.25;
 
 /** Difficulty 1-2 -> level 1, 3-4 -> level 2, 5-6 -> level 3. */
 export function levelForDifficulty(difficulty: Difficulty): PassageLevel {
@@ -16,20 +20,23 @@ export function charsNeeded(minutes: number): number {
 }
 
 /**
- * Join shuffled passages of one level (with single spaces) until the text is
- * at least `minChars` long.
+ * Join paragraphs of one level (with single spaces) until the text is at
+ * least `minChars` long. Most paragraphs are freshly generated so passages
+ * can't be memorized; now and then a hand-written one is mixed in.
  */
 export function buildPassage(rng: Rng, level: PassageLevel, minChars: number): string {
-  const pool = passages.filter((p) => p.level === level).map((p) => p.text);
+  const handwritten = shuffle(
+    rng,
+    passages.filter((p) => p.level === level).map((p) => p.text),
+  );
   const parts: string[] = [];
   let length = 0;
 
   while (length < minChars) {
-    for (const text of shuffle(rng, pool)) {
-      parts.push(text);
-      length += text.length + 1;
-      if (length >= minChars) break;
-    }
+    const useHandwritten = handwritten.length > 0 && rng() < HANDWRITTEN_SHARE;
+    const text = useHandwritten ? handwritten.pop()! : generateParagraph(rng, level);
+    parts.push(text);
+    length += text.length + 1;
   }
 
   return parts.join(' ');

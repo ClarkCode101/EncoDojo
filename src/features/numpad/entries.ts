@@ -10,14 +10,8 @@
  *   6  mix of 2-5, bigger amounts  e.g. 348,912.05
  */
 import type { Difficulty } from '../../lib/storage';
+import { formatAmount } from '../../lib/format';
 import { intBetween, pick, type Rng } from '../../lib/random';
-
-/** 1234567.5 -> "1,234,567.50" (always 2 decimals, commas every 3 digits). */
-export function formatAmount(value: number): string {
-  const [whole, cents] = value.toFixed(2).split('.');
-  const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return `${withCommas}.${cents}`;
-}
 
 function amount(rng: Rng, maxPesos: number): string {
   const centavos = intBetween(rng, 100, maxPesos * 100 + 99);
