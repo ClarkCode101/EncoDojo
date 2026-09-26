@@ -1,4 +1,5 @@
 import { Suspense, useEffect, type ReactNode } from 'react';
+import BeltCard from '../components/BeltCard';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   AssessmentIcon,
@@ -69,7 +70,7 @@ export default function Layout() {
 
       <aside
         className={
-          'bg-brand-900 text-white md:sticky md:top-0 md:h-screen md:shrink-0 md:overflow-y-auto md:overflow-x-hidden ' +
+          'bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden ' +
           'md:transition-[width] md:duration-200 motion-reduce:transition-none ' +
           (collapsed ? 'md:w-20' : 'md:w-64')
         }
@@ -125,6 +126,11 @@ export default function Layout() {
             ))}
           </div>
         </nav>
+
+        {/* The belt card: bottom of the sidebar on desktop, under the links on phones. */}
+        <div className="px-3 pb-4 md:mt-auto">
+          <BeltCard collapsed={collapsed} />
+        </div>
       </aside>
 
       <main id="main" className="min-w-0 flex-1 px-4 py-6 md:px-10">

@@ -11,7 +11,8 @@ The owner is learning while building. When you finish a task, **explain what you
 - Red = mistake, green = correct, amber = warning: keep these meanings; they are never brand colors.
 - Logo: a tied belt on a gold tile (`<Logo />` in `components/icons.tsx`, same drawing in `public/favicon.svg`).
 - Signature touches: the passage looks like a sheet of paper (`shadow-paper`), and the Assessment report has a rubber stamp ("PASADO" / "HINDI PA", `Stamp` in `components/ResultPieces.tsx`).
-- Planned: belt ranks (White → Yellow → Orange → Green → Blue → Black) as the Phase 4 level system; optional "Sensei" tips character; optional on-screen keyboard/numpad guide.
+- **Belt ranks — early version LIVE** (owner's decision, 2026-09-26): `lib/belts.ts` + `components/BeltCard.tsx` at the bottom of the sidebar ("Ang belt mo", progress bar, what to do next; links to the Assessment; icon only when the sidebar is collapsed). The belt comes from the BEST Assessment, so it is never taken away: White (none / <25% of targets), Yellow 25%+, Orange 50%+, Green 75%+, Blue = Job-ready once, Black = Job-ready on 3 different (local) days. Percentages, so older 4- and 6-target assessments still count. Phase 4 may extend this (e.g. per-skill levels), but keep these rules unless the owner changes them.
+- Planned: optional "Sensei" tips character; optional on-screen keyboard/numpad guide.
 
 ## UI & Language Rules (decided 2026-09-26)
 The app must be easy for **older and non-techy users**:
