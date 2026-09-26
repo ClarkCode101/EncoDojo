@@ -1,29 +1,30 @@
 /**
- * Numpad Drill — TRAINING mode. Pick a duration, enter numbers, see results.
- * Results are saved by default (optional). The Assessment uses the same
- * NumpadRunner with stricter rules.
+ * Numpad Practice — TRAINING mode. Pick a mode and duration, enter numbers,
+ * see results. Results are saved by default (optional). The Assessment uses
+ * the same NumpadRunner with stricter rules and the "mixed" numbers.
  */
 import { useState } from 'react';
 import { NumpadIcon } from '../../components/icons';
 import { Card, PageHeader, SegmentedPicker, Step } from '../../components/ui';
-import type { Difficulty, Session } from '../../lib/storage';
+import type { NumpadMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import NumpadResults from './NumpadResults';
 import NumpadRunner from './NumpadRunner';
-import { NUMPAD_DIFFICULTY_LABELS } from './entries';
+import { NUMPAD_MODES } from './entries';
 
 const DURATIONS = [30, 60] as const;
 type Seconds = (typeof DURATIONS)[number];
 
 const durationLabel = (s: Seconds) => (s === 30 ? '30 segundo' : '1 minuto');
 
-const DIFFICULTIES: Difficulty[] = [1, 2, 3, 4, 5, 6];
+const MODES: NumpadMode[] = ['mixed', 'beginner'];
 
 type Result = { session: Session; finishedEarly: boolean };
 
 export default function NumpadPage() {
   const data = useAppData();
-  const { numpadDifficulty: difficulty, showLiveStats, sound } = data.settings;
+  const { numpadMode: mode, showLiveStats, sound } = data.settings;
+  const difficulty = NUMPAD_MODES[mode].difficulty;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
@@ -58,6 +59,7 @@ export default function NumpadPage() {
     return (
       <NumpadResults
         session={result.session}
+        beginner={mode === 'beginner'}
         saved={saved}
         finishedEarly={result.finishedEarly}
         onToggleSaved={toggleSaved}
@@ -76,14 +78,15 @@ export default function NumpadPage() {
 
       <Card className="mb-6">
         <div className="space-y-6">
-          <Step number={1} title="Pumili ng hirap at tagal">
+          <Step number={1} title="Pumili ng klase ng numero at tagal">
             <div className="flex flex-wrap items-end gap-6">
               <SegmentedPicker
-                label="Gaano kahirap? (1 = pinakamadali)"
-                options={DIFFICULTIES}
-                value={difficulty}
+                label="Anong klase ng numero?"
+                options={MODES}
+                value={mode}
+                format={(m) => NUMPAD_MODES[m].label}
                 disabled={running}
-                onChange={(d) => updateSettings({ numpadDifficulty: d })}
+                onChange={(m) => updateSettings({ numpadMode: m })}
               />
               <SegmentedPicker
                 label="Gaano katagal?"
@@ -94,16 +97,20 @@ export default function NumpadPage() {
                 onChange={setSeconds}
               />
             </div>
-            <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">
-              <strong>Level {difficulty}:</strong> {NUMPAD_DIFFICULTY_LABELS[difficulty]}
-            </p>
+            <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">{NUMPAD_MODES[mode].description}</p>
+            {mode === 'beginner' && (
+              <p className="mt-2 text-stone-700">
+                Ang Pang-baguhan ay hindi kasama sa &quot;Pinakamabilis na numpad&quot; sa Home. Kapag komportable ka na,
+                lumipat sa Halo-halo.
+              </p>
+            )}
           </Step>
           <Step number={2} title="I-type ang bawat numero at pindutin ang Enter" />
         </div>
       </Card>
 
       <NumpadRunner
-        key={`${seconds}-${difficulty}-${attempt}`}
+        key={`${seconds}-${mode}-${attempt}`}
         seconds={seconds}
         difficulty={difficulty}
         showLiveStats={showLiveStats}

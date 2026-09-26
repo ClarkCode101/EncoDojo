@@ -87,20 +87,19 @@ src/
 - Round displayed values to whole numbers; store raw values.
 
 ## Storage Schema (`lib/storage.ts`)
-Single key: `encodojo:v1` (the key name never changes; the schema version is `data.version`, currently **3**)
+Single key: `encodojo:v1` (the key name never changes; the schema version is `data.version`, currently **4**)
 ```ts
 type AppData = {
-  version: 3;
+  version: 4;
   profile: { displayName: string; createdAt: string };
   settings: {
-    typingLevel: 1 | 2 | 3;                  // currently UNUSED (Typing is plain text only); kept for later
-    numpadDifficulty: 1 | 2 | 3 | 4 | 5 | 6; // chosen on the Numpad Drill page
+    numpadMode: 'mixed' | 'beginner';     // Numpad Practice: Halo-halo (= Assessment) or Pang-baguhan
     sound: boolean;
     showLiveStats: boolean;
     largeText: boolean;                      // v3: "Mas malaking text" in Settings
   };
-  // v1 had a single `difficulty` (1-6) in Settings; migrate() upgrades it:
-  // typingLevel = ceil(difficulty / 2), numpadDifficulty = difficulty.
+  // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
+  // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).
   sessions: Session[];
 };
 
@@ -146,6 +145,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Show one entry at a time; user types it and presses Enter to submit.
 - Entry types by difficulty: short integers → amounts with decimals (e.g. `12,450.75`) → reference numbers (e.g. `DR-2026-004517` style, digits only for numpad mode).
 - Training modes: **30 sec** and **1 min** (changed from 2/5 min at the owner's request).
+- Two number types (owner's decision, replaced difficulty 1-6): **Halo-halo** (default, difficulty 6 = exactly the Assessment mix, `MIXED_DIFFICULTY`) and **Pang-baguhan** (difficulty 1, short numbers). Only Halo-halo counts for "Pinakamabilis na numpad" on Home (`forNumpadBest`); beginner results skip the hiring target and KPH levels.
 - Live stats: KPH, entry accuracy, entries done.
 - Results: KPH, entry accuracy, job-ready check, list of wrong entries.
 
@@ -155,7 +155,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Recent sessions list (last 10).
 
 ### 5. Settings (`features/settings`)
-- Display name, live stats toggle, sound. (Difficulty was moved to each training page at the owner's request: Numpad = Difficulty 1–6 picker on the Numpad Drill page. Typing has no level picker while it is plain text only.)
+- Display name, live stats toggle, sound. (Difficulty is not in Settings: Numpad Practice has a Halo-halo / Pang-baguhan picker; Typing has no level picker while it is plain text only.)
 - Export progress, Import progress, Reset all data (with typed confirmation).
 
 ### 6. Tests

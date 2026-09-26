@@ -9,19 +9,29 @@
  *   5  reference numbers (digits)  e.g. 2026004517  (like DR-2026-004517)
  *   6  mix of 2-5, bigger amounts  e.g. 348,912.05
  */
-import type { Difficulty } from '../../lib/storage';
+import type { Difficulty, NumpadMode } from '../../lib/storage';
 import { formatAmount } from '../../lib/format';
 import { intBetween, pick, type Rng } from '../../lib/random';
 
-/** Shown under the Difficulty picker on the Numpad Drill page. */
-export const NUMPAD_DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  1: 'Maiikling numero (hal. 482)',
-  2: 'Mas mahahabang numero (hal. 30719)',
-  3: 'Maliit na halaga na may sentimo (hal. 86.40)',
-  4: 'Halaga na may comma (hal. 12,450.75)',
-  5: 'Reference number at halaga (hal. 2026004517)',
-  6: 'Halo-halo, mas malalaking halaga (hal. 348,912.05)',
+/**
+ * The two choices on the Numpad Practice page.
+ * "mixed" uses the SAME difficulty as the Assessment, so practice = exam.
+ */
+export const NUMPAD_MODES: Record<NumpadMode, { difficulty: Difficulty; label: string; description: string }> = {
+  mixed: {
+    difficulty: 6,
+    label: 'Halo-halo (gaya ng Assessment)',
+    description: 'Mahahabang numero, halaga na may sentimo, at reference number — gaya mismo sa Assessment.',
+  },
+  beginner: {
+    difficulty: 1,
+    label: 'Pang-baguhan',
+    description: 'Maiikling numero lang (hal. 482). Para masanay muna sa puwesto ng mga key sa numpad.',
+  },
 };
+
+/** The difficulty used by the "mixed" mode and the Assessment. */
+export const MIXED_DIFFICULTY = NUMPAD_MODES.mixed.difficulty;
 
 function amount(rng: Rng, maxPesos: number): string {
   const centavos = intBetween(rng, 100, maxPesos * 100 + 99);

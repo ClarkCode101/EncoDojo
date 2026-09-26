@@ -12,13 +12,13 @@
  * version lives INSIDE the data (`version`) and is upgraded by migrate().
  */
 export const STORAGE_KEY = 'encodojo:v1';
-export const CURRENT_VERSION = 3;
+export const CURRENT_VERSION = 4;
 export const MAX_SESSIONS = 500;
 
-/** Numpad Drill difficulty (see features/numpad/entries.ts). */
+/** Number generator difficulty 1-6 (see features/numpad/entries.ts). */
 export type Difficulty = 1 | 2 | 3 | 4 | 5 | 6;
-/** Typing Test passage level: 1 plain text, 2 names & addresses, 3 numbers & codes. */
-export type TypingLevel = 1 | 2 | 3;
+/** Numpad Practice mode: "mixed" = same as the Assessment, "beginner" = short numbers only. */
+export type NumpadMode = 'mixed' | 'beginner';
 export const SESSION_TYPES = ['typing', 'numpad', 'assessment'] as const;
 export type SessionType = (typeof SESSION_TYPES)[number];
 
@@ -40,12 +40,7 @@ export type Session = {
 };
 
 export type Settings = {
-  /**
-   * Not used right now: the Typing Test is plain text only for the time
-   * being. Kept so a level picker can come back without another migration.
-   */
-  typingLevel: TypingLevel;
-  numpadDifficulty: Difficulty;
+  numpadMode: NumpadMode;
   sound: boolean;
   showLiveStats: boolean;
   /** Bigger text and buttons everywhere (for people who find the normal size hard to read). */
@@ -53,7 +48,7 @@ export type Settings = {
 };
 
 export type AppData = {
-  version: 3;
+  version: 4;
   profile: { displayName: string; createdAt: string };
   settings: Settings;
   sessions: Session[];
@@ -61,9 +56,9 @@ export type AppData = {
 
 export function defaultData(now: Date = new Date()): AppData {
   return {
-    version: 3,
+    version: 4,
     profile: { displayName: '', createdAt: now.toISOString() },
-    settings: { typingLevel: 1, numpadDifficulty: 1, sound: false, showLiveStats: true, largeText: false },
+    settings: { numpadMode: 'mixed', sound: false, showLiveStats: true, largeText: false },
     sessions: [],
   };
 }
@@ -78,8 +73,12 @@ function isDifficulty(value: unknown): value is Difficulty {
   return typeof value === 'number' && [1, 2, 3, 4, 5, 6].includes(value);
 }
 
-function isTypingLevel(value: unknown): value is TypingLevel {
+function isTypingLevel(value: unknown): boolean {
   return typeof value === 'number' && [1, 2, 3].includes(value);
+}
+
+function isNumpadMode(value: unknown): value is NumpadMode {
+  return value === 'mixed' || value === 'beginner';
 }
 
 function isSession(value: unknown): value is Session {
@@ -114,11 +113,7 @@ function hasValidCommonParts(value: Record<string, unknown>): boolean {
 export function isAppData(value: unknown): value is AppData {
   if (!isObject(value) || value.version !== CURRENT_VERSION || !hasValidCommonParts(value)) return false;
   const settings = value.settings as Record<string, unknown>;
-  return (
-    isTypingLevel(settings.typingLevel) &&
-    isDifficulty(settings.numpadDifficulty) &&
-    typeof settings.largeText === 'boolean'
-  );
+  return isNumpadMode(settings.numpadMode) && typeof settings.largeText === 'boolean';
 }
 
 /**
@@ -147,6 +142,18 @@ function upgradeV2toV3(raw: Record<string, unknown>): Record<string, unknown> | 
 }
 
 /**
+ * Version 4 replaces the numpad difficulty (1-6) with two simple modes and
+ * removes the unused typing level. Everyone starts on "mixed" (the same mix
+ * as the Assessment), which is the recommended mode.
+ */
+function upgradeV3toV4(raw: Record<string, unknown>): Record<string, unknown> | null {
+  if (!hasValidCommonParts(raw)) return null;
+  const { typingLevel, numpadDifficulty, ...rest } = raw.settings as Record<string, unknown>;
+  if (!isTypingLevel(typingLevel) || !isDifficulty(numpadDifficulty)) return null;
+  return { ...raw, version: 4, settings: { ...rest, numpadMode: 'mixed' } };
+}
+
+/**
  * Upgrade saved data to the current version, one step at a time.
  * Returns null when the data cannot be understood.
  */
@@ -155,6 +162,7 @@ export function migrate(raw: unknown): AppData | null {
   let data: Record<string, unknown> | null = raw;
   if (data?.version === 1) data = upgradeV1toV2(data);
   if (data?.version === 2) data = upgradeV2toV3(data);
+  if (data?.version === 3) data = upgradeV3toV4(data);
   return isAppData(data) ? data : null;
 }
 

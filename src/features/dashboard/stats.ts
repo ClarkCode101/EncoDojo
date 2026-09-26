@@ -1,4 +1,19 @@
 import type { Session, SessionType } from '../../lib/storage';
+import { MIXED_DIFFICULTY, NUMPAD_MODES } from '../numpad/entries';
+
+/**
+ * Only "Halo-halo" numpad practice counts toward the best numpad score, so the
+ * best KPH is always measured on the same kind of numbers as the Assessment.
+ * Other session types pass through unchanged.
+ */
+export function forNumpadBest(sessions: Session[]): Session[] {
+  return sessions.filter((s) => s.type !== 'numpad' || s.metrics.difficulty === MIXED_DIFFICULTY);
+}
+
+/** True for a "Pang-baguhan" numpad practice session. */
+export function isBeginnerNumpad(session: Session): boolean {
+  return session.type === 'numpad' && session.metrics.difficulty === NUMPAD_MODES.beginner.difficulty;
+}
 
 function ofType(sessions: Session[], type: SessionType): Session[] {
   return sessions.filter((s) => s.type === type);

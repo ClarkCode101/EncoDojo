@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Session } from '../../lib/storage';
-import { bestMetric, currentStreak, latestMetric, recentSessions } from './stats';
+import {
+  bestMetric,
+  currentStreak,
+  forNumpadBest,
+  isBeginnerNumpad,
+  latestMetric,
+  recentSessions,
+} from './stats';
 
 let counter = 0;
 function session(type: Session['type'], startedAt: Date, metrics: Record<string, number>): Session {
@@ -37,6 +44,24 @@ describe('bestMetric / latestMetric', () => {
   it('returns null when there are no sessions of that type', () => {
     expect(bestMetric([], 'typing', 'netWpm')).toBeNull();
     expect(latestMetric([], 'numpad', 'kph')).toBeNull();
+  });
+});
+
+describe('forNumpadBest / isBeginnerNumpad', () => {
+  const mixed = session('numpad', day(1), { kph: 8000, difficulty: 6 });
+  const beginner = session('numpad', day(2), { kph: 14000, difficulty: 1 });
+  const typing = session('typing', day(3), { netWpm: 40 });
+
+  it('ignores beginner numpad runs for the best KPH', () => {
+    expect(bestMetric(forNumpadBest([mixed, beginner, typing]), 'numpad', 'kph')).toBe(8000);
+  });
+
+  it('keeps other session types', () => {
+    expect(forNumpadBest([mixed, beginner, typing])).toEqual([mixed, typing]);
+  });
+
+  it('spots beginner runs', () => {
+    expect([mixed, beginner, typing].map(isBeginnerNumpad)).toEqual([false, true, false]);
   });
 });
 

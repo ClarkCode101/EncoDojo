@@ -1,6 +1,6 @@
 import { KphLevels, SaveBanner, TargetRow } from '../../components/ResultPieces';
 import { NumpadIcon } from '../../components/icons';
-import { Button, Card, HelpTip, PageHeader, StatBadge } from '../../components/ui';
+import { Button, Card, HelpTip, Notice, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
@@ -41,12 +41,15 @@ export function NumpadMistakesCard({ mistakes }: { mistakes: SessionMistake[] })
 
 export default function NumpadResults({
   session,
+  beginner,
   saved,
   finishedEarly,
   onToggleSaved,
   onRetry,
 }: {
   session: Session;
+  /** "Pang-baguhan" run: short numbers only, so hiring targets don't apply. */
+  beginner: boolean;
   saved: boolean;
   finishedEarly: boolean;
   onToggleSaved: () => void;
@@ -56,7 +59,11 @@ export default function NumpadResults({
   const t = JOB_READY_NUMPAD;
   const speed = display(m.kph);
   const acc = display(m.entryAccuracy);
-  const ready = speed >= t.kph && acc >= t.entryAccuracy;
+  const ready = !beginner && speed >= t.kph && acc >= t.entryAccuracy;
+
+  let message = `Ang target ay ${t.kph.toLocaleString()} KPH at ${t.entryAccuracy}% na tama. Tuloy lang ang practice!`;
+  if (ready) message = '🎉 Pasado ka sa karaniwang target! Subukan ang Assessment para makasigurado.';
+  if (beginner) message = 'Magaling! Kapag komportable ka na sa mga key, subukan ang "Halo-halo" — iyon ang nasa Assessment.';
 
   return (
     <div>
@@ -72,11 +79,7 @@ export default function NumpadResults({
           <strong>{m.correctEntries}</strong> sa <strong>{m.entries}</strong> na numero ang tama, sa bilis na{' '}
           <strong>{speed.toLocaleString()} KPH</strong>.
         </p>
-        <p className="mt-2 text-lg text-stone-700">
-          {ready
-            ? '🎉 Pasado ka sa karaniwang target! Subukan ang Assessment para makasigurado.'
-            : `Ang target ay ${t.kph.toLocaleString()} KPH at ${t.entryAccuracy}% na tama. Tuloy lang ang practice!`}
-        </p>
+        <p className="mt-2 text-lg text-stone-700">{message}</p>
         <div className="mt-5">
           <Button size="lg" onClick={onRetry} autoFocus>
             Ulitin
@@ -94,17 +97,26 @@ export default function NumpadResults({
         <StatBadge label="Tagal" value={formatClock(session.durationSec)} />
       </div>
 
-      <Card title="Target ng hiring test" className="mb-6">
-        <ul className="space-y-2">
-          <TargetRow label="Bilis (KPH)" value={m.kph} target={t.kph} />
-          <TargetRow label="Tamang numero" value={m.entryAccuracy} target={t.entryAccuracy} unit="%" />
-        </ul>
-      </Card>
+      {beginner ? (
+        <Notice kind="info" className="mb-6">
+          <strong>Pang-baguhan ito.</strong> Maiikling numero lang ang nandito, kaya hindi ito ikinukumpara sa target ng
+          hiring test at hindi kasama sa &quot;Pinakamabilis na numpad&quot; sa Home.
+        </Notice>
+      ) : (
+        <>
+          <Card title="Target ng hiring test" className="mb-6">
+            <ul className="space-y-2">
+              <TargetRow label="Bilis (KPH)" value={m.kph} target={t.kph} />
+              <TargetRow label="Tamang numero" value={m.entryAccuracy} target={t.entryAccuracy} unit="%" />
+            </ul>
+          </Card>
 
-      <Card title="Antas ng bilis mo (KPH)" className="mb-6">
-        <KphLevels kph={m.kph} />
-        <HelpTip label="Saan galing ang mga numerong ito?">{HELP.kphLevels}</HelpTip>
-      </Card>
+          <Card title="Antas ng bilis mo (KPH)" className="mb-6">
+            <KphLevels kph={m.kph} />
+            <HelpTip label="Saan galing ang mga numerong ito?">{HELP.kphLevels}</HelpTip>
+          </Card>
+        </>
+      )}
 
       <NumpadMistakesCard mistakes={session.mistakes} />
     </div>

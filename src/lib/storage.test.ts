@@ -33,9 +33,9 @@ beforeEach(() => {
 describe('loadData', () => {
   it('returns defaults when nothing is saved', () => {
     const data = loadData();
-    expect(data.version).toBe(3);
+    expect(data.version).toBe(4);
     expect(data.sessions).toEqual([]);
-    expect(data.settings).toEqual({ typingLevel: 1, numpadDifficulty: 1, sound: false, showLiveStats: true, largeText: false });
+    expect(data.settings).toEqual({ numpadMode: 'mixed', sound: false, showLiveStats: true, largeText: false });
   });
 
   it('returns defaults when saved text is not JSON', () => {
@@ -52,7 +52,7 @@ describe('loadData', () => {
   it('returns defaults for an unknown version', () => {
     const future = { ...defaultData(), version: 99, sessions: [sampleSession()] };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(future));
-    expect(loadData().version).toBe(3);
+    expect(loadData().version).toBe(4);
     expect(loadData().sessions).toEqual([]);
   });
 });
@@ -130,18 +130,14 @@ describe('migrate', () => {
     expect(parseImport(text).ok).toBe(false);
   });
 
-  it('rejects an invalid numpad difficulty or typing level', () => {
-    const badNumpad = defaultData();
-    (badNumpad.settings as { numpadDifficulty: number }).numpadDifficulty = 9;
-    expect(migrate(badNumpad)).toBeNull();
-
-    const badTyping = defaultData();
-    (badTyping.settings as { typingLevel: number }).typingLevel = 4;
-    expect(migrate(badTyping)).toBeNull();
+  it('rejects an invalid numpad mode', () => {
+    const bad = defaultData();
+    (bad.settings as { numpadMode: string }).numpadMode = 'turbo';
+    expect(migrate(bad)).toBeNull();
   });
 });
 
-describe('migrate from version 1', () => {
+describe('migrate from older versions', () => {
   /** What version 1 data looked like (one shared difficulty). */
   function v1(difficulty: number) {
     return {
@@ -152,25 +148,21 @@ describe('migrate from version 1', () => {
     };
   }
 
-  it('splits the old difficulty into typing level and numpad difficulty', () => {
-    expect([1, 2, 3, 4, 5, 6].map((d) => migrate(v1(d))?.settings.typingLevel)).toEqual([1, 1, 2, 2, 3, 3]);
-    expect(migrate(v1(5))?.settings.numpadDifficulty).toBe(5);
-  });
-
-  it('keeps profile, sessions, and other settings', () => {
-    const data = migrate(v1(4))!;
-    expect(data).toEqual({
-      version: 3,
-      profile: { displayName: 'Ana', createdAt: '2026-09-01T00:00:00.000Z' },
-      settings: { typingLevel: 2, numpadDifficulty: 4, sound: true, showLiveStats: false, largeText: false },
-      sessions: [sampleSession()],
-    });
+  it('version 1 -> 4: keeps profile, sessions, and other settings; numpad starts on "mixed"', () => {
+    for (const difficulty of [1, 2, 3, 4, 5, 6]) {
+      expect(migrate(v1(difficulty))).toEqual({
+        version: 4,
+        profile: { displayName: 'Ana', createdAt: '2026-09-01T00:00:00.000Z' },
+        settings: { numpadMode: 'mixed', sound: true, showLiveStats: false, largeText: false },
+        sessions: [sampleSession()],
+      });
+    }
   });
 
   it('upgrades version 1 data already in localStorage', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v1(3)));
     const data = loadData();
-    expect(data.version).toBe(3);
+    expect(data.version).toBe(4);
     expect(data.sessions).toHaveLength(1);
   });
 
@@ -179,7 +171,7 @@ describe('migrate from version 1', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('upgrades version 2 data: adds largeText = false, keeps the rest', () => {
+  it('version 2 -> 4: adds largeText = false and numpadMode = "mixed"', () => {
     const v2 = {
       version: 2,
       profile: { displayName: 'Ana', createdAt: '2026-09-01T00:00:00.000Z' },
@@ -188,9 +180,33 @@ describe('migrate from version 1', () => {
     };
     expect(migrate(v2)).toEqual({
       ...v2,
-      version: 3,
-      settings: { ...v2.settings, largeText: false },
+      version: 4,
+      settings: { numpadMode: 'mixed', sound: false, showLiveStats: true, largeText: false },
     });
+  });
+
+  it('version 3 -> 4: keeps largeText, drops the old difficulty fields', () => {
+    const v3 = {
+      version: 3,
+      profile: { displayName: 'Ana', createdAt: '2026-09-01T00:00:00.000Z' },
+      settings: { typingLevel: 1, numpadDifficulty: 2, sound: true, showLiveStats: true, largeText: true },
+      sessions: [sampleSession()],
+    };
+    expect(migrate(v3)).toEqual({
+      ...v3,
+      version: 4,
+      settings: { numpadMode: 'mixed', sound: true, showLiveStats: true, largeText: true },
+    });
+  });
+
+  it('rejects broken version 3 data', () => {
+    const broken = {
+      version: 3,
+      profile: { displayName: '', createdAt: '2026-09-01T00:00:00.000Z' },
+      settings: { typingLevel: 1, numpadDifficulty: 9, sound: true, showLiveStats: true, largeText: true },
+      sessions: [],
+    };
+    expect(migrate(broken)).toBeNull();
   });
 
   it('rejects broken version 1 data', () => {

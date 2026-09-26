@@ -6,15 +6,16 @@
  * assessments can be shown again later exactly the same way.
  */
 import { display } from '../../lib/scoring';
-import { makeId, type Difficulty, type Session } from '../../lib/storage';
+import { makeId, type Session } from '../../lib/storage';
 import { JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { MIXED_DIFFICULTY } from '../numpad/entries';
 
 /** Fixed rules, so every attempt is comparable. */
 export const ASSESSMENT = {
   typingSeconds: 60,
   numpadSeconds: 60,
-  /** 6 = mix of long integers, amounts, and reference numbers. */
-  numpadDifficulty: 6 as Difficulty,
+  /** Same mix as the "Halo-halo" mode in Numpad Practice (long numbers, amounts, reference numbers). */
+  numpadDifficulty: MIXED_DIFFICULTY,
 } as const;
 
 /** Keep the saved assessment small. */

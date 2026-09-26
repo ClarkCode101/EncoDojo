@@ -19,7 +19,14 @@ import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
 import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
 import { formatClock } from '../../lib/useCountdown';
-import { bestMetric, currentStreak, latestMetric, recentSessions } from './stats';
+import {
+  bestMetric,
+  currentStreak,
+  forNumpadBest,
+  isBeginnerNumpad,
+  latestMetric,
+  recentSessions,
+} from './stats';
 
 function show(value: number | null, suffix = ''): string {
   return value === null ? '–' : `${display(value).toLocaleString()}${suffix}`;
@@ -172,8 +179,8 @@ export default function DashboardPage() {
           />
           <StatBadge
             label="Pinakamabilis na numpad"
-            value={show(bestMetric(sessions, 'numpad', 'kph'))}
-            hint="KPH"
+            value={show(bestMetric(forNumpadBest(sessions), 'numpad', 'kph'))}
+            hint="KPH (Halo-halo)"
             help={HELP.kph}
           />
           <StatBadge
@@ -215,7 +222,12 @@ export default function DashboardPage() {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="py-3 pr-4 font-medium">{typeLabel[s.type]}</td>
+                    <td className="py-3 pr-4 font-medium">
+                      {typeLabel[s.type]}
+                      {isBeginnerNumpad(s) && (
+                        <span className="block text-sm font-normal text-stone-600">pang-baguhan</span>
+                      )}
+                    </td>
                     <td className="py-3 pr-4 tabular-nums">{formatClock(s.durationSec)}</td>
                     <td className="py-3 pr-4 tabular-nums">{summary(s)}</td>
                     <td className="py-3 text-right">
