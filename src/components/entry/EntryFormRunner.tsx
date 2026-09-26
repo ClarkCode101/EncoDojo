@@ -135,15 +135,15 @@ export default function EntryFormRunner({
 
           {/* The form to fill in. */}
           <form
-            id="entry-form"
             aria-label="Form na pupunan"
-            className="min-h-0 min-w-0 overflow-y-auto px-1 pb-1"
+            className="flex min-h-0 min-w-0 flex-col"
             onSubmit={(e) => {
               e.preventDefault();
               submit();
             }}
           >
-            <div className="space-y-2">
+            {/* Only the fields scroll (on small screens); Submit always stays right under them. */}
+            <div className="min-h-0 space-y-2 overflow-y-auto px-1 pb-1">
               {item.fields.map((f, i) => (
                 <div key={f.key}>
                   <label htmlFor={`entry-${f.key}`} className="mb-0.5 block text-base font-semibold text-stone-800">
@@ -171,30 +171,29 @@ export default function EntryFormRunner({
                 </div>
               ))}
             </div>
+            <div className="mt-3 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-1">
+              <Button type="submit">
+                <EnTl en="Submit" tl="Ipasa" />
+              </Button>
+              <span role="status" className="font-bold">
+                {lastWrongFields === 0 && <span className="text-green-800">✓ Lahat tama!</span>}
+                {lastWrongFields !== null && lastWrongFields > 0 && (
+                  <span className="text-red-700">
+                    ✗ {lastWrongFields} field ang mali sa huling {unit}
+                  </span>
+                )}
+              </span>
+            </div>
           </form>
         </div>
 
         <div className="mt-3 flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-3">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            {/* Outside the <form> element, so it points to it with form="entry-form". */}
-            <Button type="submit" form="entry-form">
-              <EnTl en="Submit" tl="Ipasa" />
-            </Button>
-            <span role="status" className="text-lg font-bold">
-              {lastWrongFields === 0 && <span className="text-green-800">✓ Lahat tama!</span>}
-              {lastWrongFields !== null && lastWrongFields > 0 && (
-                <span className="text-red-700">
-                  ✗ {lastWrongFields} field ang mali sa huling {unit}
-                </span>
-              )}
-            </span>
-            <KeyTips
-              tips={[
-                { key: 'Tab', text: 'susunod na field' },
-                { key: 'Enter', text: `sa ${lastField.label} = ipasa` },
-              ]}
-            />
-          </div>
+          <KeyTips
+            tips={[
+              { key: 'Tab', text: 'susunod na field' },
+              { key: 'Enter', text: `sa ${lastField.label} = ipasa` },
+            ]}
+          />
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
               <EnTl en="Finish" tl="Tapusin na" />
