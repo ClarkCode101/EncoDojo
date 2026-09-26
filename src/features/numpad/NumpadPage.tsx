@@ -23,7 +23,7 @@ type Result = { session: Session; finishedEarly: boolean };
 
 export default function NumpadPage() {
   const data = useAppData();
-  const { numpadMode: mode, showLiveStats, sound } = data.settings;
+  const { numpadMode: mode, sound } = data.settings;
   const difficulty = NUMPAD_MODES[mode].difficulty;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
@@ -113,7 +113,7 @@ export default function NumpadPage() {
         key={`${seconds}-${mode}-${attempt}`}
         seconds={seconds}
         difficulty={difficulty}
-        showLiveStats={showLiveStats}
+        showLiveStats // always shown in practice (hidden in the Assessment)
         allowFinishEarly
         sound={sound}
         onStart={() => setRunning(true)}

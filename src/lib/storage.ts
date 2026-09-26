@@ -52,6 +52,11 @@ export type Settings = {
    */
   copyMode?: CopyMode;
   sound: boolean;
+  /**
+   * No longer used: practice always shows live stats and the Assessment always
+   * hides them (owner's decision). Kept so old data stays valid without a
+   * migration; remove it the next time the schema version changes.
+   */
   showLiveStats: boolean;
   /** Bigger text and buttons everywhere (for people who find the normal size hard to read). */
   largeText: boolean;

@@ -97,12 +97,6 @@ export default function SettingsPage() {
             onChange={(v) => updateSettings({ largeText: v })}
           />
           <Checkbox
-            label="Ipakita ang score habang nagpa-practice"
-            description="Makikita ang bilis at accuracy habang tumatakbo ang oras. (Sa Assessment, laging nakatago ito.)"
-            checked={data.settings.showLiveStats}
-            onChange={(v) => updateSettings({ showLiveStats: v })}
-          />
-          <Checkbox
             label="Tunog kapag nagkamali"
             description="Maikling 'beep' tuwing may maling pindot."
             checked={data.settings.sound}

@@ -8,10 +8,10 @@
  */
 import { useMemo, useState } from 'react';
 import { KeyboardIcon } from '../../components/icons';
-import { Button, Card, Checkbox, PageHeader, SegmentedPicker, Step } from '../../components/ui';
+import { Button, Card, PageHeader, SegmentedPicker, Step } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
-import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
+import { removeSession, saveSession, useAppData } from '../../lib/useAppData';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from './buildPassage';
 import { compareWithHistory, type TypingComparison } from './compare';
 import TypingResults from './TypingResults';
@@ -30,7 +30,7 @@ type Result = {
 
 export default function TypingPage() {
   const data = useAppData();
-  const { showLiveStats, sound } = data.settings;
+  const { sound } = data.settings;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [seed, setSeed] = useState(randomSeed);
@@ -108,14 +108,6 @@ export default function TypingPage() {
                 Ibang text
               </Button>
             </div>
-            <div className="mt-4">
-              <Checkbox
-                label="Ipakita ang score habang nagta-type"
-                description="Makikita mo ang bilis at accuracy mo habang tumatakbo ang oras."
-                checked={showLiveStats}
-                onChange={(v) => updateSettings({ showLiveStats: v })}
-              />
-            </div>
           </Step>
           <Step number={2} title="I-type ang text sa ibaba" />
         </div>
@@ -126,7 +118,7 @@ export default function TypingPage() {
         passage={passage}
         seconds={seconds}
         level={PLAIN_TEXT_LEVEL}
-        showLiveStats={showLiveStats}
+        showLiveStats // always shown in practice (hidden in the Assessment)
         allowFinishEarly
         sound={sound}
         onStart={() => setRunning(true)}

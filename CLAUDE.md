@@ -98,7 +98,7 @@ type AppData = {
   settings: {
     numpadMode: 'mixed' | 'beginner';     // Numpad Practice: Halo-halo (= Assessment) or Pang-baguhan
     sound: boolean;
-    showLiveStats: boolean;
+    showLiveStats: boolean;                  // UNUSED: practice always shows live stats, Assessment always hides them; drop at next schema bump
     largeText: boolean;                      // v3: "Mas malaking text" in Settings
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
@@ -158,7 +158,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Recent sessions list (last 10).
 
 ### 5. Settings (`features/settings`)
-- Display name, live stats toggle, sound. (Difficulty is not in Settings: Numpad Practice has a Halo-halo / Pang-baguhan picker; Typing has no level picker while it is plain text only.)
+- Display name, larger text, sound. (No live-stats toggle: practice always shows live stats; the Assessment never does.) (Difficulty is not in Settings: Numpad Practice has a Halo-halo / Pang-baguhan picker; Typing has no level picker while it is plain text only.)
 - Export progress, Import progress, Reset all data (with typed confirmation).
 
 ### 6. Tests

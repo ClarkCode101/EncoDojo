@@ -9,7 +9,7 @@
  */
 import { useState } from 'react';
 import { CopyIcon } from '../../components/icons';
-import { Card, Checkbox, Kbd, PageHeader, SegmentedPicker, Step } from '../../components/ui';
+import { Card, Kbd, PageHeader, SegmentedPicker, Step } from '../../components/ui';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import CopyResults from './CopyResults';
@@ -39,7 +39,7 @@ type Result = { session: Session; finishedEarly: boolean };
 
 export default function CopyPage() {
   const data = useAppData();
-  const { showLiveStats, sound } = data.settings;
+  const { sound } = data.settings;
   // Default = spreadsheet (like most encoder jobs). The Assessment always uses the form.
   const mode: CopyMode = data.settings.copyMode ?? 'sheet';
 
@@ -114,14 +114,6 @@ export default function CopyPage() {
               />
             </div>
             <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">{MODE_INFO[mode].description}</p>
-            <div className="mt-4">
-              <Checkbox
-                label="Ipakita ang score habang nagta-type"
-                description="Makikita mo ang bilis at tamang field habang tumatakbo ang oras."
-                checked={showLiveStats}
-                onChange={(v) => updateSettings({ showLiveStats: v })}
-              />
-            </div>
           </Step>
           <Step
             number={2}
@@ -148,7 +140,7 @@ export default function CopyPage() {
         <CopyRunner
           key={`form-${seconds}-${attempt}`}
           seconds={seconds}
-          showLiveStats={showLiveStats}
+          showLiveStats // always shown in practice (hidden in the Assessment)
           allowFinishEarly
           sound={sound}
           onStart={() => setRunning(true)}
@@ -158,7 +150,7 @@ export default function CopyPage() {
         <CopySheetRunner
           key={`sheet-${seconds}-${attempt}`}
           seconds={seconds}
-          showLiveStats={showLiveStats}
+          showLiveStats // always shown in practice (hidden in the Assessment)
           allowFinishEarly
           sound={sound}
           onStart={() => setRunning(true)}
