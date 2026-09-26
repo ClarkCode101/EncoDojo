@@ -38,7 +38,7 @@ export default function Layout() {
 
       <aside className="bg-slate-900 text-white md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:overflow-y-auto">
         <div className="px-4 py-5">
-          <div className="text-lg font-bold">Encoder Practice</div>
+          <div className="text-lg font-bold">EncoDojo</div>
           <div className="text-xs text-slate-300">Data entry skills trainer</div>
         </div>
 

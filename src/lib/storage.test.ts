@@ -125,6 +125,6 @@ describe('export / import', () => {
   });
 
   it('names the file with the local date', () => {
-    expect(exportFileName(new Date(2026, 8, 6))).toBe('eps-progress-2026-09-06.json');
+    expect(exportFileName(new Date(2026, 8, 6))).toBe('encodojo-progress-2026-09-06.json');
   });
 });

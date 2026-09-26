@@ -139,12 +139,12 @@ export function exportJson(data: AppData): string {
   return JSON.stringify(data, null, 2);
 }
 
-/** e.g. eps-progress-2026-09-26.json (uses the local date). */
+/** e.g. encodojo-progress-2026-09-26.json (uses the local date). */
 export function exportFileName(now: Date = new Date()): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
-  return `eps-progress-${y}-${m}-${d}.json`;
+  return `encodojo-progress-${y}-${m}-${d}.json`;
 }
 
 export type ImportResult = { ok: true; data: AppData } | { ok: false; error: string };
@@ -159,7 +159,7 @@ export function parseImport(text: string): ImportResult {
   }
   const data = migrate(raw);
   if (!data) {
-    return { ok: false, error: 'This file is not an Encoder Practice progress export.' };
+    return { ok: false, error: 'This file is not an EncoDojo progress export.' };
   }
   return { ok: true, data: { ...data, sessions: capSessions(data.sessions) } };
 }
