@@ -2,7 +2,7 @@
  * The report card for one saved assessment: verdict, targets, comments,
  * change since the previous assessment, and the mistake lists.
  */
-import { Stamp, TargetRow } from '../../components/ResultPieces';
+import { KphLevels, Stamp, TargetRow } from '../../components/ResultPieces';
 import { AssessmentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
@@ -152,6 +152,10 @@ export default function AssessmentReport({
           <StatBadge label="Natapos na numero" value={m.numpadEntries} hint={`${m.numpadCorrectEntries} ang tama`} />
         </div>
         <Targets checks={checks.filter((c) => c.section === 'numpad')} />
+        <div className="mt-6 border-t border-stone-200 pt-5">
+          <h3 className="mb-2 text-lg font-bold text-stone-900">Antas ng bilis mo (KPH)</h3>
+          <KphLevels kph={m.numpadKph} />
+        </div>
       </Card>
 
       <div className="space-y-6">

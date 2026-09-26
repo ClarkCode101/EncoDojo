@@ -18,6 +18,11 @@ export const HELP = {
   kph:
     `KPH (keystrokes per hour) = ilang tamang pindot sa numpad ang kaya mo sa loob ng isang oras. ` +
     `${kph} pataas ang target.`,
+  kphLevels:
+    'Ito ang karaniwang binabanggit na pamantayan sa 10-key / numpad data entry: mga 8,000 KPH para sa ' +
+    'entry-level, 10,000 ang madalas hinihingi, at 12,000 pataas para sa mas mahigpit na trabaho. ' +
+    'Gabay lang ito — iba-iba ang bawat employer, kaya tingnan pa rin ang mismong job post. ' +
+    'Mas maikli (1 minuto) ang practice dito kaysa sa karaniwang test, kaya tingnan ang average ng ilang subok.',
   entryAccuracy: `Entry accuracy = ilang porsyento ng mga numero ang buong tama. ${JOB_READY_NUMPAD.entryAccuracy}% pataas ang target.`,
   streak: 'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
   numpad:

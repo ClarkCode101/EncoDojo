@@ -1,6 +1,6 @@
-import { SaveBanner, TargetRow } from '../../components/ResultPieces';
+import { KphLevels, SaveBanner, TargetRow } from '../../components/ResultPieces';
 import { NumpadIcon } from '../../components/icons';
-import { Button, Card, PageHeader, StatBadge } from '../../components/ui';
+import { Button, Card, HelpTip, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
@@ -99,6 +99,11 @@ export default function NumpadResults({
           <TargetRow label="Bilis (KPH)" value={m.kph} target={t.kph} />
           <TargetRow label="Tamang numero" value={m.entryAccuracy} target={t.entryAccuracy} unit="%" />
         </ul>
+      </Card>
+
+      <Card title="Antas ng bilis mo (KPH)" className="mb-6">
+        <KphLevels kph={m.kph} />
+        <HelpTip label="Saan galing ang mga numerong ito?">{HELP.kphLevels}</HelpTip>
       </Card>
 
       <NumpadMistakesCard mistakes={session.mistakes} />

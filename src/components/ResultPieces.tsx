@@ -2,6 +2,7 @@
  * Pieces shared by the results screens (Typing, Numpad, Assessment).
  */
 import { display } from '../lib/scoring';
+import { KPH_LEVELS, kphLevel } from '../lib/targets';
 import { Button } from './ui';
 
 /**
@@ -41,6 +42,76 @@ export function SaveBanner({
       <Button variant="secondary" size="sm" onClick={onToggle}>
         {button}
       </Button>
+    </div>
+  );
+}
+
+/**
+ * Where a KPH score stands among the job levels (Pasado / Karaniwan / Magaling):
+ * a plain sentence first, then a bar with a marker, then the list of levels.
+ */
+export function KphLevels({ kph }: { kph: number }) {
+  const score = display(kph);
+  const { reached, next } = kphLevel(kph);
+  const top = KPH_LEVELS[KPH_LEVELS.length - 1].min;
+  const scaleMax = Math.max(top + 3000, score * 1.05);
+  const pos = (value: number) => `${Math.min(100, (value / scaleMax) * 100)}%`;
+
+  return (
+    <div>
+      <p className="text-lg text-stone-900">
+        Antas mo: <strong>{reached ? reached.label : 'Hindi pa pasado'}</strong>
+        {next && (
+          <span className="text-stone-700">
+            {' '}
+            · {(next.min - score).toLocaleString()} KPH pa para sa &quot;{next.label}&quot;
+          </span>
+        )}
+        {!next && <span className="text-stone-700"> · Pinakamataas na antas! 🥋</span>}
+      </p>
+
+      {/* The bar is only a picture of the sentence above, so screen readers skip it. */}
+      <div aria-hidden="true" className="relative mb-8 mt-4 h-4 rounded-full bg-stone-200">
+        {KPH_LEVELS.map((level, i) => {
+          const end = KPH_LEVELS[i + 1]?.min ?? scaleMax;
+          const shade = ['bg-green-200', 'bg-green-400', 'bg-green-600'][i] ?? 'bg-green-600';
+          return (
+            <div
+              key={level.min}
+              className={`absolute inset-y-0 ${shade} ${i === KPH_LEVELS.length - 1 ? 'rounded-r-full' : ''}`}
+              style={{ left: pos(level.min), width: `calc(${pos(end)} - ${pos(level.min)})` }}
+            />
+          );
+        })}
+        {KPH_LEVELS.map((level) => (
+          <div
+            key={level.min}
+            className="absolute top-5 -translate-x-1/2 text-xs font-semibold text-stone-600"
+            style={{ left: pos(level.min) }}
+          >
+            {(level.min / 1000).toLocaleString()}k
+          </div>
+        ))}
+        <div
+          className="absolute -top-2 h-8 w-1.5 -translate-x-1/2 rounded-full bg-brand-800 ring-2 ring-white"
+          style={{ left: pos(score) }}
+        />
+      </div>
+
+      <ul className="space-y-1.5">
+        {KPH_LEVELS.map((level) => {
+          const done = score >= level.min;
+          return (
+            <li key={level.min} className="flex flex-wrap items-baseline gap-x-2 text-base">
+              <span aria-hidden="true">{done ? '✅' : '⬜'}</span>
+              <span className="w-20 font-bold tabular-nums">{level.min.toLocaleString()}</span>
+              <span className="font-semibold text-stone-900">{level.label}</span>
+              <span className="text-sm text-stone-600">— {level.description}</span>
+              <span className="sr-only">{done ? 'naabot mo na' : 'hindi pa naaabot'}</span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
