@@ -113,38 +113,63 @@ export default function EntryFormRunner({
 
       <Card compact className="flex min-h-0 flex-col">
         {/*
-          Wide documents sit beside the form only when there is room; with large text they need a wider screen.
-          grid-rows-[minmax(0,1fr)...]: in a PracticeFrame the columns may shrink and scroll inside.
+          One toolbar line above both columns (like the spreadsheet): which item, the last result, key tips,
+          Finish. Above BOTH columns so the document and the form start and end at the same height.
+        */}
+        <div className="mb-1.5 flex min-h-9 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="text-sm font-semibold text-brand-800">
+              📄 {item.title} #{submitted.length + 1}
+            </span>
+            <span role="status" className="font-bold">
+              {/* "#1" = the number of the item just submitted (same as its title, e.g. "Sales Invoice #1"). */}
+              {lastWrongFields === 0 && <span className="text-green-800">✓ #{submitted.length}: lahat tama!</span>}
+              {lastWrongFields !== null && lastWrongFields > 0 && (
+                <span className="text-red-700">
+                  ✗ #{submitted.length}: {lastWrongFields} field ang mali
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <KeyTips
+              tips={[
+                { key: 'Tab', text: 'susunod na field' },
+                { key: 'Enter', text: 'sa huling field = ipasa' },
+              ]}
+            />
+            {allowFinishEarly && timer.started && (
+              <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
+                <EnTl en="Finish" tl="Tapusin na" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/*
+          Side by side (when there is room): the form column is always 20rem (same in Copy Test, Document
+          Encoding and the Assessment) and the FORM sets the height; the source fills the same height and
+          scrolls inside, so both columns end at the same line. Wide documents need a wider screen (and even
+          wider with large text). grid-rows-[minmax(0,1fr)...]: in a PracticeFrame everything may shrink.
         */}
         <div
           className={`grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,auto)] gap-5 ${
             wideSource
               ? 'xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)] large-text:xl:grid-cols-1 large-text:xl:grid-rows-[minmax(0,1fr)_minmax(0,auto)] large-text:2xl:grid-cols-[minmax(0,1fr)_20rem] large-text:2xl:grid-rows-[minmax(0,1fr)]'
-              : 'lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]'
+              : 'lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)]'
           }`}
         >
-          {/* The source to read from. */}
-          <section aria-label={item.title} className="flex min-h-0 min-w-0 flex-col">
-            {/* One toolbar line (like the spreadsheet): which item, key tips, Finish. No footer row, so the whole form fits. */}
-            <div className="mb-2 flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1">
-              <span className="text-sm font-semibold text-brand-800">
-                📄 {item.title} #{submitted.length + 1}
-              </span>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <KeyTips
-                  tips={[
-                    { key: 'Tab', text: 'susunod na field' },
-                    { key: 'Enter', text: 'sa huling field = ipasa' },
-                  ]}
-                />
-                {allowFinishEarly && timer.started && (
-                  <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-                    <EnTl en="Finish" tl="Tapusin na" />
-                  </Button>
-                )}
-              </div>
+          {/* The source to read from. Side by side it is taken out of the height calculation (absolute); bottom-1 = ends exactly with the Submit button. */}
+          <section aria-label={item.title} className="relative min-h-0 min-w-0">
+            <div
+              className={`overflow-y-auto [&>*]:min-h-full ${
+                wideSource
+                  ? 'xl:absolute xl:inset-x-0 xl:top-0 xl:bottom-1 large-text:xl:static large-text:2xl:absolute'
+                  : 'lg:absolute lg:inset-x-0 lg:top-0 lg:bottom-1'
+              }`}
+            >
+              {item.source}
             </div>
-            <div className="min-h-0 overflow-y-auto">{item.source}</div>
           </section>
 
           {/* The form to fill in. */}
@@ -186,28 +211,14 @@ export default function EntryFormRunner({
                 </div>
               ))}
             </div>
-            {/*
-              Same width as the inputs (lined up with them), result message on its own line below.
-              The same scrollbar gutter as the fields above keeps both edges lined up.
-            */}
+            {/* Same width as the inputs (the same scrollbar gutter keeps both edges lined up). */}
             <div className="mt-1 shrink-0 overflow-hidden px-1.5 py-1 [scrollbar-gutter:stable]">
               <Button type="submit" className="w-full">
                 <EnTl en="Submit" tl="Ipasa" />
               </Button>
-              {/* min-h: the space is kept, so nothing jumps when a message appears. */}
-              <p role="status" className="mt-0.5 min-h-6 text-center font-bold">
-                {/* "#1" = the number of the item just submitted (same as its title, e.g. "Sales Invoice #1"). */}
-                {lastWrongFields === 0 && <span className="text-green-800">✓ #{submitted.length}: lahat tama!</span>}
-                {lastWrongFields !== null && lastWrongFields > 0 && (
-                  <span className="text-red-700">
-                    ✗ #{submitted.length}: {lastWrongFields} field ang mali
-                  </span>
-                )}
-              </p>
             </div>
           </form>
         </div>
-
       </Card>
     </>
   );
