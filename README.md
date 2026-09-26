@@ -1,5 +1,7 @@
 # EncoDojo
 
+**Live app: https://encodojo.vercel.app**
+
 A free, browser-only practice app for **Encoder / Data Entry** job skills in the Philippines:
 typing speed & accuracy and numpad (10-key) speed, with more drills planned.
 

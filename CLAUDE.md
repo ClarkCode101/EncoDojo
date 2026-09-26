@@ -87,8 +87,8 @@ type Session = {
 
 ---
 
-## PHASE 1 — Built (only deployment left)
-Status: all Phase 1 features are built, tested, and committed. Remaining: deploy to Vercel.
+## PHASE 1 — DONE (2026-09-26)
+Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `encodojo`, auto-deploys on every push to `main`). Do not rename the Vercel project — localStorage progress is tied to the domain.
 
 ### 1. Project setup
 - Vite + React + TS, Tailwind, React Router, Vitest, ESLint.
