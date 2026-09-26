@@ -36,7 +36,7 @@ function RecordCard({ record, wide }: { record: CopyRecord; wide: boolean }) {
         Kopyahin nang eksakto
       </div>
       {/* Wide: fields side by side, each value kept whole (it wraps to the next line as a unit). */}
-      <dl className={wide ? 'flex flex-wrap gap-x-10 gap-y-3 px-5 py-4' : 'space-y-4 px-5 py-5'}>
+      <dl className={wide ? 'flex flex-wrap gap-x-10 gap-y-3 px-5 py-4' : 'space-y-3 px-5 py-4'}>
         {FIELDS.map((f) => (
           <div key={f.key} className={wide ? 'min-w-0 max-w-full' : ''}>
             <dt className="text-sm font-medium text-stone-600">
