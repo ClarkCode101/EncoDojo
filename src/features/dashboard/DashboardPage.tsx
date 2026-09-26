@@ -2,7 +2,7 @@
  * Home: where to start (4 practice steps + the Assessment), your progress, and recent sessions.
  * Written for people who are new to computers: big cards, clear order, Taglish.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRightIcon,
@@ -15,7 +15,7 @@ import {
   NumpadIcon,
   StarIcon,
 } from '../../components/icons';
-import { Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
+import { Button, Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
@@ -47,9 +47,11 @@ function summary(session: Session): string {
     return `${verdict} · ${display(m.typingNetWpm)} WPM · ${display(m.numpadKph).toLocaleString()} KPH`;
   }
   if (session.type === 'copy') {
+    if (m.records === 0) return 'Walang natapos na record';
     return `${display(m.fieldAccuracy)}% tamang field · ${display(copyKphOf(m)).toLocaleString()} KPH · ${m.records} record`;
   }
   if (session.type === 'encoding') {
+    if (m.documents === 0) return 'Walang natapos na dokumento';
     return `${display(m.fieldAccuracy)}% tamang field · ${display(m.kph).toLocaleString()} KPH · ${m.documents} dokumento`;
   }
   return `${display(m.kph).toLocaleString()} KPH · ${display(m.entryAccuracy)}% tama`;
@@ -61,6 +63,10 @@ function encodingDetail(session: Session): string {
   const doc = docType ? DOC_INFO[docType].label : 'Halo-halo';
   return session.metrics.sheet === 1 ? `${doc} · spreadsheet` : doc;
 }
+
+/** Recent sessions shown at first, and how many more each "Ipakita pa" adds. */
+const RECENT_FIRST = 5;
+const RECENT_MORE = 10;
 
 const typeLabel: Record<Session['type'], string> = {
   typing: 'Typing Practice',
@@ -157,7 +163,14 @@ const comingSoon = [
 export default function DashboardPage() {
   const { profile, sessions } = useAppData();
   const training = sessions.filter((s) => s.type !== 'assessment');
-  const recent = recentSessions(sessions, 10);
+  // Copy Test / Encoding runs with nothing finished say "100%" (nothing wrong yet): skip them for "Huling ...".
+  const withFinishedItems = sessions.filter(
+    (s) => !(s.type === 'copy' && s.metrics.records === 0) && !(s.type === 'encoding' && s.metrics.documents === 0),
+  );
+  // Show a few at first so Home stays short; "Ipakita pa" adds more.
+  const [shown, setShown] = useState(RECENT_FIRST);
+  const allRecent = recentSessions(sessions, sessions.length);
+  const recent = allRecent.slice(0, shown);
   const streak = currentStreak(sessions);
   const latestAssessment = recentSessions(sessions.filter((s) => s.type === 'assessment'), 1)[0] ?? null;
 
@@ -248,13 +261,13 @@ export default function DashboardPage() {
           />
           <StatBadge
             label="Huling Copy Test"
-            value={show(latestMetric(sessions, 'copy', 'fieldAccuracy'), '%')}
+            value={show(latestMetric(withFinishedItems, 'copy', 'fieldAccuracy'), '%')}
             hint="tamang field sa huling practice"
             help={HELP.fieldAccuracy}
           />
           <StatBadge
             label="Huling Document Encoding"
-            value={show(latestMetric(sessions, 'encoding', 'fieldAccuracy'), '%')}
+            value={show(latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy'), '%')}
             hint="tamang field sa huling practice"
             help={HELP.fieldAccuracy}
           />
@@ -325,6 +338,24 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {allRecent.length > RECENT_FIRST && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span className="text-stone-600">
+              {recent.length} sa {allRecent.length} ang nakikita
+            </span>
+            {recent.length < allRecent.length && (
+              <Button size="sm" variant="secondary" onClick={() => setShown((n) => n + RECENT_MORE)}>
+                Ipakita pa ({Math.min(RECENT_MORE, allRecent.length - recent.length)})
+              </Button>
+            )}
+            {shown > RECENT_FIRST && (
+              <Button size="sm" variant="secondary" onClick={() => setShown(RECENT_FIRST)}>
+                Itago
+              </Button>
+            )}
           </div>
         )}
 
