@@ -3,7 +3,7 @@
  * change since the previous assessment, and the mistake lists.
  */
 import { KphLevels, Stamp, TargetRow } from '../../components/ResultPieces';
-import { AssessmentIcon, CopyIcon, KeyboardIcon, NumpadIcon, ReviewIcon } from '../../components/icons';
+import { AssessmentIcon, CopyIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
@@ -111,9 +111,6 @@ export default function AssessmentReport({
           </ButtonLink>
           <ButtonLink to="/copy" variant="secondary">
             <CopyIcon className="h-5 w-5" /> Copy Test
-          </ButtonLink>
-          <ButtonLink to="/review" variant="secondary">
-            <ReviewIcon className="h-5 w-5" /> Mistake Review
           </ButtonLink>
         </div>
       </Card>
