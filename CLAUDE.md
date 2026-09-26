@@ -96,7 +96,8 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - LICENSE (GPL-3.0), README with run/deploy steps.
 
 ### 2. Typing Test (`features/typing`)
-- Modes: 1, 3, 5 minutes.
+- Modes: **30 sec (practice — results shown, NOT saved)** and **1 min (recorded to progress)**. (Changed from 1/3/5 min at the owner's request.)
+- Extra space: a space typed right after another space, where the passage has no space, counts as 1 mistake but is not added to the text, so the next letters still line up. Logic in `features/typing/typingInput.ts`.
 - Show passage; highlight current character; mark correct (neutral) vs wrong (red) as the user types.
 - Timer starts on first keystroke. Backspace allowed.
 - Live stats (toggleable): Net WPM, Accuracy, time left.
