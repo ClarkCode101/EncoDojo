@@ -6,10 +6,11 @@
  * Steps: intro -> typing -> break -> numpad -> break -> copy -> break -> encoding -> report
  * (A past report can also be opened from the history list on the intro.)
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import EntryFormRunner from '../../components/entry/EntryFormRunner';
 import { AssessmentIcon, ClockIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
-import { Button, Card, ConfirmButton, HelpTip, Kbd, PageHeader } from '../../components/ui';
+import { PracticeFrame } from '../../components/Practice';
+import { Button, Card, ConfirmButton, HelpTip, Kbd, Notice, PageHeader } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { makeRng, randomSeed } from '../../lib/random';
@@ -23,6 +24,7 @@ import NumpadRunner from '../numpad/NumpadRunner';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
 import AssessmentReport from './AssessmentReport';
+import { DEV_TOOLS, DevJumpPanel, blankPart, type JumpTarget } from './DevJump'; // TEMPORARY (DevJump)
 import {
   ASSESSMENT,
   assessmentCopyKph,
@@ -45,19 +47,33 @@ type Step =
 
 const TOTAL_PARTS = 4;
 
-/** "Bahagi 2 sa 3" with a simple progress bar (one segment per part). */
-function PartProgress({ part }: { part: number }) {
+/**
+ * One-line header for the parts and breaks: icon + title (+ a short note) on
+ * the left, "Bahagi 2 sa 4" with a small progress bar on the right. Short, so
+ * each part fits the window without scrolling.
+ */
+function PartHeader({ icon, title, note, part }: { icon: ReactNode; title: string; note?: string; part: number }) {
   return (
-    <div className="mb-6">
-      <div className="mb-2 text-base font-semibold text-stone-700">
-        Bahagi {part} sa {TOTAL_PARTS}
+    <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-x-6 gap-y-2">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-800 sm:flex">
+          {icon}
+        </div>
+        <h1 className="text-2xl font-bold text-stone-900">
+          {title} {note && <span className="ml-1 text-base font-normal text-stone-600">{note}</span>}
+        </h1>
       </div>
-      <div className="flex gap-2" aria-hidden="true">
-        {Array.from({ length: TOTAL_PARTS }, (_, i) => (
-          <div key={i} className={'h-3 flex-1 rounded-full ' + (i < part ? 'bg-brand-700' : 'bg-stone-300')} />
-        ))}
+      <div className="w-56">
+        <div className="mb-1 text-sm font-semibold text-stone-700">
+          Bahagi {part} sa {TOTAL_PARTS}
+        </div>
+        <div className="flex gap-1.5" aria-hidden="true">
+          {Array.from({ length: TOTAL_PARTS }, (_, i) => (
+            <div key={i} className={'h-2.5 flex-1 rounded-full ' + (i < part ? 'bg-brand-700' : 'bg-stone-300')} />
+          ))}
+        </div>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -201,6 +217,8 @@ export default function AssessmentPage() {
   const { sound } = data.settings;
   const [step, setStep] = useState<Step>({ name: 'intro' });
   const [seed, setSeed] = useState(randomSeed);
+  // TEMPORARY (DevJump): a test run started from the jump buttons is not saved.
+  const [testRun, setTestRun] = useState(false);
 
   const passage = useMemo(
     () => buildPassage(makeRng(seed), PLAIN_TEXT_LEVEL, charsNeeded(ASSESSMENT.typingSeconds / 60)),
@@ -230,36 +248,53 @@ export default function AssessmentPage() {
 
   function start() {
     setSeed(randomSeed());
+    setTestRun(false);
     setStep({ name: 'typing' });
   }
 
   function finishEncoding(typing: Session, numpad: Session, copy: Session, encoding: Session) {
     const assessment = buildAssessmentSession(typing, numpad, copy, encoding);
-    saveSession(assessment);
+    if (!testRun) saveSession(assessment);
     setStep({ name: 'report', assessment, fromHistory: false });
+  }
+
+  // TEMPORARY (DevJump): start at a later part; skipped parts count as 0.
+  function jump(to: JumpTarget) {
+    setSeed(randomSeed());
+    setTestRun(true);
+    const typing = blankPart('typing');
+    const numpad = blankPart('numpad');
+    const copy = blankPart('copy');
+    if (to === 'numpad') setStep({ name: 'numpad', typing });
+    else if (to === 'copy') setStep({ name: 'copy', typing, numpad });
+    else if (to === 'encoding') setStep({ name: 'encoding', typing, numpad, copy });
+    else setStep({ name: 'report', assessment: buildAssessmentSession(typing, numpad, copy, blankPart('encoding')), fromHistory: false });
   }
 
   if (step.name === 'report') {
     return (
-      <AssessmentReport
-        assessment={step.assessment}
-        previous={previousAssessment(data.sessions, step.assessment)}
-        onBack={() => setStep({ name: 'intro' })}
-        backLabel={step.fromHistory ? 'Bumalik sa listahan' : 'Tapos na'}
-        onRetake={start}
-      />
+      <>
+        {/* TEMPORARY (DevJump) */}
+        {testRun && !step.fromHistory && (
+          <Notice kind="warning" className="mb-4">
+            🧪 TEST run: hindi ito na-save. 0 ang mga nilaktawang bahagi.
+          </Notice>
+        )}
+        <AssessmentReport
+          assessment={step.assessment}
+          previous={previousAssessment(data.sessions, step.assessment)}
+          onBack={() => setStep({ name: 'intro' })}
+          backLabel={step.fromHistory ? 'Bumalik sa listahan' : 'Tapos na'}
+          onRetake={start}
+        />
+      </>
     );
   }
 
   if (step.name === 'typing') {
     return (
-      <div>
-        <PageHeader
-          icon={<KeyboardIcon className="h-8 w-8" />}
-          title="Assessment: Typing"
-          description="I-type ang text nang eksakto. 1 minuto."
-        />
-        <PartProgress part={1} />
+      <PracticeFrame>
+        <PartHeader icon={<KeyboardIcon className="h-6 w-6" />} title="Assessment: Typing" note="1 minuto" part={1} />
         <TypingRunner
           passage={passage}
           seconds={ASSESSMENT.typingSeconds}
@@ -269,19 +304,14 @@ export default function AssessmentPage() {
           sound={sound}
           onFinish={(typing) => setStep({ name: 'break1', typing })}
         />
-      </div>
+      </PracticeFrame>
     );
   }
 
   if (step.name === 'break1') {
     return (
       <div>
-        <PageHeader
-          icon={<ClockIcon className="h-8 w-8" />}
-          title="Tapos na ang Bahagi 1! 👏"
-          description="Magpahinga muna saglit. Naka-save na ang typing result mo para sa report."
-        />
-        <PartProgress part={2} />
+        <PartHeader icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 1! 👏" note="Magpahinga muna saglit." part={2} />
         <Card title="Susunod: Bahagi 2, Numpad (1 minuto)" icon={<NumpadIcon />}>
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
             <li>
@@ -305,13 +335,8 @@ export default function AssessmentPage() {
 
   if (step.name === 'numpad') {
     return (
-      <div>
-        <PageHeader
-          icon={<NumpadIcon className="h-8 w-8" />}
-          title="Assessment: Numpad"
-          description="I-type ang bawat numero at pindutin ang Enter. 1 minuto."
-        />
-        <PartProgress part={2} />
+      <PracticeFrame>
+        <PartHeader icon={<NumpadIcon className="h-6 w-6" />} title="Assessment: Numpad" note="1 minuto" part={2} />
         <NumpadRunner
           seconds={ASSESSMENT.numpadSeconds}
           difficulty={ASSESSMENT.numpadDifficulty}
@@ -320,19 +345,14 @@ export default function AssessmentPage() {
           sound={sound}
           onFinish={(numpad) => setStep({ name: 'break2', typing: step.typing, numpad })}
         />
-      </div>
+      </PracticeFrame>
     );
   }
 
   if (step.name === 'break2') {
     return (
       <div>
-        <PageHeader
-          icon={<ClockIcon className="h-8 w-8" />}
-          title="Tapos na ang Bahagi 2! 👏"
-          description="Naka-save na ang typing at numpad result mo para sa report."
-        />
-        <PartProgress part={3} />
+        <PartHeader icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 2! 👏" note="Magpahinga muna saglit." part={3} />
         <Card title="Susunod: Bahagi 3, Copy Test (2 minuto)" icon={<CopyIcon />}>
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
             <li>Makikita mo ang isang record (pangalan, petsa, address, contact no., ID).</li>
@@ -359,13 +379,8 @@ export default function AssessmentPage() {
 
   if (step.name === 'copy') {
     return (
-      <div>
-        <PageHeader
-          icon={<CopyIcon className="h-8 w-8" />}
-          title="Assessment: Copy Test"
-          description="Kopyahin ang bawat record nang eksakto. 2 minuto."
-        />
-        <PartProgress part={3} />
+      <PracticeFrame>
+        <PartHeader icon={<CopyIcon className="h-6 w-6" />} title="Assessment: Copy Test" note="2 minuto" part={3} />
         <CopyRunner
           seconds={ASSESSMENT.copySeconds}
           showLiveStats={false}
@@ -373,19 +388,14 @@ export default function AssessmentPage() {
           sound={sound}
           onFinish={(copy) => setStep({ name: 'break3', typing: step.typing, numpad: step.numpad, copy })}
         />
-      </div>
+      </PracticeFrame>
     );
   }
 
   if (step.name === 'break3') {
     return (
       <div>
-        <PageHeader
-          icon={<ClockIcon className="h-8 w-8" />}
-          title="Tapos na ang Bahagi 3! 👏"
-          description="Isa na lang! Naka-save na ang typing, numpad, at copy test result mo para sa report."
-        />
-        <PartProgress part={4} />
+        <PartHeader icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 3! 👏" note="Magpahinga muna saglit." part={4} />
         <Card title="Susunod: Bahagi 4, Document Encoding (3 minuto)" icon={<DocumentIcon />}>
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
             <li>Makikita mo ang isang dokumento: invoice, delivery receipt, o application form (salitan).</li>
@@ -412,14 +422,9 @@ export default function AssessmentPage() {
 
   if (step.name === 'encoding') {
     return (
-      <div>
-        <PageHeader
-          icon={<DocumentIcon className="h-8 w-8" />}
-          title="Assessment: Document Encoding"
-          description="I-encode ang bawat dokumento ayon sa patakaran. 3 minuto."
-        />
-        <PartProgress part={4} />
-        <EncodingRules compact className="mb-4" />
+      <PracticeFrame>
+        <PartHeader icon={<DocumentIcon className="h-6 w-6" />} title="Assessment: Document Encoding" note="3 minuto" part={4} />
+        <EncodingRules compact className="mb-3" />
         <EntryFormRunner
           seconds={ASSESSMENT.encodingSeconds}
           showLiveStats={false}
@@ -437,7 +442,7 @@ export default function AssessmentPage() {
             )
           }
         />
-      </div>
+      </PracticeFrame>
     );
   }
 
@@ -448,6 +453,9 @@ export default function AssessmentPage() {
         title="Assessment"
         description="Parang totoong hiring exam para sa Encoder / Data Entry. Sa dulo, malalaman mo kung job-ready ka na at kung ano pa ang dapat i-practice."
       />
+
+      {/* TEMPORARY (DevJump): localhost only */}
+      {DEV_TOOLS && <DevJumpPanel onJump={jump} />}
 
       <Card title="Paano ito gumagana">
         <Rules />
