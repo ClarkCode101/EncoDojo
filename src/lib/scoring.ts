@@ -46,7 +46,9 @@ export function netWpm(
 }
 
 /**
- * Accuracy % = correct characters / total typed characters * 100.
+ * Accuracy % = correct characters / total characters * 100.
+ * For typing, "total" = correct + mistakes (wrong, extra, and skipped keys),
+ * so skipping a letter lowers accuracy too. See features/typing/alignTyping.ts.
  * Nothing typed yet = 100 (no mistakes have been made). Clamped to 0..100.
  */
 export function accuracyPct(correctChars: number, totalTypedChars: number): number {
@@ -70,33 +72,6 @@ export function entryAccuracyPct(correctEntries: number, totalEntries: number): 
   if (totalEntries <= 0) return 100;
   const pct = (correctEntries / totalEntries) * 100;
   return Math.min(100, Math.max(0, pct));
-}
-
-/**
- * Compare what the user typed against the passage, character by character.
- *
- * `typed` may be shorter than `expected` (they ran out of time) or longer
- * (they typed past the end). Characters past the end of the passage count as
- * mistakes with an empty `expected`.
- */
-export function compareTyping(
-  expected: string,
-  typed: string,
-): { correctChars: number; errors: number; mistakes: Mistake[] } {
-  let correctChars = 0;
-  const mistakes: Mistake[] = [];
-
-  for (let i = 0; i < typed.length; i++) {
-    const want = expected[i] ?? '';
-    const got = typed[i];
-    if (want === got) {
-      correctChars++;
-    } else {
-      mistakes.push({ expected: want, typed: got, index: i });
-    }
-  }
-
-  return { correctChars, errors: typed.length - correctChars, mistakes };
 }
 
 /**

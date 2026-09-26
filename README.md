@@ -22,8 +22,9 @@ typing speed & accuracy and numpad (10-key) speed, with more drills planned.
 
 - **Gross WPM** = (typed characters ÷ 5) ÷ minutes
 - **Net WPM** = Gross WPM − (uncorrected errors ÷ minutes), never below 0
-- **Accuracy** = correct characters ÷ typed characters × 100
-- **Extra spaces** (a second space where the passage has none) count as 1 mistake each, but don't shift the rest of your text
+- **Accuracy** = correct characters ÷ (correct characters + mistakes) × 100
+- **Mistakes** = wrong keys + extra keys (e.g. a double space) + skipped letters. Your typing is lined up with
+  the passage like a "diff", so one slip counts as one mistake and doesn't make the rest of the line wrong.
 - **KPH** = correct keystrokes ÷ hours (digits, decimal point, and Enter; commas are optional and not counted)
 - **Entry accuracy** = fully correct entries ÷ total entries × 100
 

@@ -15,7 +15,7 @@ import { formatClock, useCountdown } from '../../lib/useCountdown';
 import { buildPassage, charsNeeded, levelForDifficulty } from './buildPassage';
 import PassageView from './PassageView';
 import TypingResults from './TypingResults';
-import { isExtraSpace, typingStats } from './typingInput';
+import { BAND, alignTyping } from './alignTyping';
 
 /** 30 sec = practice (not saved), 60 sec = recorded test. */
 const DURATIONS = [30, 60] as const;
@@ -34,8 +34,6 @@ export default function TypingPage() {
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [seed, setSeed] = useState(randomSeed);
   const [typed, setTyped] = useState('');
-  // Positions where an extra space was typed (counted as mistakes, not shown).
-  const [extraSpaces, setExtraSpaces] = useState<number[]>([]);
   const [result, setResult] = useState<Session | null>(null);
 
   const isPractice = seconds === PRACTICE_SECONDS;
@@ -45,11 +43,12 @@ export default function TypingPage() {
     [seed, difficulty, seconds],
   );
 
+  // Line up the typed text with the passage (see alignTyping.ts).
+  const alignment = useMemo(() => alignTyping(passage, typed), [passage, typed]);
+
   // Refs hold the latest values for the timer callback.
   const typedRef = useRef(typed);
   typedRef.current = typed;
-  const extraSpacesRef = useRef(extraSpaces);
-  extraSpacesRef.current = extraSpaces;
   const savedRef = useRef(false);
 
   const finish = useCallback(
@@ -57,22 +56,23 @@ export default function TypingPage() {
       if (savedRef.current) return; // never finish the same test twice
       savedRef.current = true;
 
-      const stats = typingStats(passage, typedRef.current, extraSpacesRef.current);
+      const text = typedRef.current;
+      const a = alignTyping(passage, text);
       const session: Session = {
         id: makeId(),
         type: 'typing',
         startedAt: new Date(Date.now() - elapsedSec * 1000).toISOString(),
         durationSec: elapsedSec,
         metrics: {
-          grossWpm: grossWpm(stats.typedChars, elapsedSec),
-          netWpm: netWpm(stats.typedChars, stats.errors, elapsedSec),
-          accuracy: accuracyPct(stats.correctChars, stats.typedChars),
-          typedChars: stats.typedChars,
-          errors: stats.errors,
+          grossWpm: grossWpm(text.length, elapsedSec),
+          netWpm: netWpm(text.length, a.errors, elapsedSec),
+          accuracy: accuracyPct(a.correctChars, a.correctChars + a.errors),
+          typedChars: text.length,
+          errors: a.errors,
           seconds,
           difficulty,
         },
-        mistakes: stats.mistakes.slice(0, MAX_SAVED_MISTAKES),
+        mistakes: a.mistakes.slice(0, MAX_SAVED_MISTAKES),
       };
       // Practice runs show results but are not saved to progress.
       if (seconds !== PRACTICE_SECONDS) {
@@ -89,32 +89,25 @@ export default function TypingPage() {
     timer.reset();
     savedRef.current = false;
     setTyped('');
-    setExtraSpaces([]);
     setResult(null);
     if (newPassage) setSeed(randomSeed());
   }
 
   function handleChange(value: string) {
     if (timer.finished) return;
-    const next = value.replace(/\n/g, '').slice(0, passage.length);
+    // Allow a little extra length for extra keys near the end.
+    const next = value.replace(/\n/g, '').slice(0, passage.length + BAND);
     if (!timer.started && next.length > 0) timer.start();
 
-    // Extra space: count it as a mistake but don't add it to the text,
-    // so the next letter still lines up with the passage.
-    if (isExtraSpace(passage, typed, next)) {
-      if (sound) errorBeep();
-      setExtraSpaces((list) => [...list, typed.length]);
-      return;
-    }
+    const nextAlignment = alignTyping(passage, next);
 
-    // Beep when a NEW character (not a backspace) is wrong.
-    if (sound && next.length > typed.length) {
-      const i = next.length - 1;
-      if (next[i] !== passage[i]) errorBeep();
+    // Beep when a new key (not a backspace) added a mistake.
+    if (sound && next.length > typed.length && nextAlignment.errors > alignment.errors) {
+      errorBeep();
     }
 
     setTyped(next);
-    if (next.length === passage.length) finish(timer.stop());
+    if (nextAlignment.cursor >= passage.length) finish(timer.stop());
   }
 
   if (result) {
@@ -129,7 +122,7 @@ export default function TypingPage() {
   }
 
   // Live numbers (rounded for display only).
-  const live = typingStats(passage, typed, extraSpaces);
+  const live = alignment;
   const elapsed = Math.max(timer.elapsedSec, 1); // avoid giant numbers in the first second
 
   return (
@@ -182,18 +175,18 @@ export default function TypingPage() {
           <>
             <StatBadge
               label="Net WPM"
-              value={timer.started ? display(netWpm(live.typedChars, live.errors, elapsed)) : '–'}
+              value={timer.started ? display(netWpm(typed.length, live.errors, elapsed)) : '–'}
             />
             <StatBadge
               label="Accuracy"
-              value={`${display(accuracyPct(live.correctChars, live.typedChars))}%`}
+              value={`${display(accuracyPct(live.correctChars, live.correctChars + live.errors))}%`}
             />
           </>
         )}
       </div>
 
       <Card>
-        <PassageView passage={passage} typed={typed} />
+        <PassageView passage={passage} alignment={alignment} />
 
         <label htmlFor="typing-input" className="mb-1 mt-4 block text-sm font-medium text-slate-700">
           Type here
@@ -216,7 +209,10 @@ export default function TypingPage() {
           className="w-full rounded-md border border-slate-300 p-3 font-mono text-lg focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
         <div className="mt-3 flex justify-between text-sm text-slate-600">
-          <span>Backspace is allowed. Pasting is disabled. An extra space counts as 1 mistake.</span>
+          <span>
+            Backspace is allowed. Pasting is disabled. Each wrong, extra, or skipped key counts as 1
+            mistake.
+          </span>
           {timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop())}>
               Finish now

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   accuracyPct,
-  compareTyping,
   display,
   entryAccuracyPct,
   grossWpm,
@@ -110,40 +109,6 @@ describe('entryAccuracyPct', () => {
 
   it('is 0 when every entry is wrong', () => {
     expect(entryAccuracyPct(0, 8)).toBe(0);
-  });
-});
-
-describe('compareTyping', () => {
-  it('counts a perfect match', () => {
-    expect(compareTyping('abc', 'abc')).toEqual({ correctChars: 3, errors: 0, mistakes: [] });
-  });
-
-  it('only compares what was typed so far', () => {
-    const result = compareTyping('hello world', 'hello');
-    expect(result.correctChars).toBe(5);
-    expect(result.errors).toBe(0);
-  });
-
-  it('records each wrong character with its position', () => {
-    const result = compareTyping('cat', 'cot');
-    expect(result.errors).toBe(1);
-    expect(result.mistakes).toEqual([{ expected: 'a', typed: 'o', index: 1 }]);
-  });
-
-  it('counts characters past the end as mistakes', () => {
-    const result = compareTyping('ab', 'abc');
-    expect(result.errors).toBe(1);
-    expect(result.mistakes[0]).toEqual({ expected: '', typed: 'c', index: 2 });
-  });
-
-  it('handles empty input', () => {
-    expect(compareTyping('abc', '')).toEqual({ correctChars: 0, errors: 0, mistakes: [] });
-  });
-
-  it('handles all errors', () => {
-    const result = compareTyping('abc', 'xyz');
-    expect(result.correctChars).toBe(0);
-    expect(result.errors).toBe(3);
   });
 });
 

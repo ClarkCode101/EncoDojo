@@ -1,16 +1,25 @@
-import { memo, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import type { Alignment } from './alignTyping';
 
 /**
  * Shows the passage one <span> per character:
- * - already typed & correct: dark text (neutral)
- * - already typed & wrong:   red background
- * - current character:       yellow highlight + underline
- * - not typed yet:           grey
+ * - typed & correct:  dark text (neutral)
+ * - wrong key:        red background
+ * - skipped letter:   red, crossed out
+ * - extra key(s):     small red bar just before the next character
+ * - current char:     yellow highlight + underline
+ * - not typed yet:    grey
  */
-function PassageView({ passage, typed }: { passage: string; typed: string }) {
+export default function PassageView({
+  passage,
+  alignment,
+}: {
+  passage: string;
+  alignment: Alignment;
+}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const currentRef = useRef<HTMLSpanElement>(null);
-  const position = typed.length;
+  const { statuses, extrasBefore, cursor } = alignment;
 
   // Keep the current character visible by scrolling the box (not the page).
   useEffect(() => {
@@ -21,7 +30,7 @@ function PassageView({ passage, typed }: { passage: string; typed: string }) {
     if (top < box.scrollTop || top > box.scrollTop + box.clientHeight - 48) {
       box.scrollTop = Math.max(0, top - 24);
     }
-  }, [position]);
+  }, [cursor]);
 
   return (
     <div
@@ -31,19 +40,27 @@ function PassageView({ passage, typed }: { passage: string; typed: string }) {
     >
       {Array.from(passage).map((char, i) => {
         let className = 'text-slate-500';
-        if (i < position) {
-          className = typed[i] === char ? 'text-slate-900' : 'bg-red-200 text-red-800';
-        } else if (i === position) {
+        if (i < cursor) {
+          if (statuses[i] === 'correct') className = 'text-slate-900';
+          else if (statuses[i] === 'wrong') className = 'bg-red-200 text-red-800';
+          else className = 'bg-red-100 text-red-700 line-through';
+        } else if (i === cursor) {
           className = 'bg-yellow-200 text-slate-900 underline decoration-2';
         }
         return (
-          <span key={i} ref={i === position ? currentRef : undefined} className={className}>
-            {char}
+          <span key={i}>
+            {i <= cursor && extrasBefore[i] > 0 && (
+              <span
+                title={`${extrasBefore[i]} extra key(s)`}
+                className="mx-px inline-block h-5 w-1 rounded-sm bg-red-600 align-middle"
+              />
+            )}
+            <span ref={i === cursor ? currentRef : undefined} className={className}>
+              {char}
+            </span>
           </span>
         );
       })}
     </div>
   );
 }
-
-export default memo(PassageView);

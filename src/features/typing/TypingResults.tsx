@@ -3,11 +3,16 @@ import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
 import { formatClock } from '../../lib/useCountdown';
 
-/** Make invisible characters visible in the mistakes table. */
+/** Make spaces visible in the mistakes table. */
 function showChar(char: string): string {
-  if (char === '') return '(nothing — extra key)';
-  if (char === ' ') return '␣ space';
-  return char;
+  return char === ' ' ? '␣ space' : char;
+}
+
+/** Short description of a mistake, e.g. "Extra key" or "Skipped letter". */
+function kindOf(mistake: Session['mistakes'][number]): string {
+  if (mistake.expected === '') return 'Extra key';
+  if (mistake.typed === '') return 'Skipped';
+  return 'Wrong key';
 }
 
 export default function TypingResults({
@@ -66,6 +71,7 @@ export default function TypingResults({
               <thead className="sticky top-0 bg-white text-slate-600">
                 <tr>
                   <th className="py-2 pr-4 font-medium">Position</th>
+                  <th className="py-2 pr-4 font-medium">Kind</th>
                   <th className="py-2 pr-4 font-medium">Expected</th>
                   <th className="py-2 font-medium">You typed</th>
                 </tr>
@@ -74,8 +80,9 @@ export default function TypingResults({
                 {session.mistakes.map((mistake, i) => (
                   <tr key={i} className="border-t border-slate-100">
                     <td className="py-1.5 pr-4 text-slate-600">{mistake.index + 1}</td>
-                    <td className="py-1.5 pr-4 text-green-800">{showChar(mistake.expected)}</td>
-                    <td className="py-1.5 text-red-700">{showChar(mistake.typed)}</td>
+                    <td className="py-1.5 pr-4 font-sans text-slate-700">{kindOf(mistake)}</td>
+                    <td className="py-1.5 pr-4 text-green-800">{showChar(mistake.expected) || '—'}</td>
+                    <td className="py-1.5 text-red-700">{showChar(mistake.typed) || '—'}</td>
                   </tr>
                 ))}
               </tbody>
