@@ -1,7 +1,14 @@
 <!doctype html>
-<html lang="fil">
+<!--
+  lang="fil": the UI is Taglish (helps screen readers).
+  translate="no" + notranslate: stop Chrome from offering to translate the page.
+  Auto-translation garbles the Taglish labels and can break React (it rewrites
+  the text React is updating, e.g. the timer and scores).
+-->
+<html lang="fil" translate="no">
   <head>
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Brand indigo (brand-900) for the phone's browser bar -->
