@@ -30,7 +30,18 @@ export const JOB_READY_COPY = {
   fieldAccuracy: 95,
 } as const;
 
-export type KphLevel ={ min: number; label: string; description: string };
+/**
+ * Document Encoding targets — EncoDojo ESTIMATES (no public standard found):
+ * - 95% of fields exactly right (same reasoning as the Copy Test).
+ * - 6,000 net KPH: lower than the Copy Test's 8,000 because the encoder must
+ *   first FIND each value on the document and convert dates/amounts.
+ */
+export const JOB_READY_ENCODING = {
+  kph: 6000,
+  fieldAccuracy: 95,
+} as const;
+
+export type KphLevel = { min: number; label: string; description: string };
 
 /**
  * KPH levels shown on the results, lowest first. The first one is the

@@ -57,6 +57,22 @@ function timeRange(rng: Rng): [string, string] {
 const centavos = (rng: Rng, minPesos: number, maxPesos: number) =>
   intBetween(rng, minPesos * 100, maxPesos * 100);
 
+/**
+ * A name in parts, for forms with separate boxes (Surname / Given Name /
+ * Middle Name). In the Philippines the middle name is usually the mother's
+ * maiden surname, so it is picked from the surname list.
+ */
+export function nameParts(rng: Rng): { given: string; middle: string; surname: string } {
+  const female = rng() < 0.5;
+  let given = pick(rng, female ? ph.femaleFirstNames : ph.maleFirstNames);
+  if (female && rng() < 0.25 && !given.startsWith('Maria')) given = `Ma. ${given}`;
+  let surname = pick(rng, ph.surnames);
+  if (rng() < 0.12) surname = `${surname}-${pick(rng, ph.surnames)}`;
+  let middle = pick(rng, ph.surnames);
+  while (middle === surname) middle = pick(rng, ph.surnames);
+  return { given, middle, surname };
+}
+
 /** e.g. "Ma. Kristine B. Dela Cruz" or "Ramon S. Soriano Jr." */
 export function fullName(rng: Rng): string {
   const female = rng() < 0.5;

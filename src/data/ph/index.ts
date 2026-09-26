@@ -72,6 +72,22 @@ export const companies = [
   'Silangan Hardware', 'Luzviminda Printing', 'Tala Freight Services', 'Kalinga Pharma Distributors',
 ];
 
+/** Fake cooperatives / associations for application forms. */
+export const organizations = [
+  'Bayanihan Multi-Purpose Cooperative',
+  'Samahang Maunlad Credit Cooperative',
+  'Pag-asa Workers Association',
+  'Luntiang Nayon Homeowners Association',
+  'Tulungan Savings and Loan Cooperative',
+];
+
+export const civilStatuses = ['Single', 'Married', 'Widowed', 'Separated'];
+
+export const occupations = ['Sales Clerk', 'Driver', 'Teacher', 'Vendor', 'Cashier', 'Welder', 'Nurse Aide', 'Farmer'];
+
+/** Payment terms printed on invoices. */
+export const paymentTerms = ['COD', '15 days', '30 days', '45 days'];
+
 /** [name, unit, min price, max price] in pesos */
 export const officeItems: [string, string, number, number][] = [
   ['bond paper', 'reams', 180, 320],

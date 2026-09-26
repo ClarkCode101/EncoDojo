@@ -46,6 +46,9 @@ function summary(session: Session): string {
   if (session.type === 'copy') {
     return `${display(m.fieldAccuracy)}% tamang field · ${display(copyKphOf(m)).toLocaleString()} KPH · ${m.records} record`;
   }
+  if (session.type === 'encoding') {
+    return `${display(m.fieldAccuracy)}% tamang field · ${display(m.kph).toLocaleString()} KPH · ${m.documents} dokumento`;
+  }
   return `${display(m.kph).toLocaleString()} KPH · ${display(m.entryAccuracy)}% tama`;
 }
 
@@ -53,6 +56,7 @@ const typeLabel: Record<Session['type'], string> = {
   typing: 'Typing Practice',
   numpad: 'Numpad Practice',
   copy: 'Copy Test',
+  encoding: 'Document Encoding',
   assessment: 'Assessment',
 };
 

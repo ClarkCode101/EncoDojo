@@ -21,7 +21,7 @@ export type Difficulty = 1 | 2 | 3 | 4 | 5 | 6;
 export type NumpadMode = 'mixed' | 'beginner';
 /** Copy Test layout: "form" = like a hiring test / company software, "sheet" = like Excel. */
 export type CopyMode = 'form' | 'sheet';
-export const SESSION_TYPES = ['typing', 'numpad', 'copy', 'assessment'] as const;
+export const SESSION_TYPES = ['typing', 'numpad', 'copy', 'encoding', 'assessment'] as const;
 export type SessionType = (typeof SESSION_TYPES)[number];
 
 export type SessionMistake = {
@@ -29,7 +29,7 @@ export type SessionMistake = {
   typed: string;
   index: number;
   /** Only in assessments: which part the mistake came from. */
-  section?: 'typing' | 'numpad' | 'copy';
+  section?: 'typing' | 'numpad' | 'copy' | 'encoding';
   /** Only in the Copy Test: which form field (e.g. "address"). */
   field?: string;
 };
