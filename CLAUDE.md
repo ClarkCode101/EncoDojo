@@ -29,7 +29,7 @@ The app must be easy for **older and non-techy users**:
 - Every number shown gets a plain explanation via `HelpTip` ("Ano ito?", click-to-open `<details>`, never hover-only). Explanations live in `lib/glossary.ts`.
 - Results screens start with a one-sentence plain summary + the main action buttons, then details.
 - Use shared pieces in `components/ui.tsx` (Button, Card, Step, HelpTip, Notice, Checkbox, LiveStatsBar, KeyTips, SegmentedPicker, ConfirmButton) and `components/icons.tsx` (hand-made SVG icons, no icon library).
-- Deletes always ask first (ConfirmButton). Sidebar shows only usable pages; "coming soon" features are listed on Home. The current page in the sidebar is a white pill with a gold "belt" mark at the sidebar edge. Sidebar top: logo + "EncoDojo" only (no tagline).
+- Deletes always ask first (ConfirmButton). Sidebar shows only usable pages; "coming soon" features are listed on Home. The current page in the sidebar is a white pill with a gold "belt" mark at the sidebar edge. Sidebar top: logo + "EncoDojo" only (no tagline). The sidebar can be collapsed to icons only on desktop (button beside the logo, remembered in `settings.sidebarCollapsed`); collapsed = icon + `title` tooltip + screen-reader name, and the page content widens (`max-w-7xl`). Phones keep the top menu.
 
 ## Product Direction: Training + Assessment (decided 2026-09-26)
 - **Training (the "dojo")**: every feature (Typing, Numpad, Copy Test, Document Encoding, and later QC, Excel) is a training ground. User picks settings, can "Finish now", can retry. Results are saved by default but optional ("Don't save this result" / "Save it again"). A run ended with "Finish now" starts **unsaved** ("Save anyway") because short runs inflate WPM/KPH.
@@ -111,6 +111,7 @@ type AppData = {
     showLiveStats: boolean;                  // UNUSED: practice always shows live stats, Assessment always hides them; drop at next schema bump
     largeText: boolean;                      // v3: "Mas malaking text" in Settings
     copyMode?: 'form' | 'sheet';             // optional, missing = 'sheet'; shared by Copy Test + Document Encoding practice (no schema bump)
+    sidebarCollapsed?: boolean;              // optional, missing = open; desktop sidebar collapsed to icons (no schema bump)
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
   // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).

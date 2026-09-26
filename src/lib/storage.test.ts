@@ -58,6 +58,15 @@ describe('loadData', () => {
   });
 });
 
+describe('optional settings', () => {
+  it('sidebarCollapsed may be missing or a boolean, nothing else', () => {
+    const base = defaultData();
+    expect(isAppData(base)).toBe(true);
+    expect(isAppData({ ...base, settings: { ...base.settings, sidebarCollapsed: true } })).toBe(true);
+    expect(isAppData({ ...base, settings: { ...base.settings, sidebarCollapsed: 'yes' } })).toBe(false);
+  });
+});
+
 describe('saveData', () => {
   it('saves and loads the same data', () => {
     const data = addSession(defaultData(), sampleSession());

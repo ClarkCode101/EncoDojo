@@ -62,6 +62,11 @@ export type Settings = {
   showLiveStats: boolean;
   /** Bigger text and buttons everywhere (for people who find the normal size hard to read). */
   largeText: boolean;
+  /**
+   * Optional (added without a schema version bump): true = the sidebar is
+   * collapsed to icons only (more room for the page). Missing = open.
+   */
+  sidebarCollapsed?: boolean;
 };
 
 export type AppData = {
@@ -96,6 +101,10 @@ function isTypingLevel(value: unknown): boolean {
 
 function isCopyModeOrMissing(value: unknown): boolean {
   return value === undefined || value === 'form' || value === 'sheet';
+}
+
+function isBooleanOrMissing(value: unknown): boolean {
+  return value === undefined || typeof value === 'boolean';
 }
 
 function isNumpadMode(value: unknown): value is NumpadMode {
@@ -137,7 +146,8 @@ export function isAppData(value: unknown): value is AppData {
   return (
     isNumpadMode(settings.numpadMode) &&
     typeof settings.largeText === 'boolean' &&
-    isCopyModeOrMissing(settings.copyMode)
+    isCopyModeOrMissing(settings.copyMode) &&
+    isBooleanOrMissing(settings.sidebarCollapsed)
   );
 }
 

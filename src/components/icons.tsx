@@ -89,7 +89,16 @@ export const DocumentIcon = (p: IconProps) => (
   </Icon>
 );
 
-export const SettingsIcon =(p: IconProps) => (
+/** A panel with an arrow: "hide the sidebar" (arrow left) or "show it" (arrow right). */
+export const SidebarToggleIcon = ({ className = 'h-6 w-6', open }: IconProps & { open: boolean }) => (
+  <Icon className={className}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M9 4v16" />
+    <path d={open ? 'M16 10l-2 2 2 2' : 'M14 10l2 2-2 2'} />
+  </Icon>
+);
+
+export const SettingsIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
     <circle cx="15" cy="6" r="2" />
