@@ -13,6 +13,16 @@ import type { Difficulty } from '../../lib/storage';
 import { formatAmount } from '../../lib/format';
 import { intBetween, pick, type Rng } from '../../lib/random';
 
+/** Shown under the Difficulty picker on the Numpad Drill page. */
+export const NUMPAD_DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  1: 'Short whole numbers (e.g. 482)',
+  2: 'Longer whole numbers (e.g. 30719)',
+  3: 'Small amounts with centavos (e.g. 86.40)',
+  4: 'Amounts with commas (e.g. 12,450.75)',
+  5: 'Reference numbers and amounts (e.g. 2026004517)',
+  6: 'Mix of everything, bigger amounts (e.g. 348,912.05)',
+};
+
 function amount(rng: Rng, maxPesos: number): string {
   const centavos = intBetween(rng, 100, maxPesos * 100 + 99);
   return formatAmount(centavos / 100);

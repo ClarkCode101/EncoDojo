@@ -5,21 +5,24 @@
  */
 import { useState } from 'react';
 import { PageHeader, SegmentedPicker } from '../../components/ui';
-import type { Session } from '../../lib/storage';
-import { removeSession, saveSession, useAppData } from '../../lib/useAppData';
+import type { Difficulty, Session } from '../../lib/storage';
+import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import NumpadResults from './NumpadResults';
 import NumpadRunner from './NumpadRunner';
+import { NUMPAD_DIFFICULTY_LABELS } from './entries';
 
 const DURATIONS = [30, 60] as const;
 type Seconds = (typeof DURATIONS)[number];
 
 const durationLabel = (s: Seconds) => (s === 30 ? '30 sec' : '1 min');
 
+const DIFFICULTIES: Difficulty[] = [1, 2, 3, 4, 5, 6];
+
 type Result = { session: Session; finishedEarly: boolean };
 
 export default function NumpadPage() {
   const data = useAppData();
-  const { difficulty, showLiveStats, sound } = data.settings;
+  const { numpadDifficulty: difficulty, showLiveStats, sound } = data.settings;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
@@ -69,7 +72,15 @@ export default function NumpadPage() {
         description="Training: type each number with the numeric keypad and press Enter. Commas are optional."
       />
 
-      <div className="mb-4 flex flex-wrap items-end gap-6">
+      <div className="mb-2 flex flex-wrap items-end gap-6">
+        <SegmentedPicker
+          label="Difficulty"
+          options={DIFFICULTIES}
+          value={difficulty}
+          onChange={(d) => {
+            if (!running) updateSettings({ numpadDifficulty: d });
+          }}
+        />
         <SegmentedPicker
           label="Duration"
           options={DURATIONS}
@@ -79,8 +90,10 @@ export default function NumpadPage() {
             if (!running) setSeconds(s);
           }}
         />
-        <span className="text-sm text-slate-600">Difficulty {difficulty} (change in Settings)</span>
       </div>
+      <p className="mb-4 text-sm text-slate-700">
+        Difficulty {difficulty}: {NUMPAD_DIFFICULTY_LABELS[difficulty]}
+      </p>
 
       <NumpadRunner
         key={`${seconds}-${difficulty}-${attempt}`}

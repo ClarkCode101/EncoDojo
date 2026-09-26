@@ -7,11 +7,18 @@
  * - Export/Import use the same JSON shape that is stored.
  */
 
+/**
+ * The key name never changes (it would lose everyone's data). The schema
+ * version lives INSIDE the data (`version`) and is upgraded by migrate().
+ */
 export const STORAGE_KEY = 'encodojo:v1';
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;
 export const MAX_SESSIONS = 500;
 
+/** Numpad Drill difficulty (see features/numpad/entries.ts). */
 export type Difficulty = 1 | 2 | 3 | 4 | 5 | 6;
+/** Typing Test passage level: 1 plain text, 2 names & addresses, 3 numbers & codes. */
+export type TypingLevel = 1 | 2 | 3;
 export const SESSION_TYPES = ['typing', 'numpad', 'assessment'] as const;
 export type SessionType = (typeof SESSION_TYPES)[number];
 
@@ -32,18 +39,25 @@ export type Session = {
   mistakes: SessionMistake[];
 };
 
+export type Settings = {
+  typingLevel: TypingLevel;
+  numpadDifficulty: Difficulty;
+  sound: boolean;
+  showLiveStats: boolean;
+};
+
 export type AppData = {
-  version: 1;
+  version: 2;
   profile: { displayName: string; createdAt: string };
-  settings: { difficulty: Difficulty; sound: boolean; showLiveStats: boolean };
+  settings: Settings;
   sessions: Session[];
 };
 
 export function defaultData(now: Date = new Date()): AppData {
   return {
-    version: 1,
+    version: 2,
     profile: { displayName: '', createdAt: now.toISOString() },
-    settings: { difficulty: 1, sound: false, showLiveStats: true },
+    settings: { typingLevel: 1, numpadDifficulty: 1, sound: false, showLiveStats: true },
     sessions: [],
   };
 }
@@ -56,6 +70,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function isDifficulty(value: unknown): value is Difficulty {
   return typeof value === 'number' && [1, 2, 3, 4, 5, 6].includes(value);
+}
+
+function isTypingLevel(value: unknown): value is TypingLevel {
+  return typeof value === 'number' && [1, 2, 3].includes(value);
 }
 
 function isSession(value: unknown): value is Session {
@@ -71,17 +89,14 @@ function isSession(value: unknown): value is Session {
   );
 }
 
-/** True when `value` has exactly the shape of the current AppData. */
-export function isAppData(value: unknown): value is AppData {
-  if (!isObject(value)) return false;
+/** Profile, sessions, sound, and live stats: the same in every version so far. */
+function hasValidCommonParts(value: Record<string, unknown>): boolean {
   const { profile, settings, sessions } = value;
   return (
-    value.version === CURRENT_VERSION &&
     isObject(profile) &&
     typeof profile.displayName === 'string' &&
     typeof profile.createdAt === 'string' &&
     isObject(settings) &&
-    isDifficulty(settings.difficulty) &&
     typeof settings.sound === 'boolean' &&
     typeof settings.showLiveStats === 'boolean' &&
     Array.isArray(sessions) &&
@@ -89,17 +104,41 @@ export function isAppData(value: unknown): value is AppData {
   );
 }
 
+/** True when `value` has exactly the shape of the current AppData. */
+export function isAppData(value: unknown): value is AppData {
+  if (!isObject(value) || value.version !== CURRENT_VERSION || !hasValidCommonParts(value)) return false;
+  const settings = value.settings as Record<string, unknown>;
+  return isTypingLevel(settings.typingLevel) && isDifficulty(settings.numpadDifficulty);
+}
+
 /**
- * Upgrade saved data to the current version.
+ * Version 1 had ONE difficulty (1-6) in Settings for both drills.
+ * Version 2 gives each drill its own: typingLevel (1-3) and numpadDifficulty (1-6).
+ */
+function upgradeV1toV2(raw: Record<string, unknown>): Record<string, unknown> | null {
+  if (!hasValidCommonParts(raw)) return null;
+  const { difficulty, ...rest } = raw.settings as Record<string, unknown>;
+  if (!isDifficulty(difficulty)) return null;
+  return {
+    ...raw,
+    version: 2,
+    settings: {
+      ...rest,
+      typingLevel: Math.ceil(difficulty / 2), // old 1-2 -> 1, 3-4 -> 2, 5-6 -> 3
+      numpadDifficulty: difficulty,
+    },
+  };
+}
+
+/**
+ * Upgrade saved data to the current version, one step at a time.
  * Returns null when the data cannot be understood.
- *
- * When we add version 2 later, add a step here like:
- *   if (raw.version === 1) raw = upgradeV1toV2(raw);
  */
 export function migrate(raw: unknown): AppData | null {
   if (!isObject(raw)) return null;
-  // (no older versions exist yet)
-  return isAppData(raw) ? raw : null;
+  let data: Record<string, unknown> | null = raw;
+  if (data.version === 1) data = upgradeV1toV2(data);
+  return isAppData(data) ? data : null;
 }
 
 /** Keep only the newest sessions so we stay far below the ~5 MB limit. */

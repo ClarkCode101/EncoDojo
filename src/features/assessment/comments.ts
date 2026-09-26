@@ -75,7 +75,7 @@ function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): 
     const categories = [
       {
         count: mistakes.filter((x) => /[0-9]/.test(charOf(x))).length,
-        tip: 'Many typing mistakes were in numbers (amounts, dates, codes). Train the Typing Test at Difficulty 5-6.',
+        tip: 'Many typing mistakes were in numbers (amounts, dates, codes). Train the Typing Test at level "Numbers & codes".',
       },
       {
         count: mistakes.filter((x) => /[A-Z]/.test(charOf(x))).length,
@@ -83,7 +83,7 @@ function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): 
       },
       {
         count: mistakes.filter((x) => /[^A-Za-z0-9 ]/.test(charOf(x))).length,
-        tip: 'Many typing mistakes were punctuation (periods, commas, dashes, slashes). Slow down on names, addresses, and codes — Difficulty 3-4 is good training.',
+        tip: 'Many typing mistakes were punctuation (periods, commas, dashes, slashes). Slow down on names, addresses, and codes — the "Names & addresses" level is good training.',
       },
     ];
     const top = categories.reduce((a, b) => (b.count > a.count ? b : a));

@@ -1,23 +1,7 @@
 import { useRef, useState } from 'react';
 import { Button, Card, PageHeader } from '../../components/ui';
-import {
-  defaultData,
-  exportFileName,
-  exportJson,
-  parseImport,
-  type AppData,
-  type Difficulty,
-} from '../../lib/storage';
-import { replaceAppData, updateAppData, useAppData } from '../../lib/useAppData';
-
-const difficultyLabels: Record<Difficulty, string> = {
-  1: '1 — Plain sentences · short numbers',
-  2: '2 — Plain sentences · 4–5 digit numbers',
-  3: '3 — Names & addresses · amounts under 1,000',
-  4: '4 — Names & addresses · amounts with commas',
-  5: '5 — Numbers & codes · reference numbers',
-  6: '6 — Numbers & codes · mixed, large amounts',
-};
+import { defaultData, exportFileName, exportJson, parseImport, type AppData } from '../../lib/storage';
+import { replaceAppData, updateAppData, updateSettings, useAppData } from '../../lib/useAppData';
 
 const RESET_WORD = 'RESET';
 
@@ -65,10 +49,6 @@ export default function SettingsPage() {
   const [pendingImport, setPendingImport] = useState<AppData | null>(null);
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [resetText, setResetText] = useState('');
-
-  function setSetting<K extends keyof AppData['settings']>(key: K, value: AppData['settings'][K]) {
-    updateAppData((d) => ({ ...d, settings: { ...d.settings, [key]: value } }));
-  }
 
   async function handleFile(file: File | undefined) {
     setMessage(null);
@@ -137,36 +117,21 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="difficulty" className="mb-1 block font-medium text-slate-800">
-              Difficulty
-            </label>
-            <select
-              id="difficulty"
-              value={data.settings.difficulty}
-              onChange={(e) => setSetting('difficulty', Number(e.target.value) as Difficulty)}
-              className="w-full max-w-sm rounded-md border border-slate-300 bg-white px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              {([1, 2, 3, 4, 5, 6] as Difficulty[]).map((d) => (
-                <option key={d} value={d}>
-                  {difficultyLabels[d]}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-sm text-slate-600">Applies to both the Typing Test and Numpad Drill.</p>
-          </div>
+          <p className="text-sm text-slate-600">
+            Difficulty is now chosen on each training page (Typing Test and Numpad Drill).
+          </p>
 
           <Toggle
             label="Show live stats"
-            description="Show WPM / KPH and accuracy while you practice. The timer is always shown."
+            description="Show WPM / KPH and accuracy while you train. The timer is always shown. (The Assessment never shows live stats.)"
             checked={data.settings.showLiveStats}
-            onChange={(v) => setSetting('showLiveStats', v)}
+            onChange={(v) => updateSettings({ showLiveStats: v })}
           />
           <Toggle
             label="Sound"
             description="Play a short beep when you make a mistake."
             checked={data.settings.sound}
-            onChange={(v) => setSetting('sound', v)}
+            onChange={(v) => updateSettings({ sound: v })}
           />
         </div>
       </Card>

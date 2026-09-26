@@ -7,7 +7,15 @@
  *   updateAppData((d) => ({ ...d, settings: { ...d.settings, sound: true } }));
  */
 import { useSyncExternalStore } from 'react';
-import { STORAGE_KEY, addSession, loadData, saveData, type AppData, type Session } from './storage';
+import {
+  STORAGE_KEY,
+  addSession,
+  loadData,
+  saveData,
+  type AppData,
+  type Session,
+  type Settings,
+} from './storage';
 
 let current: AppData = loadData();
 const listeners = new Set<() => void>();
@@ -34,6 +42,11 @@ export function updateAppData(change: (data: AppData) => AppData): boolean {
 /** Replace everything (used by Import and Reset). */
 export function replaceAppData(data: AppData): boolean {
   return updateAppData(() => data);
+}
+
+/** Change one or more settings, e.g. updateSettings({ sound: true }). */
+export function updateSettings(changes: Partial<Settings>): boolean {
+  return updateAppData((d) => ({ ...d, settings: { ...d.settings, ...changes } }));
 }
 
 /** Add a finished session to progress. */

@@ -8,12 +8,13 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card, StatBadge } from '../../components/ui';
-import { accuracyPct, display, grossWpm, netWpm, wrongKeystrokes } from '../../lib/scoring';
+import { accuracyPct, display, netWpm, wrongKeystrokes } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { makeId, type Session } from '../../lib/storage';
 import { formatClock, useCountdown } from '../../lib/useCountdown';
 import PassageView from './PassageView';
 import { BAND, alignTyping } from './alignTyping';
+import { scoreTyping } from './scoreTyping';
 
 /** Store at most this many mistakes per session (keeps localStorage small). */
 const MAX_SAVED_MISTAKES = 200;
@@ -21,7 +22,7 @@ const MAX_SAVED_MISTAKES = 200;
 export default function TypingRunner({
   passage,
   seconds,
-  difficulty,
+  level,
   showLiveStats,
   allowFinishEarly,
   sound,
@@ -30,8 +31,8 @@ export default function TypingRunner({
 }: {
   passage: string;
   seconds: number;
-  /** Saved with the result. 0 = mixed (assessment). */
-  difficulty: number;
+  /** Passage level, saved with the result. 0 = mixed (assessment). */
+  level: number;
   showLiveStats: boolean;
   allowFinishEarly: boolean;
   sound: boolean;
@@ -60,29 +61,18 @@ export default function TypingRunner({
       if (finishedRef.current) return; // never finish the same run twice
       finishedRef.current = true;
 
-      const text = typedRef.current;
-      const a = alignTyping(passage, text);
-      const keys = keysRef.current;
+      const { alignment: a, metrics } = scoreTyping(passage, typedRef.current, elapsedSec, keysRef.current);
       const session: Session = {
         id: makeId(),
         type: 'typing',
         startedAt: new Date(Date.now() - elapsedSec * 1000).toISOString(),
         durationSec: elapsedSec,
-        metrics: {
-          grossWpm: grossWpm(text.length, elapsedSec),
-          netWpm: netWpm(text.length, a.errors, elapsedSec),
-          accuracy: accuracyPct(a.correctChars, a.correctChars + a.errors),
-          keystrokeAccuracy: accuracyPct(keys.total - keys.wrong, keys.total),
-          typedChars: text.length,
-          errors: a.errors,
-          seconds,
-          difficulty,
-        },
+        metrics: { ...metrics, seconds, level },
         mistakes: a.mistakes.slice(0, MAX_SAVED_MISTAKES),
       };
       onFinishRef.current(session, finishedEarly);
     },
-    [passage, seconds, difficulty],
+    [passage, seconds, level],
   );
 
   const timer = useCountdown(seconds, () => finish(seconds, false));

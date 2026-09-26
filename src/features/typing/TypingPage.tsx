@@ -6,9 +6,9 @@
 import { useMemo, useState } from 'react';
 import { Button, PageHeader, SegmentedPicker } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
-import type { Session } from '../../lib/storage';
-import { removeSession, saveSession, updateAppData, useAppData } from '../../lib/useAppData';
-import { buildPassage, charsNeeded, levelForDifficulty } from './buildPassage';
+import type { Session, TypingLevel } from '../../lib/storage';
+import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
+import { TYPING_LEVEL_LABELS, buildPassage, charsNeeded } from './buildPassage';
 import { compareWithHistory, type TypingComparison } from './compare';
 import TypingResults from './TypingResults';
 import TypingRunner from './TypingRunner';
@@ -18,6 +18,8 @@ type Seconds = (typeof DURATIONS)[number];
 
 const durationLabel = (s: Seconds) => (s === 30 ? '30 sec' : '1 min');
 
+const LEVELS: TypingLevel[] = [1, 2, 3];
+
 type Result = {
   session: Session;
   comparison: TypingComparison;
@@ -26,7 +28,7 @@ type Result = {
 
 export default function TypingPage() {
   const data = useAppData();
-  const { difficulty, showLiveStats, sound } = data.settings;
+  const { typingLevel, showLiveStats, sound } = data.settings;
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [seed, setSeed] = useState(randomSeed);
@@ -36,8 +38,8 @@ export default function TypingPage() {
   const [saved, setSaved] = useState(false);
 
   const passage = useMemo(
-    () => buildPassage(makeRng(seed), levelForDifficulty(difficulty), charsNeeded(seconds / 60)),
-    [seed, difficulty, seconds],
+    () => buildPassage(makeRng(seed), typingLevel, charsNeeded(seconds / 60)),
+    [seed, typingLevel, seconds],
   );
 
   function handleFinish(session: Session, finishedEarly: boolean) {
@@ -89,6 +91,15 @@ export default function TypingPage() {
 
       <div className="mb-4 flex flex-wrap items-end gap-6">
         <SegmentedPicker
+          label="Level"
+          options={LEVELS}
+          value={typingLevel}
+          format={(l) => TYPING_LEVEL_LABELS[l]}
+          onChange={(l) => {
+            if (!running) updateSettings({ typingLevel: l });
+          }}
+        />
+        <SegmentedPicker
           label="Duration"
           options={DURATIONS}
           value={seconds}
@@ -105,23 +116,17 @@ export default function TypingPage() {
             type="checkbox"
             className="h-4 w-4"
             checked={showLiveStats}
-            onChange={(e) =>
-              updateAppData((d) => ({
-                ...d,
-                settings: { ...d.settings, showLiveStats: e.target.checked },
-              }))
-            }
+            onChange={(e) => updateSettings({ showLiveStats: e.target.checked })}
           />
           Show live stats
         </label>
-        <span className="text-sm text-slate-600">Difficulty {difficulty} (change in Settings)</span>
       </div>
 
       <TypingRunner
-        key={`${seed}-${seconds}-${difficulty}-${attempt}`}
+        key={`${seed}-${seconds}-${typingLevel}-${attempt}`}
         passage={passage}
         seconds={seconds}
-        difficulty={difficulty}
+        level={typingLevel}
         showLiveStats={showLiveStats}
         allowFinishEarly
         sound={sound}

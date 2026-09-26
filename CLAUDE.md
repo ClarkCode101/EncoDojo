@@ -69,12 +69,19 @@ src/
 - Round displayed values to whole numbers; store raw values.
 
 ## Storage Schema (`lib/storage.ts`)
-Single key: `encodojo:v1`
+Single key: `encodojo:v1` (the key name never changes; the schema version is `data.version`, currently **2**)
 ```ts
 type AppData = {
-  version: 1;
+  version: 2;
   profile: { displayName: string; createdAt: string };
-  settings: { difficulty: 1 | 2 | 3 | 4 | 5 | 6; sound: boolean; showLiveStats: boolean };
+  settings: {
+    typingLevel: 1 | 2 | 3;                  // chosen on the Typing Test page
+    numpadDifficulty: 1 | 2 | 3 | 4 | 5 | 6; // chosen on the Numpad Drill page
+    sound: boolean;
+    showLiveStats: boolean;
+  };
+  // v1 had a single `difficulty` (1-6) in Settings; migrate() upgrades it:
+  // typingLevel = ceil(difficulty / 2), numpadDifficulty = difficulty.
   sessions: Session[];
 };
 
@@ -128,7 +135,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Recent sessions list (last 10).
 
 ### 5. Settings (`features/settings`)
-- Display name, difficulty (1–6), live stats toggle.
+- Display name, live stats toggle, sound. (Difficulty was moved to each training page at the owner's request: Typing = Level picker, Numpad = Difficulty 1–6 picker.)
 - Export progress, Import progress, Reset all data (with typed confirmation).
 
 ### 6. Tests

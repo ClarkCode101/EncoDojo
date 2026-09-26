@@ -1,15 +1,16 @@
 import { passages, type PassageLevel } from '../../data/passages';
-import type { Difficulty } from '../../lib/storage';
 import { shuffle, type Rng } from '../../lib/random';
 import { generateParagraph } from './generatePassage';
 
 /** Share of paragraphs taken from the hand-written passages (the rest are generated). */
 const HANDWRITTEN_SHARE = 0.25;
 
-/** Difficulty 1-2 -> level 1, 3-4 -> level 2, 5-6 -> level 3. */
-export function levelForDifficulty(difficulty: Difficulty): PassageLevel {
-  return Math.ceil(difficulty / 2) as PassageLevel;
-}
+/** Names of the typing levels, shown in the Level picker. */
+export const TYPING_LEVEL_LABELS: Record<PassageLevel, string> = {
+  1: 'Plain text',
+  2: 'Names & addresses',
+  3: 'Numbers & codes',
+};
 
 /**
  * Enough characters that even a very fast typist (about 120 WPM) will not

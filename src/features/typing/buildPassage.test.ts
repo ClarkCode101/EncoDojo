@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildMixedPassage, buildPassage, charsNeeded, levelForDifficulty } from './buildPassage';
+import { buildMixedPassage, buildPassage, charsNeeded } from './buildPassage';
 import { makeRng } from '../../lib/random';
 import { passages } from '../../data/passages';
-
-describe('levelForDifficulty', () => {
-  it('maps 6 difficulties onto 3 passage levels', () => {
-    expect([1, 2, 3, 4, 5, 6].map((d) => levelForDifficulty(d as 1))).toEqual([1, 1, 2, 2, 3, 3]);
-  });
-});
 
 describe('buildPassage', () => {
   it('is long enough for the chosen time', () => {

@@ -146,7 +146,7 @@ export default function AssessmentPage() {
         <TypingRunner
           passage={passage}
           seconds={ASSESSMENT.typingSeconds}
-          difficulty={0}
+          level={0}
           showLiveStats={false}
           allowFinishEarly={false}
           sound={sound}
