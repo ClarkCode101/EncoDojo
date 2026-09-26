@@ -132,7 +132,7 @@ export default function NumpadPage() {
         <StatBadge label="Entries done" value={tally.entries} />
         {showLiveStats && (
           <>
-            <StatBadge label="KPH" value={timer.started ? display(kph(tally.keystrokes, elapsed)) : '–'} />
+            <StatBadge label="KPH" value={timer.started ? display(kph(tally.keystrokes, elapsed)).toLocaleString() : '–'} />
             <StatBadge
               label="Entry accuracy"
               value={`${display(entryAccuracyPct(tally.correctEntries, tally.entries))}%`}
