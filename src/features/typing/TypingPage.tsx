@@ -7,7 +7,8 @@
  * and numbers will be trained by upcoming features (Copy Test, Encoding).
  */
 import { useMemo, useState } from 'react';
-import { Button, PageHeader, SegmentedPicker } from '../../components/ui';
+import { KeyboardIcon } from '../../components/icons';
+import { Button, Card, Checkbox, PageHeader, SegmentedPicker, Step } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
@@ -19,7 +20,7 @@ import TypingRunner from './TypingRunner';
 const DURATIONS = [30, 60] as const;
 type Seconds = (typeof DURATIONS)[number];
 
-const durationLabel = (s: Seconds) => (s === 30 ? '30 sec' : '1 min');
+const durationLabel = (s: Seconds) => (s === 30 ? '30 segundo' : '1 minuto');
 
 type Result = {
   session: Session;
@@ -86,33 +87,39 @@ export default function TypingPage() {
   return (
     <div>
       <PageHeader
-        title="Typing Test"
-        description="Training: type the passage exactly as shown. The timer starts on your first keystroke."
+        icon={<KeyboardIcon className="h-8 w-8" />}
+        title="Typing Practice"
+        description="Sanayin ang bilis at tamang pagta-type. Practice lang ito — puwede kang umulit hangga't gusto mo."
       />
 
-      <div className="mb-4 flex flex-wrap items-end gap-6">
-        <SegmentedPicker
-          label="Duration"
-          options={DURATIONS}
-          value={seconds}
-          format={durationLabel}
-          onChange={(s) => {
-            if (!running) setSeconds(s);
-          }}
-        />
-        <Button variant="secondary" onClick={() => restart(true)}>
-          New passage
-        </Button>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            className="h-4 w-4"
-            checked={showLiveStats}
-            onChange={(e) => updateSettings({ showLiveStats: e.target.checked })}
-          />
-          Show live stats
-        </label>
-      </div>
+      <Card className="mb-6">
+        <div className="space-y-6">
+          <Step number={1} title="Pumili ng tagal">
+            <div className="flex flex-wrap items-end gap-4">
+              <SegmentedPicker
+                label="Gaano katagal?"
+                options={DURATIONS}
+                value={seconds}
+                format={durationLabel}
+                disabled={running}
+                onChange={setSeconds}
+              />
+              <Button variant="secondary" disabled={running} onClick={() => restart(true)}>
+                Ibang text
+              </Button>
+            </div>
+            <div className="mt-4">
+              <Checkbox
+                label="Ipakita ang score habang nagta-type"
+                description="Makikita mo ang bilis at accuracy mo habang tumatakbo ang oras."
+                checked={showLiveStats}
+                onChange={(v) => updateSettings({ showLiveStats: v })}
+              />
+            </div>
+          </Step>
+          <Step number={2} title="I-type ang text sa ibaba" />
+        </div>
+      </Card>
 
       <TypingRunner
         key={`${seed}-${seconds}-${attempt}`}

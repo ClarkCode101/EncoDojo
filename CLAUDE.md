@@ -5,6 +5,16 @@
 
 The owner is learning while building. When you finish a task, **explain what you did in simple terms (Taglish is fine)**, and point out anything they should test manually.
 
+## UI & Language Rules (decided 2026-09-26)
+The app must be easy for **older and non-techy users**:
+- **All UI text is Taglish** (simple, conversational). Keep job terms in English (WPM, KPH, Accuracy, Encoder, Assessment). Code, comments, and commit messages stay in English.
+- Big readable text (root 17px; Settings → "Mas malaking text" = 19px via `html.large-text`, `settings.largeText`). Buttons at least 44px tall. No ALL-CAPS labels.
+- Every page: icon + title + one-sentence explanation, then numbered steps (`Step` component) for what to do.
+- Every number shown gets a plain explanation via `HelpTip` ("Ano ito?", click-to-open `<details>`, never hover-only). Explanations live in `lib/glossary.ts`.
+- Results screens start with a one-sentence plain summary + the main action buttons, then details.
+- Use shared pieces in `components/ui.tsx` (Button, Card, Step, HelpTip, Notice, Checkbox, TimeLeft, SegmentedPicker, ConfirmButton) and `components/icons.tsx` (hand-made SVG icons, no icon library).
+- Deletes always ask first (ConfirmButton). Sidebar shows only usable pages; "coming soon" features are listed on Home.
+
 ## Product Direction: Training + Assessment (decided 2026-09-26)
 - **Training (the "dojo")**: every feature (Typing, Numpad, and later Copy Test, Encoding, QC, Excel) is a training ground. User picks settings, can "Finish now", can retry. Results are saved by default but optional ("Don't save this result" / "Save it again"). A run ended with "Finish now" starts **unsaved** ("Save anyway") because short runs inflate WPM/KPH.
 - **Assessment** (`features/assessment`): runs every feature in a fixed order under exam rules — fixed duration/difficulty, no live stats, no "Finish now", no retry — then shows a **report card**: per-target ✅/❌, overall "Job-ready" verdict, rule-based comments (no AI), change vs previous assessment, and mistake lists. Always saved as ONE session of type `'assessment'`.
@@ -69,16 +79,17 @@ src/
 - Round displayed values to whole numbers; store raw values.
 
 ## Storage Schema (`lib/storage.ts`)
-Single key: `encodojo:v1` (the key name never changes; the schema version is `data.version`, currently **2**)
+Single key: `encodojo:v1` (the key name never changes; the schema version is `data.version`, currently **3**)
 ```ts
 type AppData = {
-  version: 2;
+  version: 3;
   profile: { displayName: string; createdAt: string };
   settings: {
     typingLevel: 1 | 2 | 3;                  // currently UNUSED (Typing is plain text only); kept for later
     numpadDifficulty: 1 | 2 | 3 | 4 | 5 | 6; // chosen on the Numpad Drill page
     sound: boolean;
     showLiveStats: boolean;
+    largeText: boolean;                      // v3: "Mas malaking text" in Settings
   };
   // v1 had a single `difficulty` (1-6) in Settings; migrate() upgrades it:
   // typingLevel = ceil(difficulty / 2), numpadDifficulty = difficulty.

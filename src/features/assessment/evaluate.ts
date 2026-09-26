@@ -72,10 +72,10 @@ export function assessmentChecks(m: Record<string, number>): Check[] {
     pass: display(value) >= target,
   });
   return [
-    check('typing', 'Net WPM', m.typingNetWpm, JOB_READY_TYPING.netWpm),
-    check('typing', 'Typing accuracy', m.typingAccuracy, JOB_READY_TYPING.accuracy, '%'),
-    check('numpad', 'KPH', m.numpadKph, JOB_READY_NUMPAD.kph),
-    check('numpad', 'Entry accuracy', m.numpadEntryAccuracy, JOB_READY_NUMPAD.entryAccuracy, '%'),
+    check('typing', 'Bilis (Net WPM)', m.typingNetWpm, JOB_READY_TYPING.netWpm),
+    check('typing', 'Accuracy (tama)', m.typingAccuracy, JOB_READY_TYPING.accuracy, '%'),
+    check('numpad', 'Bilis (KPH)', m.numpadKph, JOB_READY_NUMPAD.kph),
+    check('numpad', 'Tamang numero', m.numpadEntryAccuracy, JOB_READY_NUMPAD.entryAccuracy, '%'),
   ];
 }
 

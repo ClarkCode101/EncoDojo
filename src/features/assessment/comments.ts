@@ -22,9 +22,9 @@ function overallComment(m: Record<string, number>): string {
   const checks = assessmentChecks(m);
   const met = checks.filter((c) => c.pass).length;
   if (met === checks.length) {
-    return `Overall: you met all ${checks.length} job-ready targets. Retake the assessment on different days to make sure it's consistent.`;
+    return `Sa kabuuan: pasado ka sa lahat ng ${checks.length} target! Ulitin ang assessment sa ibang araw para siguradong tuloy-tuloy ang galing mo.`;
   }
-  return `Overall: you met ${met} of ${checks.length} job-ready targets. Train the weaker parts below, then retake the assessment.`;
+  return `Sa kabuuan: ${met} sa ${checks.length} target ang pasado. I-practice ang mga bahaging nasa ibaba, tapos subukan ulit ang assessment.`;
 }
 
 function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): string[] {
@@ -36,29 +36,29 @@ function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): 
   const out: string[] = [];
 
   if (speedOk && accOk) {
-    out.push(`Typing: you met both targets (${net} Net WPM, ${acc}% accuracy). Nice work!`);
+    out.push(`Typing: pasado ka sa bilis at accuracy (${net} WPM, ${acc}% tama). Ang galing!`);
   } else if (speedOk) {
     out.push(
-      `Typing: your speed is enough (${net} Net WPM), but accuracy is ${acc}% (target ${t.accuracy}%). ` +
-        'Slow down a little — in encoding, one wrong character can make a whole record wrong.',
+      `Typing: sapat na ang bilis mo (${net} WPM), pero ${acc}% lang ang tama (target: ${t.accuracy}%). ` +
+        'Bagalan nang kaunti — sa encoding, isang maling letra lang ay puwedeng mali na ang buong record.',
     );
   } else if (accOk) {
     out.push(
-      `Typing: your accuracy is good (${acc}%). Now build speed — you need ${t.netWpm - net} more Net WPM. ` +
-        'Do a few 1-minute Typing Test trainings every day.',
+      `Typing: maganda ang accuracy mo (${acc}%). Bilis naman ang kailangan — ${t.netWpm - net} WPM pa. ` +
+        'Mag-Typing Practice nang ilang beses (1 minuto) araw-araw.',
     );
   } else {
     out.push(
-      `Typing: work on accuracy first (${acc}%, target ${t.accuracy}%), then speed (${net} Net WPM, target ${t.netWpm}). ` +
-        'Speed comes naturally once you stop making mistakes.',
+      `Typing: unahin muna ang tamang pagta-type (${acc}%, target: ${t.accuracy}%), saka ang bilis (${net} WPM, target: ${t.netWpm}). ` +
+        'Kusang bibilis ka kapag nabawasan na ang mali.',
     );
   }
 
   const keystrokeAcc = display(m.typingKeystrokeAccuracy);
   if (acc - keystrokeAcc >= 5) {
     out.push(
-      `You fixed a lot of mistakes with Backspace (keystroke accuracy ${keystrokeAcc}%). ` +
-        'Every correction costs time — try to get it right the first time.',
+      `Madalas kang magbura gamit ang Backspace (keystroke accuracy: ${keystrokeAcc}%). ` +
+        'Nakakaubos ng oras ang bawat pagbura — subukang tama na agad sa unang pindot.',
     );
   }
 
@@ -66,7 +66,7 @@ function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): 
     const slips = mistakes.filter((x) => mistakeKind(x) !== 'Wrong key').length;
     if (isPattern(slips, mistakes.length)) {
       out.push(
-        'Many typing mistakes were skipped or extra keys. Keep your eyes on the source text and don\'t rush ahead.',
+        'Maraming nalaktawan o sobrang letra. Tutok lang sa text na kinokopya at huwag magmadali.',
       );
     }
 
@@ -75,15 +75,15 @@ function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): 
     const categories = [
       {
         count: mistakes.filter((x) => /[0-9]/.test(charOf(x))).length,
-        tip: 'Many typing mistakes were in numbers. Slow down when you reach a number and check each digit.',
+        tip: 'Madalas kang magkamali sa mga numero. Bagalan kapag may numero at tingnan ang bawat digit.',
       },
       {
         count: mistakes.filter((x) => /[A-Z]/.test(charOf(x))).length,
-        tip: 'Many typing mistakes were capital letters. Practice holding Shift with the opposite hand.',
+        tip: 'Madalas kang magkamali sa malalaking titik (capital letters). Sanayin ang pagpindot ng Shift gamit ang kabilang kamay.',
       },
       {
         count: mistakes.filter((x) => /[^A-Za-z0-9 ]/.test(charOf(x))).length,
-        tip: 'Many typing mistakes were punctuation (periods, commas, dashes). Slow down at the end of each sentence and check the punctuation.',
+        tip: 'Madalas kang magkamali sa tuldok, comma, at iba pang bantas. Bagalan sa dulo ng bawat pangungusap.',
       },
     ];
     const top = categories.reduce((a, b) => (b.count > a.count ? b : a));
@@ -102,23 +102,23 @@ function numpadComments(m: Record<string, number>, mistakes: SessionMistake[]): 
   const out: string[] = [];
 
   if (entries === 0) {
-    return ['Numpad: no entries were submitted. Remember to press Enter after each number.'];
+    return ['Numpad: walang numerong naipasa. Tandaan: pindutin ang Enter pagkatapos ng bawat numero.'];
   }
 
   const speedOk = kphNow >= t.kph;
   const accOk = acc >= t.entryAccuracy;
   const kphText = kphNow.toLocaleString('en-US');
   if (speedOk && accOk) {
-    out.push(`Numpad: you met both targets (${kphText} KPH, ${acc}% of entries correct). Nice work!`);
+    out.push(`Numpad: pasado ka sa bilis at accuracy (${kphText} KPH, ${acc}% tama). Ang galing!`);
   } else if (speedOk) {
-    out.push(`Numpad: you're fast (${kphText} KPH), but ${wrong} of ${entries} entries were wrong. Check each number before pressing Enter.`);
+    out.push(`Numpad: mabilis ka (${kphText} KPH), pero ${wrong} sa ${entries} na numero ang mali. Tingnan muna ang numero bago pindutin ang Enter.`);
   } else if (accOk) {
     out.push(
-      `Numpad: your entries are accurate, but speed is ${kphText} KPH (target ${t.kph.toLocaleString('en-US')}). ` +
-        'Turn on Num Lock, keep your fingers on 4-5-6, and try not to look at the keypad.',
+      `Numpad: tama ang mga numero mo, pero ${kphText} KPH pa lang ang bilis (target: ${t.kph.toLocaleString('en-US')}). ` +
+        'I-ON ang Num Lock, ilagay ang mga daliri sa 4-5-6, at subukang huwag tumingin sa keypad.',
     );
   } else {
-    out.push(`Numpad: build accuracy first (${acc}% of entries correct), then speed (${kphText} KPH).`);
+    out.push(`Numpad: unahin muna ang tamang numero (${acc}% tama), saka ang bilis (${kphText} KPH).`);
   }
 
   // Wrong only after the decimal point, e.g. 1,234.56 typed as 1234.65
@@ -128,14 +128,14 @@ function numpadComments(m: Record<string, number>, mistakes: SessionMistake[]): 
     return wantCents !== undefined && wantWhole === gotWhole && wantCents !== gotCents;
   }).length;
   if (centavoSlips >= 2) {
-    out.push('Several numpad mistakes were in the centavos (after the decimal point). Double-check the last two digits.');
+    out.push('Ilang mali ay nasa sentimo (pagkatapos ng tuldok). Tingnang mabuti ang huling dalawang digit.');
   }
 
   const missingDigits = mistakes.filter(
     (x) => normalizeEntry(x.typed).length < normalizeEntry(x.expected).length,
   ).length;
   if (missingDigits >= 2) {
-    out.push('Some numpad entries were missing digits. Be extra careful with long numbers like reference numbers.');
+    out.push('May mga numerong kulang ang digit. Mag-ingat lalo na sa mahahabang numero gaya ng reference number.');
   }
 
   return out;

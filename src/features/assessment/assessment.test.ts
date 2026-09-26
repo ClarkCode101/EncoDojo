@@ -71,14 +71,14 @@ describe('previousAssessment', () => {
 describe('assessmentComments', () => {
   it('congratulates when everything passes', () => {
     const c = assessmentComments(buildAssessmentSession(typingSession({}), numpadSession({})));
-    expect(c[0]).toMatch(/met all 4/);
-    expect(c.join(' ')).toMatch(/Typing: you met both/);
-    expect(c.join(' ')).toMatch(/Numpad: you met both/);
+    expect(c[0]).toMatch(/pasado ka sa lahat ng 4/);
+    expect(c.join(' ')).toMatch(/Typing: pasado ka sa bilis at accuracy/);
+    expect(c.join(' ')).toMatch(/Numpad: pasado ka sa bilis at accuracy/);
   });
 
   it('tells a fast but careless typist to slow down', () => {
     const c = assessmentComments(buildAssessmentSession(typingSession({ netWpm: 55, accuracy: 88 }), numpadSession({})));
-    expect(c.join(' ')).toMatch(/speed is enough.*accuracy is 88%/);
+    expect(c.join(' ')).toMatch(/sapat na ang bilis mo.*88% lang ang tama/);
   });
 
   it('notices heavy Backspace use', () => {
@@ -89,13 +89,13 @@ describe('assessmentComments', () => {
   it('spots a pattern of number mistakes', () => {
     const mistakes = ['1', '5', '0', '7'].map((d, i) => ({ expected: d, typed: 'x', index: i }));
     const c = assessmentComments(buildAssessmentSession(typingSession({}, mistakes), numpadSession({})));
-    expect(c.join(' ')).toMatch(/mistakes were in numbers/);
+    expect(c.join(' ')).toMatch(/magkamali sa mga numero/);
   });
 
   it('does not call 1 or 2 mistakes a pattern', () => {
     const mistakes = [{ expected: '1', typed: 'x', index: 0 }];
     const c = assessmentComments(buildAssessmentSession(typingSession({}, mistakes), numpadSession({})));
-    expect(c.join(' ')).not.toMatch(/mistakes were in numbers/);
+    expect(c.join(' ')).not.toMatch(/magkamali sa mga numero/);
   });
 
   it('spots centavo mistakes and missing digits on the numpad', () => {
@@ -108,14 +108,14 @@ describe('assessmentComments', () => {
     const c = assessmentComments(
       buildAssessmentSession(typingSession({}), numpadSession({ entryAccuracy: 80, correctEntries: 16 }, mistakes)),
     ).join(' ');
-    expect(c).toMatch(/centavos/);
-    expect(c).toMatch(/missing digits/);
+    expect(c).toMatch(/sentimo/);
+    expect(c).toMatch(/kulang ang digit/);
   });
 
   it('handles a numpad part with no entries', () => {
     const c = assessmentComments(
       buildAssessmentSession(typingSession({}), numpadSession({ kph: 0, entryAccuracy: 100, entries: 0, correctEntries: 0 })),
     );
-    expect(c.join(' ')).toMatch(/no entries were submitted/);
+    expect(c.join(' ')).toMatch(/walang numerong naipasa/);
   });
 });

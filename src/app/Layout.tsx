@@ -1,73 +1,86 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import {
+  AssessmentIcon,
+  HomeIcon,
+  KeyboardIcon,
+  NumpadIcon,
+  SettingsIcon,
+} from '../components/icons';
+import { useAppData } from '../lib/useAppData';
 
-type NavGroup = { heading?: string; links: { to: string; label: string }[] };
+type NavItem = { to: string; label: string; icon: ReactNode };
+type NavGroup = { heading?: string; items: NavItem[] };
 
 const groups: NavGroup[] = [
   {
-    links: [
-      { to: '/', label: 'Dashboard' },
-      { to: '/assessment', label: 'Assessment' },
+    items: [
+      { to: '/', label: 'Home', icon: <HomeIcon /> },
+      { to: '/assessment', label: 'Assessment', icon: <AssessmentIcon /> },
     ],
   },
   {
-    heading: 'Training',
-    links: [
-      { to: '/typing', label: 'Typing Test' },
-      { to: '/numpad', label: 'Numpad Drill' },
+    heading: 'Practice',
+    items: [
+      { to: '/typing', label: 'Typing Practice', icon: <KeyboardIcon /> },
+      { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon /> },
     ],
   },
-  { links: [{ to: '/settings', label: 'Settings' }] },
-];
-
-// Shown in the sidebar so the roadmap is visible, but not clickable yet.
-const comingSoon = [
-  'Copy Test',
-  'Document Encoding',
-  'QC / Spot the Difference',
-  'Excel Drills',
-  'Mistake Review',
-  'Progress & Reports',
+  { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },
 ];
 
 function navClass({ isActive }: { isActive: boolean }) {
   return (
-    'block rounded-md px-3 py-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 ' +
-    'focus-visible:outline-offset-2 focus-visible:outline-blue-400 ' +
-    (isActive ? 'bg-blue-700 text-white' : 'text-slate-200 hover:bg-slate-800')
+    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-semibold transition-colors ' +
+    'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-blue-300 ' +
+    (isActive ? 'bg-white text-blue-900 shadow' : 'text-blue-50 hover:bg-blue-800')
   );
 }
 
 export default function Layout() {
+  const { largeText } = useAppData().settings;
+
+  // "Mas malaking text" in Settings makes the whole app bigger (see index.css).
+  useEffect(() => {
+    document.documentElement.classList.toggle('large-text', largeText);
+  }, [largeText]);
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded focus:bg-white focus:px-3 focus:py-2"
       >
-        Skip to content
+        Lumaktaw sa nilalaman
       </a>
 
-      <aside className="bg-slate-900 text-white md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:overflow-y-auto">
-        <div className="px-4 py-5">
-          <div className="text-lg font-bold">EncoDojo</div>
-          <div className="text-xs text-slate-300">Data entry skills trainer</div>
+      <aside className="bg-blue-900 text-white md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:overflow-y-auto">
+        <div className="flex items-center gap-3 px-5 py-6">
+          <div
+            aria-hidden="true"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-400 text-2xl font-black text-blue-950"
+          >
+            E
+          </div>
+          <div>
+            <div className="text-xl font-bold leading-tight">EncoDojo</div>
+            <div className="text-sm leading-tight text-blue-200">Encoder at Data Entry practice</div>
+          </div>
         </div>
 
-        <nav aria-label="Main" className="px-2 pb-4">
+        <nav aria-label="Main" className="px-3 pb-6">
           <div className="flex flex-wrap gap-1 md:block">
             {groups.map((group, i) => (
-              <div key={i} className="md:mb-4">
+              <div key={i} className="md:mb-5">
                 {group.heading && (
-                  <div className="hidden px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400 md:block">
-                    {group.heading}
-                  </div>
+                  <div className="hidden px-3 pb-1 text-sm font-semibold text-blue-300 md:block">{group.heading}</div>
                 )}
                 <ul className="flex flex-wrap gap-1 md:block md:space-y-1">
-                  {group.links.map((link) => (
-                    <li key={link.to}>
-                      <NavLink to={link.to} end={link.to === '/'} className={navClass}>
-                        {link.label}
+                  {group.items.map((item) => (
+                    <li key={item.to}>
+                      <NavLink to={item.to} end={item.to === '/'} className={navClass}>
+                        {item.icon}
+                        {item.label}
                       </NavLink>
                     </li>
                   ))}
@@ -75,29 +88,12 @@ export default function Layout() {
               </div>
             ))}
           </div>
-
-          <div className="mt-2 hidden md:block">
-            <div className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Coming soon
-            </div>
-            <ul className="mt-2 space-y-1">
-              {comingSoon.map((label) => (
-                <li
-                  key={label}
-                  aria-disabled="true"
-                  className="cursor-default px-3 py-1.5 text-sm text-slate-400"
-                >
-                  {label}
-                </li>
-              ))}
-            </ul>
-          </div>
         </nav>
       </aside>
 
-      <main id="main" className="flex-1 bg-slate-50 px-4 py-6 md:px-10 md:py-8">
+      <main id="main" className="flex-1 px-4 py-8 md:px-10">
         <div className="mx-auto max-w-5xl">
-          <Suspense fallback={<p className="text-slate-600">Loading…</p>}>
+          <Suspense fallback={<p className="text-lg text-slate-700">Naglo-load…</p>}>
             <Outlet />
           </Suspense>
         </div>

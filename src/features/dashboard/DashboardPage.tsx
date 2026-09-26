@@ -1,4 +1,20 @@
-import { ButtonLink, Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
+/**
+ * Home: where to start (3 steps), your progress, and recent sessions.
+ * Written for people who are new to computers: big cards, clear order, Taglish.
+ */
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  ArrowRightIcon,
+  AssessmentIcon,
+  ClockIcon,
+  HomeIcon,
+  KeyboardIcon,
+  NumpadIcon,
+  StarIcon,
+} from '../../components/icons';
+import { Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
+import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
 import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
@@ -12,139 +28,245 @@ function show(value: number | null, suffix = ''): string {
 function summary(session: Session): string {
   const m = session.metrics;
   if (session.type === 'typing') {
-    return `${display(m.netWpm)} net WPM · ${display(m.accuracy)}% accuracy`;
+    return `${display(m.netWpm)} WPM · ${display(m.accuracy)}% tama`;
   }
   if (session.type === 'assessment') {
-    const verdict = m.jobReady === 1 ? '✅ Job-ready' : `${m.targetsMet}/${m.targetsTotal} targets`;
+    const verdict = m.jobReady === 1 ? '✅ Job-ready' : `${m.targetsMet} sa ${m.targetsTotal} pasado`;
     return `${verdict} · ${display(m.typingNetWpm)} WPM · ${display(m.numpadKph).toLocaleString()} KPH`;
   }
-  return `${display(m.kph).toLocaleString()} KPH · ${display(m.entryAccuracy)}% entries correct`;
+  return `${display(m.kph).toLocaleString()} KPH · ${display(m.entryAccuracy)}% tama`;
 }
 
 const typeLabel: Record<Session['type'], string> = {
-  typing: 'Typing Test',
-  numpad: 'Numpad Drill',
+  typing: 'Typing Practice',
+  numpad: 'Numpad Practice',
   assessment: 'Assessment',
 };
 
-function AssessmentCard({ latest }: { latest: Session | null }) {
-  let status = 'You have not taken the assessment yet. It takes about 2 minutes.';
-  if (latest) {
-    const m = latest.metrics;
-    const when = new Date(latest.startedAt).toLocaleDateString(undefined, { dateStyle: 'medium' });
-    status =
-      m.jobReady === 1
-        ? `Latest (${when}): ✅ Job-ready — all ${m.targetsTotal} targets met.`
-        : `Latest (${when}): ${m.targetsMet} of ${m.targetsTotal} targets met. Keep training!`;
-  }
+/** One of the three big "where to start" cards. The whole card is a link. */
+function StepCard({
+  number,
+  to,
+  icon,
+  title,
+  text,
+  action,
+  footer,
+  highlight = false,
+}: {
+  number: number;
+  to: string;
+  icon: ReactNode;
+  title: string;
+  text: string;
+  action: string;
+  footer?: ReactNode;
+  highlight?: boolean;
+}) {
   return (
-    <Card title="Assessment" className="mb-6">
-      <p className="mb-4 text-slate-700">{status}</p>
-      <ButtonLink to="/assessment">{latest ? 'Retake assessment' : 'Start assessment'}</ButtonLink>
-    </Card>
+    <Link
+      to={to}
+      className={
+        'group flex flex-col rounded-2xl border-2 p-5 shadow-sm transition ' +
+        'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-blue-600 ' +
+        (highlight ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white hover:border-blue-400')
+      }
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-800">{icon}</div>
+        <div className="text-sm font-semibold text-slate-600">Hakbang {number}</div>
+      </div>
+      <h2 className="mt-3 text-xl font-bold text-slate-900">{title}</h2>
+      <p className="mt-1 flex-1 text-slate-700">{text}</p>
+      {footer && <div className="mt-3 text-sm font-medium text-slate-800">{footer}</div>}
+      <div className="mt-4 inline-flex items-center gap-2 text-lg font-bold text-blue-800 group-hover:text-blue-950">
+        {action} <ArrowRightIcon className="h-5 w-5" />
+      </div>
+    </Link>
   );
 }
 
+function assessmentStatus(latest: Session | null): string {
+  if (!latest) return 'Hindi mo pa ito nasusubukan. Mga 2 minuto lang.';
+  const m = latest.metrics;
+  const when = new Date(latest.startedAt).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  return m.jobReady === 1
+    ? `Huling resulta (${when}): ✅ Job-ready!`
+    : `Huling resulta (${when}): ${m.targetsMet} sa ${m.targetsTotal} target ang pasado.`;
+}
+
+const comingSoon = [
+  { name: 'Copy Test', text: 'Pagkopya ng listahan ng pangalan, address, at ID.' },
+  { name: 'Document Encoding', text: 'Pag-encode mula sa pekeng invoice, resibo, at form.' },
+  { name: 'QC / Spot the Difference', text: 'Paghahanap ng mali sa na-encode na data.' },
+  { name: 'Excel Practice', text: 'Mga basic na formula, sort, filter, at VLOOKUP.' },
+  { name: 'Mistake Review', text: 'Balikan at ulitin ang mga dati mong mali.' },
+  { name: 'Progress Reports', text: 'Chart ng pag-improve mo sa bawat linggo.' },
+];
+
 export default function DashboardPage() {
   const { profile, sessions } = useAppData();
+  const training = sessions.filter((s) => s.type !== 'assessment');
   const recent = recentSessions(sessions, 10);
   const streak = currentStreak(sessions);
   const latestAssessment = recentSessions(sessions.filter((s) => s.type === 'assessment'), 1)[0] ?? null;
-  const trainingCount = sessions.filter((s) => s.type !== 'assessment').length;
 
   return (
-    <div>
+    <div className="space-y-10">
       <PageHeader
-        title={profile.displayName ? `Welcome back, ${profile.displayName}!` : 'Dashboard'}
-        description="Train a little every day, then take the Assessment to check if you're job-ready."
+        icon={<HomeIcon className="h-8 w-8" />}
+        title={profile.displayName ? `Magandang araw, ${profile.displayName}!` : 'Maligayang pagdating sa EncoDojo!'}
+        description="Dito ka magpa-practice para sa trabahong Encoder o Data Entry. Sundan lang ang mga hakbang sa ibaba."
       />
 
-      <AssessmentCard latest={latestAssessment} />
+      <section aria-labelledby="start-heading">
+        <h2 id="start-heading" className="mb-4 text-2xl font-bold text-slate-900">
+          Paano magsimula
+        </h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          <StepCard
+            number={1}
+            to="/typing"
+            icon={<KeyboardIcon className="h-7 w-7" />}
+            title="Typing Practice"
+            text="Sanayin ang bilis at tamang pagta-type ng mga pangungusap."
+            action="Mag-practice"
+          />
+          <StepCard
+            number={2}
+            to="/numpad"
+            icon={<NumpadIcon className="h-7 w-7" />}
+            title="Numpad Practice"
+            text="Sanayin ang pag-type ng mga numero gamit ang numpad sa kanan ng keyboard."
+            action="Mag-practice"
+          />
+          <StepCard
+            number={3}
+            to="/assessment"
+            icon={<AssessmentIcon className="h-7 w-7" />}
+            title="Assessment"
+            text="Kapag handa ka na, subukan ito para malaman kung job-ready ka na."
+            action={latestAssessment ? 'Subukan ulit' : 'Simulan'}
+            footer={assessmentStatus(latestAssessment)}
+            highlight
+          />
+        </div>
+      </section>
 
-      <h2 className="mb-3 text-base font-semibold text-slate-800">Training</h2>
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-        <StatBadge label="Best Net WPM" value={show(bestMetric(sessions, 'typing', 'netWpm'))} />
-        <StatBadge
-          label="Latest accuracy"
-          value={show(latestMetric(sessions, 'typing', 'accuracy'), '%')}
-          hint="last typing test"
-        />
-        <StatBadge label="Best KPH" value={show(bestMetric(sessions, 'numpad', 'kph'))} />
-        <StatBadge label="Total sessions" value={sessions.length} />
-        <StatBadge label="Current streak" value={`${streak} ${streak === 1 ? 'day' : 'days'}`} />
-      </div>
+      <section aria-labelledby="progress-heading">
+        <h2 id="progress-heading" className="mb-4 flex items-center gap-2 text-2xl font-bold text-slate-900">
+          <StarIcon className="h-7 w-7 text-amber-500" /> Ang progress mo sa practice
+        </h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatBadge
+            label="Pinakamabilis na typing"
+            value={show(bestMetric(sessions, 'typing', 'netWpm'))}
+            hint="Net WPM"
+            help={HELP.netWpm}
+          />
+          <StatBadge
+            label="Huling typing accuracy"
+            value={show(latestMetric(sessions, 'typing', 'accuracy'), '%')}
+            hint="tama sa huling practice"
+            help={HELP.accuracy}
+          />
+          <StatBadge
+            label="Pinakamabilis na numpad"
+            value={show(bestMetric(sessions, 'numpad', 'kph'))}
+            hint="KPH"
+            help={HELP.kph}
+          />
+          <StatBadge
+            label="Sunod-sunod na araw"
+            value={`${streak} araw`}
+            hint={`${training.length} practice session lahat`}
+            help={HELP.streak}
+          />
+        </div>
+      </section>
 
-      <div className="mb-8 flex flex-wrap gap-3">
-        <ButtonLink to="/typing" variant="secondary">
-          Train Typing
-        </ButtonLink>
-        <ButtonLink to="/numpad" variant="secondary">
-          Train Numpad
-        </ButtonLink>
-      </div>
-
-      <Card title="Recent sessions">
+      <Card title="Mga huling ginawa" icon={<ClockIcon />}>
         {recent.length === 0 ? (
-          <p className="text-slate-700">No sessions yet. Try a Typing Test to get your first score!</p>
+          <p className="text-lg text-slate-700">
+            Wala ka pang nagagawa. Simulan sa <strong>Hakbang 1: Typing Practice</strong> sa itaas!
+          </p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="text-slate-600">
-              <tr>
-                <th className="py-2 pr-4 font-medium">Date</th>
-                <th className="py-2 pr-4 font-medium">Drill</th>
-                <th className="py-2 pr-4 font-medium">Time</th>
-                <th className="py-2 pr-4 font-medium">Result</th>
-                <th className="py-2 font-medium">
-                  <span className="sr-only">Delete</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((s) => (
-                <tr key={s.id} className="border-t border-slate-100">
-                  <td className="py-2 pr-4 text-slate-700">
-                    {new Date(s.startedAt).toLocaleString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </td>
-                  <td className="py-2 pr-4">{typeLabel[s.type]}</td>
-                  <td className="py-2 pr-4 tabular-nums">{formatClock(s.durationSec)}</td>
-                  <td className="py-2 pr-4 tabular-nums">{summary(s)}</td>
-                  <td className="py-2 text-right">
-                    <ConfirmButton
-                      size="sm"
-                      label="Delete"
-                      question="Delete this?"
-                      onConfirm={() => removeSession(s.id)}
-                    />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-base">
+              <thead className="text-slate-600">
+                <tr>
+                  <th className="py-2 pr-4 font-semibold">Petsa</th>
+                  <th className="py-2 pr-4 font-semibold">Ginawa</th>
+                  <th className="py-2 pr-4 font-semibold">Tagal</th>
+                  <th className="py-2 pr-4 font-semibold">Resulta</th>
+                  <th className="py-2 font-semibold">
+                    <span className="sr-only">Burahin</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recent.map((s) => (
+                  <tr key={s.id} className="border-t border-slate-200">
+                    <td className="py-3 pr-4 text-slate-700">
+                      {new Date(s.startedAt).toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="py-3 pr-4 font-medium">{typeLabel[s.type]}</td>
+                    <td className="py-3 pr-4 tabular-nums">{formatClock(s.durationSec)}</td>
+                    <td className="py-3 pr-4 tabular-nums">{summary(s)}</td>
+                    <td className="py-3 text-right">
+                      <ConfirmButton
+                        size="sm"
+                        label="Burahin"
+                        question="Burahin ito?"
+                        onConfirm={() => removeSession(s.id)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        {trainingCount > 0 && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-            <p className="text-sm text-slate-600">
-              Deleting also updates your best scores and streak. Assessments are cleared on the Assessment page.
+        {training.length > 0 && (
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+            <p className="max-w-md text-sm text-slate-600">
+              Kapag nagbura ka, magbabago rin ang pinakamabilis mong score at streak. Ang assessments ay
+              binubura sa Assessment page.
             </p>
             <ConfirmButton
-              label="Clear training history"
+              label="Burahin lahat ng practice"
               question={
-                trainingCount === 1
-                  ? 'Delete your 1 training session?'
-                  : `Delete all ${trainingCount} training sessions?`
+                training.length === 1
+                  ? 'Burahin ang 1 practice session?'
+                  : `Burahin lahat ng ${training.length} practice sessions?`
               }
-              confirmLabel="Yes, clear all"
+              confirmLabel="Oo, burahin lahat"
               onConfirm={() => clearSessions(['typing', 'numpad'])}
             />
           </div>
         )}
       </Card>
+
+      <section aria-labelledby="soon-heading" className="rounded-2xl border-2 border-dashed border-slate-300 p-6">
+        <h2 id="soon-heading" className="text-xl font-bold text-slate-800">
+          Parating pa sa EncoDojo
+        </h2>
+        <p className="mt-1 text-slate-600">Hindi pa ito magagamit, pero idadagdag sa mga susunod na update.</p>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {comingSoon.map((item) => (
+            <li key={item.name} className="rounded-lg bg-white px-4 py-3">
+              <div className="font-semibold text-slate-800">{item.name}</div>
+              <div className="text-sm text-slate-600">{item.text}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

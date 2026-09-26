@@ -12,7 +12,7 @@
  * version lives INSIDE the data (`version`) and is upgraded by migrate().
  */
 export const STORAGE_KEY = 'encodojo:v1';
-export const CURRENT_VERSION = 2;
+export const CURRENT_VERSION = 3;
 export const MAX_SESSIONS = 500;
 
 /** Numpad Drill difficulty (see features/numpad/entries.ts). */
@@ -48,10 +48,12 @@ export type Settings = {
   numpadDifficulty: Difficulty;
   sound: boolean;
   showLiveStats: boolean;
+  /** Bigger text and buttons everywhere (for people who find the normal size hard to read). */
+  largeText: boolean;
 };
 
 export type AppData = {
-  version: 2;
+  version: 3;
   profile: { displayName: string; createdAt: string };
   settings: Settings;
   sessions: Session[];
@@ -59,9 +61,9 @@ export type AppData = {
 
 export function defaultData(now: Date = new Date()): AppData {
   return {
-    version: 2,
+    version: 3,
     profile: { displayName: '', createdAt: now.toISOString() },
-    settings: { typingLevel: 1, numpadDifficulty: 1, sound: false, showLiveStats: true },
+    settings: { typingLevel: 1, numpadDifficulty: 1, sound: false, showLiveStats: true, largeText: false },
     sessions: [],
   };
 }
@@ -112,7 +114,11 @@ function hasValidCommonParts(value: Record<string, unknown>): boolean {
 export function isAppData(value: unknown): value is AppData {
   if (!isObject(value) || value.version !== CURRENT_VERSION || !hasValidCommonParts(value)) return false;
   const settings = value.settings as Record<string, unknown>;
-  return isTypingLevel(settings.typingLevel) && isDifficulty(settings.numpadDifficulty);
+  return (
+    isTypingLevel(settings.typingLevel) &&
+    isDifficulty(settings.numpadDifficulty) &&
+    typeof settings.largeText === 'boolean'
+  );
 }
 
 /**
@@ -134,6 +140,12 @@ function upgradeV1toV2(raw: Record<string, unknown>): Record<string, unknown> | 
   };
 }
 
+/** Version 3 adds the "large text" setting (off by default). */
+function upgradeV2toV3(raw: Record<string, unknown>): Record<string, unknown> | null {
+  if (!isObject(raw.settings)) return null;
+  return { ...raw, version: 3, settings: { ...raw.settings, largeText: false } };
+}
+
 /**
  * Upgrade saved data to the current version, one step at a time.
  * Returns null when the data cannot be understood.
@@ -141,7 +153,8 @@ function upgradeV1toV2(raw: Record<string, unknown>): Record<string, unknown> | 
 export function migrate(raw: unknown): AppData | null {
   if (!isObject(raw)) return null;
   let data: Record<string, unknown> | null = raw;
-  if (data.version === 1) data = upgradeV1toV2(data);
+  if (data?.version === 1) data = upgradeV1toV2(data);
+  if (data?.version === 2) data = upgradeV2toV3(data);
   return isAppData(data) ? data : null;
 }
 
@@ -212,11 +225,11 @@ export function parseImport(text: string): ImportResult {
   try {
     raw = JSON.parse(text);
   } catch {
-    return { ok: false, error: 'This file is not valid JSON.' };
+    return { ok: false, error: 'Hindi mabasa ang file na ito. Siguraduhing backup file ito ng EncoDojo (.json).' };
   }
   const data = migrate(raw);
   if (!data) {
-    return { ok: false, error: 'This file is not an EncoDojo progress export.' };
+    return { ok: false, error: 'Hindi ito backup file ng EncoDojo. Pumili ng ibang file.' };
   }
   return { ok: true, data: { ...data, sessions: capSessions(data.sessions) } };
 }

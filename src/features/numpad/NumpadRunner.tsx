@@ -2,17 +2,18 @@
  * One numpad run: the number to type, the input box, timer, and live stats.
  * Used by both the Numpad Drill (training) and the Assessment.
  *
- * It does NOT save anything. When time is up (or "Finish now" is pressed) it
+ * It does NOT save anything. When time is up (or "Tapusin na" is pressed) it
  * builds a Session and hands it to `onFinish`. To start over, the parent
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, StatBadge } from '../../components/ui';
+import { Button, Card, HelpTip, StatBadge, TimeLeft } from '../../components/ui';
+import { HELP } from '../../lib/glossary';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display, entryAccuracyPct, isEntryCorrect, keystrokesForEntry, kph } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { makeId, type Difficulty, type Session } from '../../lib/storage';
-import { formatClock, useCountdown } from '../../lib/useCountdown';
+import { useCountdown } from '../../lib/useCountdown';
 import { cleanNumpadInput, makeEntry } from './entries';
 
 type Tally = {
@@ -107,16 +108,16 @@ export default function NumpadRunner({
   return (
     <>
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatBadge label="Time left" value={formatClock(timer.remainingSec)} />
-        <StatBadge label="Entries done" value={tally.entries} />
+        <TimeLeft seconds={timer.remainingSec} started={timer.started} waitingText="naghihintay sa unang numero" />
+        <StatBadge label="Natapos na numero" value={tally.entries} />
         {showLiveStats && (
           <>
             <StatBadge
-              label="KPH"
+              label="Bilis (KPH)"
               value={timer.started ? display(kph(tally.keystrokes, elapsed)).toLocaleString() : '–'}
             />
             <StatBadge
-              label="Entry accuracy"
+              label="Tamang numero"
               value={`${display(entryAccuracyPct(tally.correctEntries, tally.entries))}%`}
             />
           </>
@@ -124,10 +125,10 @@ export default function NumpadRunner({
       </div>
 
       <Card>
-        <div className="py-6 text-center">
-          <div className="text-sm font-medium uppercase tracking-wide text-slate-600">Type this</div>
+        <div className="rounded-xl bg-slate-50 py-8 text-center">
+          <div className="text-lg font-semibold text-slate-700">I-type ang numerong ito:</div>
           <div
-            className="mt-2 select-none font-mono text-5xl font-bold tabular-nums text-slate-900"
+            className="mt-2 select-none font-mono text-6xl font-bold tabular-nums tracking-wide text-slate-900"
             aria-live="polite"
           >
             {current}
@@ -135,15 +136,21 @@ export default function NumpadRunner({
         </div>
 
         <form
-          className="mx-auto max-w-md"
+          className="mx-auto mt-6 max-w-md"
           onSubmit={(e) => {
             e.preventDefault();
             submit();
           }}
         >
-          <label htmlFor="numpad-input" className="mb-1 block text-sm font-medium text-slate-700">
-            Your entry (press Enter to submit)
+          <label htmlFor="numpad-input" className="mb-2 block text-lg font-bold text-slate-900">
+            Dito ka mag-type 👇
           </label>
+          {!timer.started && (
+            <p className="mb-2 rounded-lg bg-blue-50 px-4 py-2 text-blue-950">
+              I-type ang numero, tapos pindutin ang <strong>Enter</strong>. Magsisimula ang oras sa unang numero na
+              ita-type mo.
+            </p>
+          )}
           <input
             id="numpad-input"
             autoFocus
@@ -161,26 +168,28 @@ export default function NumpadRunner({
             }}
             onPaste={(e) => e.preventDefault()}
             onDrop={(e) => e.preventDefault()}
-            className="w-full rounded-md border border-slate-300 p-3 text-center font-mono text-3xl tabular-nums focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="I-type dito…"
+            className="w-full rounded-xl border-2 border-slate-400 bg-white p-4 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200"
           />
+          <p className="mt-2 text-center text-slate-600">Hindi kailangan ang comma (,). Pindutin ang Enter pagkatapos.</p>
         </form>
 
-        <div className="mt-3 flex min-h-10 items-center justify-between">
-          <span role="status" className="text-sm font-medium">
-            {lastWasCorrect === true && <span className="text-green-800">✓ Correct</span>}
-            {lastWasCorrect === false && <span className="text-red-700">✗ Wrong</span>}
+        <div className="mt-4 flex min-h-12 flex-wrap items-center justify-between gap-3">
+          <span role="status" className="text-lg font-bold">
+            {lastWasCorrect === true && <span className="text-green-800">✓ Tama!</span>}
+            {lastWasCorrect === false && <span className="text-red-700">✗ Mali ang huli</span>}
           </span>
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              Finish now
+              Tapusin na
             </Button>
           )}
         </div>
       </Card>
 
-      <p className="mt-4 text-sm text-slate-600">
-        Tip: turn on Num Lock and keep your fingers on 4-5-6 (home row). Use the keypad Enter key.
-      </p>
+      <div className="mt-4">
+        <HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>
+      </div>
     </>
   );
 }

@@ -15,12 +15,12 @@ import { intBetween, pick, type Rng } from '../../lib/random';
 
 /** Shown under the Difficulty picker on the Numpad Drill page. */
 export const NUMPAD_DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  1: 'Short whole numbers (e.g. 482)',
-  2: 'Longer whole numbers (e.g. 30719)',
-  3: 'Small amounts with centavos (e.g. 86.40)',
-  4: 'Amounts with commas (e.g. 12,450.75)',
-  5: 'Reference numbers and amounts (e.g. 2026004517)',
-  6: 'Mix of everything, bigger amounts (e.g. 348,912.05)',
+  1: 'Maiikling numero (hal. 482)',
+  2: 'Mas mahahabang numero (hal. 30719)',
+  3: 'Maliit na halaga na may sentimo (hal. 86.40)',
+  4: 'Halaga na may comma (hal. 12,450.75)',
+  5: 'Reference number at halaga (hal. 2026004517)',
+  6: 'Halo-halo, mas malalaking halaga (hal. 348,912.05)',
 };
 
 function amount(rng: Rng, maxPesos: number): string {

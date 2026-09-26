@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Text size for the whole app. Tailwind sizes are in rem, so changing the
+ * root font size makes EVERYTHING (text, buttons, spacing) bigger together.
+ *   normal:     17px (a bit bigger than the usual 16px, easier to read)
+ *   large text: 19px (Settings -> "Mas malaking text")
+ */
+html {
+  font-size: 106.25%;
+}
+
+html.large-text {
+  font-size: 118.75%;
+}
+
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-slate-100 text-slate-900 antialiased;
 }

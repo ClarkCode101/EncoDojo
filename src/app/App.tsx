@@ -1,5 +1,6 @@
 import { lazy } from 'react';
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ButtonLink, PageHeader } from '../components/ui';
 import Layout from './Layout';
 
 // Each screen is loaded only when you open it (smaller first download).
@@ -12,10 +13,10 @@ const Settings = lazy(() => import('../features/settings/SettingsPage'));
 function NotFound() {
   return (
     <div>
-      <h1 className="text-2xl font-bold">Page not found</h1>
-      <Link to="/" className="mt-2 inline-block text-blue-700 underline">
-        Back to Dashboard
-      </Link>
+      <PageHeader title="Hindi makita ang page" description="Baka mali ang link. Bumalik na lang sa Home." />
+      <ButtonLink to="/" size="lg">
+        Bumalik sa Home
+      </ButtonLink>
     </div>
   );
 }

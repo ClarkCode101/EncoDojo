@@ -1,12 +1,15 @@
 /**
  * Assessment: every skill in a row, under fixed exam-like rules, then a
- * report card. Always saved, so improvement over time is honest.
+ * report card. Saved automatically, so improvement over time is honest
+ * (it can be deleted later from the history).
  *
  * Steps: intro -> typing -> break -> numpad -> report
  * (A past report can also be opened from the history list on the intro.)
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, ConfirmButton, PageHeader } from '../../components/ui';
+import { AssessmentIcon, ClockIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import { Button, Card, ConfirmButton, HelpTip, PageHeader } from '../../components/ui';
+import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
@@ -24,87 +27,114 @@ type Step =
   | { name: 'numpad'; typing: Session }
   | { name: 'report'; assessment: Session; fromHistory: boolean };
 
+/** "Bahagi 1 sa 2" with a simple two-part progress bar. */
+function PartProgress({ part }: { part: 1 | 2 }) {
+  return (
+    <div className="mb-6">
+      <div className="mb-2 text-base font-semibold text-slate-700">Bahagi {part} sa 2</div>
+      <div className="flex gap-2" aria-hidden="true">
+        <div className="h-3 flex-1 rounded-full bg-blue-700" />
+        <div className={'h-3 flex-1 rounded-full ' + (part === 2 ? 'bg-blue-700' : 'bg-slate-300')} />
+      </div>
+    </div>
+  );
+}
+
 function Rules() {
   return (
-    <ul className="list-disc space-y-1 pl-5 text-slate-800">
-      <li>
-        <strong>Part 1 — Typing, 1 minute.</strong> Plain office text, like most hiring typing tests.
-      </li>
-      <li>
-        <strong>Part 2 — Numpad, 1 minute.</strong> A mix of whole numbers, amounts, and reference numbers.
-      </li>
-      <li>No live stats, no "Finish now", and no retry once a part starts — just like a real hiring test.</li>
-      <li>Each part's timer starts on your first keystroke. There is a short break between parts.</li>
-      <li>
-        Your result is saved automatically so you can see your real progress (you can delete it later from the
-        history). Don't leave this page until the report appears.
-      </li>
-    </ul>
+    <div className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex gap-3 rounded-xl bg-slate-50 p-4">
+          <KeyboardIcon className="h-8 w-8 shrink-0 text-blue-700" />
+          <div>
+            <div className="text-lg font-bold">Bahagi 1: Typing (1 minuto)</div>
+            <div className="text-slate-700">I-type ang ordinaryong text, gaya sa karaniwang hiring test.</div>
+          </div>
+        </div>
+        <div className="flex gap-3 rounded-xl bg-slate-50 p-4">
+          <NumpadIcon className="h-8 w-8 shrink-0 text-blue-700" />
+          <div>
+            <div className="text-lg font-bold">Bahagi 2: Numpad (1 minuto)</div>
+            <div className="text-slate-700">I-type ang mga numero, halaga, at reference number.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-lg font-bold text-slate-900">Mga paalala</h3>
+        <ul className="list-disc space-y-1 pl-6 text-slate-800">
+          <li>Parang totoong exam: walang score habang nagta-type, walang &quot;Tapusin na&quot;, at walang ulitan kapag nasimulan na.</li>
+          <li>Magsisimula ang oras sa unang pindot mo. May pahinga sa pagitan ng dalawang bahagi.</li>
+          <li>Huwag umalis sa page na ito hangga't hindi lumalabas ang resulta.</li>
+          <li>Automatic na mase-save ang resulta. Puwede mo itong burahin mamaya sa listahan sa ibaba.</li>
+        </ul>
+      </div>
+    </div>
   );
 }
 
 function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Session) => void }) {
   if (sessions.length === 0) {
-    return <p className="text-slate-700">No assessments yet. Your first report will appear here.</p>;
+    return <p className="text-lg text-slate-700">Wala ka pang nagagawang assessment. Dito lalabas ang mga resulta mo.</p>;
   }
   return (
     <>
-      <table className="w-full text-left text-sm">
-        <thead className="text-slate-600">
-          <tr>
-            <th className="py-2 pr-4 font-medium">Date</th>
-            <th className="py-2 pr-4 font-medium">Result</th>
-            <th className="py-2 pr-4 font-medium">Net WPM</th>
-            <th className="py-2 pr-4 font-medium">Typing acc.</th>
-            <th className="py-2 pr-4 font-medium">KPH</th>
-            <th className="py-2 pr-4 font-medium">Entry acc.</th>
-            <th className="py-2 font-medium">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="tabular-nums">
-          {sessions.map((s) => (
-            <tr key={s.id} className="border-t border-slate-100">
-              <td className="py-2 pr-4 text-slate-700">
-                {new Date(s.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-              </td>
-              <td className="py-2 pr-4">
-                {s.metrics.jobReady === 1 ? '✅ Job-ready' : `${s.metrics.targetsMet}/${s.metrics.targetsTotal} targets`}
-              </td>
-              <td className="py-2 pr-4">{display(s.metrics.typingNetWpm)}</td>
-              <td className="py-2 pr-4">{display(s.metrics.typingAccuracy)}%</td>
-              <td className="py-2 pr-4">{display(s.metrics.numpadKph).toLocaleString()}</td>
-              <td className="py-2 pr-4">{display(s.metrics.numpadEntryAccuracy)}%</td>
-              <td className="py-2">
-                <div className="flex flex-wrap items-center justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => onOpen(s)}
-                    className="rounded text-blue-700 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
-                  >
-                    View report
-                  </button>
-                  <ConfirmButton
-                    size="sm"
-                    label="Delete"
-                    question="Delete this?"
-                    onConfirm={() => removeSession(s.id)}
-                  />
-                </div>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-base">
+          <thead className="text-slate-600">
+            <tr>
+              <th className="py-2 pr-4 font-semibold">Petsa</th>
+              <th className="py-2 pr-4 font-semibold">Resulta</th>
+              <th className="py-2 pr-4 font-semibold">Typing</th>
+              <th className="py-2 pr-4 font-semibold">Numpad</th>
+              <th className="py-2 font-semibold">
+                <span className="sr-only">Mga aksyon</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="tabular-nums">
+            {sessions.map((s) => (
+              <tr key={s.id} className="border-t border-slate-200">
+                <td className="py-3 pr-4 text-slate-700">
+                  {new Date(s.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                </td>
+                <td className="py-3 pr-4 font-semibold">
+                  {s.metrics.jobReady === 1
+                    ? '✅ Job-ready'
+                    : `${s.metrics.targetsMet} sa ${s.metrics.targetsTotal} pasado`}
+                </td>
+                <td className="py-3 pr-4">
+                  {display(s.metrics.typingNetWpm)} WPM · {display(s.metrics.typingAccuracy)}%
+                </td>
+                <td className="py-3 pr-4">
+                  {display(s.metrics.numpadKph).toLocaleString()} KPH · {display(s.metrics.numpadEntryAccuracy)}%
+                </td>
+                <td className="py-3">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => onOpen(s)}>
+                      Tingnan
+                    </Button>
+                    <ConfirmButton
+                      size="sm"
+                      label="Burahin"
+                      question="Burahin ito?"
+                      onConfirm={() => removeSession(s.id)}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <div className="mt-4 flex justify-end border-t border-slate-200 pt-4">
+      <div className="mt-5 flex justify-end border-t border-slate-200 pt-5">
         <ConfirmButton
-          label="Clear assessment history"
+          label="Burahin lahat ng assessment"
           question={
-            sessions.length === 1 ? 'Delete your 1 assessment?' : `Delete all ${sessions.length} assessments?`
+            sessions.length === 1 ? 'Burahin ang 1 assessment?' : `Burahin lahat ng ${sessions.length} assessment?`
           }
-          confirmLabel="Yes, clear all"
+          confirmLabel="Oo, burahin lahat"
           onConfirm={() => clearSessions(['assessment'])}
         />
       </div>
@@ -157,7 +187,7 @@ export default function AssessmentPage() {
         assessment={step.assessment}
         previous={previousAssessment(data.sessions, step.assessment)}
         onBack={() => setStep({ name: 'intro' })}
-        backLabel={step.fromHistory ? 'Back to history' : 'Done'}
+        backLabel={step.fromHistory ? 'Bumalik sa listahan' : 'Tapos na'}
         onRetake={start}
       />
     );
@@ -166,7 +196,12 @@ export default function AssessmentPage() {
   if (step.name === 'typing') {
     return (
       <div>
-        <PageHeader title="Assessment — Part 1 of 2: Typing" description="Type the passage exactly as shown. 1 minute." />
+        <PageHeader
+          icon={<KeyboardIcon className="h-8 w-8" />}
+          title="Assessment: Typing"
+          description="I-type ang text nang eksakto. 1 minuto."
+        />
+        <PartProgress part={1} />
         <TypingRunner
           passage={passage}
           seconds={ASSESSMENT.typingSeconds}
@@ -183,15 +218,28 @@ export default function AssessmentPage() {
   if (step.name === 'break') {
     return (
       <div>
-        <PageHeader title="Part 1 done!" description="Take a breath. Your typing result is kept for the report." />
-        <Card title="Next: Part 2 — Numpad (1 minute)">
-          <p className="mb-4 text-slate-700">
-            Turn on Num Lock and place your fingers on 4-5-6. Type each number and press Enter. Commas are
-            optional. The timer starts on your first keystroke.
-          </p>
-          <Button autoFocus onClick={() => setStep({ name: 'numpad', typing: step.typing })}>
-            Start Part 2
-          </Button>
+        <PageHeader
+          icon={<ClockIcon className="h-8 w-8" />}
+          title="Tapos na ang Bahagi 1! 👏"
+          description="Magpahinga muna saglit. Naka-save na ang typing result mo para sa report."
+        />
+        <PartProgress part={2} />
+        <Card title="Susunod: Bahagi 2, Numpad (1 minuto)" icon={<NumpadIcon />}>
+          <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-slate-800">
+            <li>
+              Siguraduhing naka-ON ang <strong>Num Lock</strong>.
+            </li>
+            <li>Ilagay ang mga daliri sa 4-5-6 ng numpad.</li>
+            <li>
+              I-type ang bawat numero at pindutin ang <strong>Enter</strong>. Hindi kailangan ang comma.
+            </li>
+          </ol>
+          <HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>
+          <div className="mt-6">
+            <Button size="lg" autoFocus onClick={() => setStep({ name: 'numpad', typing: step.typing })}>
+              Simulan ang Bahagi 2
+            </Button>
+          </div>
         </Card>
       </div>
     );
@@ -200,7 +248,12 @@ export default function AssessmentPage() {
   if (step.name === 'numpad') {
     return (
       <div>
-        <PageHeader title="Assessment — Part 2 of 2: Numpad" description="Type each number and press Enter. 1 minute." />
+        <PageHeader
+          icon={<NumpadIcon className="h-8 w-8" />}
+          title="Assessment: Numpad"
+          description="I-type ang bawat numero at pindutin ang Enter. 1 minuto."
+        />
+        <PartProgress part={2} />
         <NumpadRunner
           seconds={ASSESSMENT.numpadSeconds}
           difficulty={ASSESSMENT.numpadDifficulty}
@@ -216,18 +269,22 @@ export default function AssessmentPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon={<AssessmentIcon className="h-8 w-8" />}
         title="Assessment"
-        description="Test every skill in one go, like a real Encoder / Data Entry hiring exam, and see if you're job-ready."
+        description="Parang totoong hiring exam para sa Encoder / Data Entry. Sa dulo, malalaman mo kung job-ready ka na at kung ano pa ang dapat i-practice."
       />
 
-      <Card title="How it works">
+      <Card title="Paano ito gumagana">
         <Rules />
-        <div className="mt-5">
-          <Button onClick={start}>Start assessment</Button>
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <Button size="lg" onClick={start}>
+            Simulan ang Assessment
+          </Button>
+          <span className="text-slate-600">Mga 2 minuto lang ito.</span>
         </div>
       </Card>
 
-      <Card title="Your assessment history">
+      <Card title="Mga dati mong resulta" icon={<ClockIcon />}>
         <History
           sessions={history}
           onOpen={(assessment) => setStep({ name: 'report', assessment, fromHistory: true })}

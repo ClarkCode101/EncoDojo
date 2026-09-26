@@ -33,9 +33,9 @@ beforeEach(() => {
 describe('loadData', () => {
   it('returns defaults when nothing is saved', () => {
     const data = loadData();
-    expect(data.version).toBe(2);
+    expect(data.version).toBe(3);
     expect(data.sessions).toEqual([]);
-    expect(data.settings).toEqual({ typingLevel: 1, numpadDifficulty: 1, sound: false, showLiveStats: true });
+    expect(data.settings).toEqual({ typingLevel: 1, numpadDifficulty: 1, sound: false, showLiveStats: true, largeText: false });
   });
 
   it('returns defaults when saved text is not JSON', () => {
@@ -52,7 +52,7 @@ describe('loadData', () => {
   it('returns defaults for an unknown version', () => {
     const future = { ...defaultData(), version: 99, sessions: [sampleSession()] };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(future));
-    expect(loadData().version).toBe(2);
+    expect(loadData().version).toBe(3);
     expect(loadData().sessions).toEqual([]);
   });
 });
@@ -160,9 +160,9 @@ describe('migrate from version 1', () => {
   it('keeps profile, sessions, and other settings', () => {
     const data = migrate(v1(4))!;
     expect(data).toEqual({
-      version: 2,
+      version: 3,
       profile: { displayName: 'Ana', createdAt: '2026-09-01T00:00:00.000Z' },
-      settings: { typingLevel: 2, numpadDifficulty: 4, sound: true, showLiveStats: false },
+      settings: { typingLevel: 2, numpadDifficulty: 4, sound: true, showLiveStats: false, largeText: false },
       sessions: [sampleSession()],
     });
   });
@@ -170,13 +170,27 @@ describe('migrate from version 1', () => {
   it('upgrades version 1 data already in localStorage', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v1(3)));
     const data = loadData();
-    expect(data.version).toBe(2);
+    expect(data.version).toBe(3);
     expect(data.sessions).toHaveLength(1);
   });
 
   it('can import an old version 1 export file', () => {
     const result = parseImport(JSON.stringify(v1(2)));
     expect(result.ok).toBe(true);
+  });
+
+  it('upgrades version 2 data: adds largeText = false, keeps the rest', () => {
+    const v2 = {
+      version: 2,
+      profile: { displayName: 'Ana', createdAt: '2026-09-01T00:00:00.000Z' },
+      settings: { typingLevel: 1, numpadDifficulty: 6, sound: false, showLiveStats: true },
+      sessions: [sampleSession()],
+    };
+    expect(migrate(v2)).toEqual({
+      ...v2,
+      version: 3,
+      settings: { ...v2.settings, largeText: false },
+    });
   });
 
   it('rejects broken version 1 data', () => {

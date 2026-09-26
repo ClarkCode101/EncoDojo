@@ -1,5 +1,7 @@
 import { SaveBanner, TargetRow } from '../../components/ResultPieces';
+import { NumpadIcon } from '../../components/icons';
 import { Button, Card, PageHeader, StatBadge } from '../../components/ui';
+import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { JOB_READY_NUMPAD } from '../../lib/targets';
@@ -8,25 +10,25 @@ import { formatClock } from '../../lib/useCountdown';
 /** The list of wrong numpad entries (also used by the Assessment report). */
 export function NumpadMistakesCard({ mistakes }: { mistakes: SessionMistake[] }) {
   return (
-    <Card title={`Wrong entries (${mistakes.length})`}>
+    <Card title={`Mga maling numero (${mistakes.length})`}>
       {mistakes.length === 0 ? (
-        <p className="text-slate-700">No wrong entries. Great job!</p>
+        <p className="text-lg text-slate-700">Walang maling numero. Ang galing! 👏</p>
       ) : (
         <div className="max-h-96 overflow-y-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-base">
             <thead className="sticky top-0 bg-white text-slate-600">
               <tr>
-                <th className="py-2 pr-4 font-medium">Entry #</th>
-                <th className="py-2 pr-4 font-medium">Expected</th>
-                <th className="py-2 font-medium">You typed</th>
+                <th className="py-2 pr-4 font-semibold">Pang-ilan</th>
+                <th className="py-2 pr-4 font-semibold">Dapat</th>
+                <th className="py-2 font-semibold">Na-type mo</th>
               </tr>
             </thead>
-            <tbody className="font-mono tabular-nums">
+            <tbody className="font-mono text-lg tabular-nums">
               {mistakes.map((mistake, i) => (
-                <tr key={i} className="border-t border-slate-100">
-                  <td className="py-1.5 pr-4 text-slate-600">{mistake.index}</td>
-                  <td className="py-1.5 pr-4 text-green-800">{mistake.expected}</td>
-                  <td className="py-1.5 text-red-700">{mistake.typed}</td>
+                <tr key={i} className="border-t border-slate-200">
+                  <td className="py-2 pr-4 font-sans text-base text-slate-600">#{mistake.index}</td>
+                  <td className="py-2 pr-4 text-green-800">{mistake.expected}</td>
+                  <td className="py-2 text-red-700">{mistake.typed}</td>
                 </tr>
               ))}
             </tbody>
@@ -52,32 +54,52 @@ export default function NumpadResults({
 }) {
   const m = session.metrics;
   const t = JOB_READY_NUMPAD;
+  const speed = display(m.kph);
+  const acc = display(m.entryAccuracy);
+  const ready = speed >= t.kph && acc >= t.entryAccuracy;
 
   return (
     <div>
-      <PageHeader title="Numpad Drill — Results" />
+      <PageHeader icon={<NumpadIcon className="h-8 w-8" />} title="Resulta ng Numpad Practice" />
+
+      <section
+        aria-label="Buod ng resulta"
+        className={
+          'mb-6 rounded-2xl border-2 p-6 ' + (ready ? 'border-green-400 bg-green-50' : 'border-blue-200 bg-white')
+        }
+      >
+        <p className="text-2xl leading-relaxed text-slate-900">
+          <strong>{m.correctEntries}</strong> sa <strong>{m.entries}</strong> na numero ang tama, sa bilis na{' '}
+          <strong>{speed.toLocaleString()} KPH</strong>.
+        </p>
+        <p className="mt-2 text-lg text-slate-700">
+          {ready
+            ? '🎉 Pasado ka sa karaniwang target! Subukan ang Assessment para makasigurado.'
+            : `Ang target ay ${t.kph.toLocaleString()} KPH at ${t.entryAccuracy}% na tama. Tuloy lang ang practice!`}
+        </p>
+        <div className="mt-5">
+          <Button size="lg" onClick={onRetry} autoFocus>
+            Ulitin
+          </Button>
+        </div>
+      </section>
 
       <SaveBanner saved={saved} finishedEarly={finishedEarly} onToggle={onToggleSaved} />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatBadge label="KPH" value={display(m.kph).toLocaleString()} hint="correct keystrokes per hour" />
-        <StatBadge label="Entry accuracy" value={`${display(m.entryAccuracy)}%`} />
-        <StatBadge label="Entries" value={m.entries} hint={`${m.correctEntries} correct`} />
-        <StatBadge label="Time" value={formatClock(session.durationSec)} />
+      <h2 className="mb-3 text-xl font-bold text-slate-900">Mga detalye</h2>
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatBadge label="Bilis (KPH)" value={speed.toLocaleString()} help={HELP.kph} />
+        <StatBadge label="Tamang numero" value={`${acc}%`} help={HELP.entryAccuracy} />
+        <StatBadge label="Natapos na numero" value={m.entries} hint={`${m.correctEntries} ang tama`} />
+        <StatBadge label="Tagal" value={formatClock(session.durationSec)} />
       </div>
 
-      <Card title="Job-ready target" className="mb-6">
+      <Card title="Target ng hiring test" className="mb-6">
         <ul className="space-y-2">
-          <TargetRow label="KPH" value={m.kph} target={t.kph} />
-          <TargetRow label="Entry accuracy" value={m.entryAccuracy} target={t.entryAccuracy} unit="%" />
+          <TargetRow label="Bilis (KPH)" value={m.kph} target={t.kph} />
+          <TargetRow label="Tamang numero" value={m.entryAccuracy} target={t.entryAccuracy} unit="%" />
         </ul>
       </Card>
-
-      <div className="mb-6">
-        <Button onClick={onRetry} autoFocus>
-          Try again
-        </Button>
-      </div>
 
       <NumpadMistakesCard mistakes={session.mistakes} />
     </div>

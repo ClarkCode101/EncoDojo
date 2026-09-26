@@ -5,8 +5,8 @@ import { display } from '../lib/scoring';
 import { Button } from './ui';
 
 /**
- * Tells the user whether a training result is saved, with a button to change it.
- * Results finished early with "Finish now" start unsaved, because a very short
+ * Tells the user whether a practice result is saved, with a button to change it.
+ * Results finished early with "Tapusin na" start unsaved, because a very short
  * run makes WPM/KPH look much higher than it really is.
  */
 export function SaveBanner({
@@ -18,33 +18,34 @@ export function SaveBanner({
   finishedEarly: boolean;
   onToggle: () => void;
 }) {
-  let message = 'This result is NOT saved.';
-  let button = 'Save it again';
+  let message = 'HINDI naka-save ang resultang ito.';
+  let button = 'I-save ulit';
   if (saved) {
-    message = 'Saved to your progress.';
-    button = "Don't save this result";
+    message = '✓ Na-save sa progress mo.';
+    button = 'Huwag i-save';
   } else if (finishedEarly) {
-    message = 'You finished early, so this result was NOT saved (a short run makes your speed look higher than it is).';
-    button = 'Save anyway';
+    message =
+      'Tinapos mo nang maaga, kaya HINDI ito na-save. (Kapag maikli ang oras, lalabas na mas mabilis ka kaysa sa totoo.)';
+    button = 'I-save pa rin';
   }
 
   return (
     <div
       role="status"
       className={
-        'mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-2 text-sm ' +
-        (saved ? 'border-green-300 bg-green-50 text-green-900' : 'border-amber-300 bg-amber-50 text-amber-900')
+        'mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 px-5 py-3 text-base ' +
+        (saved ? 'border-green-400 bg-green-50 text-green-950' : 'border-amber-400 bg-amber-50 text-amber-950')
       }
     >
-      <span>{message}</span>
-      <Button variant="secondary" onClick={onToggle}>
+      <span className="font-medium">{message}</span>
+      <Button variant="secondary" size="sm" onClick={onToggle}>
         {button}
       </Button>
     </div>
   );
 }
 
-/** One "✅ Net WPM 43 / 40 needed" line. Compares the ROUNDED value, like the screen shows. */
+/** One "✅ Net WPM  43  / 40 ang kailangan" line. Compares the ROUNDED value, like the screen shows. */
 export function TargetRow({
   label,
   value,
@@ -58,20 +59,24 @@ export function TargetRow({
 }) {
   const pass = display(value) >= target;
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <span aria-hidden="true" className="text-lg">
+    <li
+      className={
+        'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-3 py-2 ' + (pass ? 'bg-green-50' : 'bg-red-50')
+      }
+    >
+      <span aria-hidden="true" className="text-xl">
         {pass ? '✅' : '❌'}
       </span>
-      <span className="w-40 text-slate-700">{label}</span>
-      <span className="font-semibold tabular-nums text-slate-900">
+      <span className="w-44 font-medium text-slate-800">{label}</span>
+      <span className="text-lg font-bold tabular-nums text-slate-900">
         {display(value).toLocaleString()}
         {unit}
       </span>
-      <span className="text-sm text-slate-600">
+      <span className="text-slate-600">
         / {target.toLocaleString()}
-        {unit} needed
+        {unit} ang kailangan
       </span>
-      <span className="sr-only">{pass ? 'passed' : 'not yet'}</span>
+      <span className="ml-auto text-sm font-semibold">{pass ? 'Pasado' : 'Hindi pa'}</span>
     </li>
   );
 }

@@ -2,16 +2,16 @@
  * One typing run: passage, input box, timer, and live stats.
  * Used by both the Typing Test (training) and the Assessment.
  *
- * It does NOT save anything. When time is up (or "Finish now" is pressed) it
+ * It does NOT save anything. When time is up (or "Tapusin na" is pressed) it
  * builds a Session and hands it to `onFinish`. To start over, the parent
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, StatBadge } from '../../components/ui';
+import { Button, Card, StatBadge, TimeLeft } from '../../components/ui';
 import { accuracyPct, display, netWpm, wrongKeystrokes } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { makeId, type Session } from '../../lib/storage';
-import { formatClock, useCountdown } from '../../lib/useCountdown';
+import { useCountdown } from '../../lib/useCountdown';
 import PassageView from './PassageView';
 import { BAND, alignTyping } from './alignTyping';
 import { scoreTyping } from './scoreTyping';
@@ -107,16 +107,16 @@ export default function TypingRunner({
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <StatBadge label="Time left" value={formatClock(timer.remainingSec)} />
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <TimeLeft seconds={timer.remainingSec} started={timer.started} waitingText="naghihintay sa unang letra" />
         {showLiveStats && (
           <>
             <StatBadge
-              label="Net WPM"
+              label="Bilis (Net WPM)"
               value={timer.started ? display(netWpm(typed.length, alignment.errors, elapsed)) : '–'}
             />
             <StatBadge
-              label="Accuracy"
+              label="Accuracy (tama)"
               value={`${display(accuracyPct(alignment.correctChars, alignment.correctChars + alignment.errors))}%`}
             />
           </>
@@ -124,11 +124,19 @@ export default function TypingRunner({
       </div>
 
       <Card>
+        <h3 className="mb-2 text-base font-semibold text-slate-700">Ito ang ita-type mo:</h3>
         <PassageView passage={passage} alignment={alignment} />
+        <ColorLegend />
 
-        <label htmlFor="typing-input" className="mb-1 mt-4 block text-sm font-medium text-slate-700">
-          Type here
+        <label htmlFor="typing-input" className="mb-2 mt-6 block text-lg font-bold text-slate-900">
+          Dito ka mag-type 👇
         </label>
+        {!timer.started && (
+          <p className="mb-2 rounded-lg bg-blue-50 px-4 py-2 text-blue-950">
+            I-click ang kahon sa ibaba at simulan ang pag-type. <strong>Magsisimula ang oras sa unang letra</strong>{' '}
+            na ita-type mo.
+          </p>
+        )}
         <textarea
           id="typing-input"
           autoFocus
@@ -139,25 +147,49 @@ export default function TypingRunner({
           onKeyDown={(e) => {
             if (e.key === 'Enter') e.preventDefault();
           }}
+          placeholder="I-click dito at magsimulang mag-type…"
           spellCheck={false}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
           rows={3}
-          className="w-full rounded-md border border-slate-300 p-3 font-mono text-lg focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full rounded-xl border-2 border-slate-400 bg-white p-4 font-mono text-xl placeholder:text-slate-500 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200"
         />
-        <div className="mt-3 flex min-h-10 items-center justify-between gap-3 text-sm text-slate-600">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-slate-700">
           <span>
-            Backspace is allowed. Pasting is disabled. Each wrong, extra, or skipped key counts as 1
-            mistake.
+            Puwede ang <kbd className="rounded border border-slate-400 bg-slate-100 px-1.5 text-sm">Backspace</kbd>{' '}
+            para magbura. Bawat maling, sobra, o nalaktawang letra ay isang mali.
           </span>
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              Finish now
+              Tapusin na
             </Button>
           )}
         </div>
       </Card>
     </>
+  );
+}
+
+/** Explains the colors used in the passage. */
+function ColorLegend() {
+  return (
+    <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-700" aria-label="Kahulugan ng mga kulay">
+      <li>
+        <span className="rounded bg-yellow-200 px-1 font-mono underline decoration-2">a</span> = susunod na letra
+      </li>
+      <li>
+        <span className="font-mono text-slate-900">a</span> = tama
+      </li>
+      <li>
+        <span className="rounded bg-red-200 px-1 font-mono text-red-800">a</span> = mali
+      </li>
+      <li>
+        <span className="rounded bg-red-100 px-1 font-mono text-red-700 line-through">a</span> = nalaktawan
+      </li>
+      <li>
+        <span className="mx-px inline-block h-4 w-1 rounded-sm bg-red-600 align-middle" /> = sobrang letra
+      </li>
+    </ul>
   );
 }
