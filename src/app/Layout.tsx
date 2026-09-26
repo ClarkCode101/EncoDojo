@@ -7,6 +7,7 @@ import {
   KeyboardIcon,
   Logo,
   NumpadIcon,
+  ReviewIcon,
   SettingsIcon,
 } from '../components/icons';
 import { useAppData } from '../lib/useAppData';
@@ -27,6 +28,7 @@ const groups: NavGroup[] = [
       { to: '/typing', label: 'Typing Practice', icon: <KeyboardIcon /> },
       { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon /> },
       { to: '/copy', label: 'Copy Test', icon: <CopyIcon /> },
+      { to: '/review', label: 'Mistake Review', icon: <ReviewIcon /> },
     ],
   },
   { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },

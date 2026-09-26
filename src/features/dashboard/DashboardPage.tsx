@@ -12,6 +12,7 @@ import {
   HomeIcon,
   KeyboardIcon,
   NumpadIcon,
+  ReviewIcon,
   StarIcon,
 } from '../../components/icons';
 import { Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
@@ -112,7 +113,6 @@ const comingSoon = [
   { name: 'Document Encoding', text: 'Pag-encode mula sa pekeng invoice, resibo, at form.' },
   { name: 'QC / Spot the Difference', text: 'Paghahanap ng mali sa na-encode na data.' },
   { name: 'Excel Practice', text: 'Mga basic na formula, sort, filter, at VLOOKUP.' },
-  { name: 'Mistake Review', text: 'Balikan at ulitin ang mga dati mong mali.' },
   { name: 'Progress Reports', text: 'Chart ng pag-improve mo sa bawat linggo.' },
 ];
 
@@ -122,6 +122,7 @@ export default function DashboardPage() {
   const recent = recentSessions(sessions, 10);
   const streak = currentStreak(sessions);
   const latestAssessment = recentSessions(sessions.filter((s) => s.type === 'assessment'), 1)[0] ?? null;
+  const mistakeCount = sessions.reduce((sum, s) => sum + s.mistakes.length, 0);
 
   return (
     <div className="space-y-10">
@@ -172,6 +173,26 @@ export default function DashboardPage() {
           />
         </div>
       </section>
+
+      {mistakeCount > 0 && (
+        <Link
+          to="/review"
+          className="flex flex-wrap items-center gap-4 rounded-2xl border-2 border-brand-200 bg-white p-5 shadow-sm transition hover:border-brand-400 hover:shadow-md focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-800">
+            <ReviewIcon className="h-7 w-7" />
+          </div>
+          <div className="flex-1">
+            <div className="text-xl font-bold text-stone-900">
+              May {mistakeCount.toLocaleString()} mali kang puwedeng balikan
+            </div>
+            <div className="text-stone-700">Sa Mistake Review, makikita mo ang mga madalas mong mali at mauulit mo ang mga ito.</div>
+          </div>
+          <div className="inline-flex items-center gap-2 text-lg font-bold text-brand-800">
+            Balikan <ArrowRightIcon className="h-5 w-5" />
+          </div>
+        </Link>
+      )}
 
       <section aria-labelledby="progress-heading">
         <h2 id="progress-heading" className="mb-4 flex items-center gap-2 text-2xl font-bold text-stone-900">

@@ -80,7 +80,16 @@ export const CopyIcon = (p: IconProps) => (
   </Icon>
 );
 
-export const SettingsIcon =(p: IconProps) => (
+/** A circular arrow: going back over something to do it again. */
+export const ReviewIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 12a8 8 0 1 0 2.4-5.7" />
+    <path d="M4 4v4h4" />
+    <path d="M12 8v4l3 2" />
+  </Icon>
+);
+
+export const SettingsIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
     <circle cx="15" cy="6" r="2" />
