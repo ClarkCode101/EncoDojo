@@ -3,16 +3,18 @@
  * change since the previous assessment, and the mistake lists.
  */
 import { KphLevels, Stamp, TargetRow } from '../../components/ResultPieces';
-import { AssessmentIcon, CopyIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import FieldMistakesCard from '../../components/entry/FieldMistakesCard';
+import { AssessmentIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
 import { CopyMistakesCard } from '../copy/CopyResults';
+import { ENCODING_FIELD_LABEL } from '../encoding/documents';
 import { NumpadMistakesCard } from '../numpad/NumpadResults';
 import { TypingMistakesCard } from '../typing/TypingResults';
 import { assessmentComments } from './comments';
-import { assessmentChecks, assessmentCopyKph, hasCopyPart, type Check } from './evaluate';
+import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart, type Check } from './evaluate';
 
 /** "↑3 mula sa huli" / "↓2 mula sa huli" / "pareho sa huli" (rounded values). */
 function change(now: number, before: number | undefined, unit = ''): string | undefined {
@@ -112,6 +114,9 @@ export default function AssessmentReport({
           <ButtonLink to="/copy" variant="secondary">
             <CopyIcon className="h-5 w-5" /> Copy Test
           </ButtonLink>
+          <ButtonLink to="/encoding" variant="secondary">
+            <DocumentIcon className="h-5 w-5" /> Document Encoding
+          </ButtonLink>
         </div>
       </Card>
 
@@ -189,13 +194,52 @@ export default function AssessmentReport({
         </Card>
       )}
 
+      {/* Assessments from before Document Encoding don't have this part. */}
+      {hasEncodingPart(m) && (
+        <Card title="Bahagi 4: Document Encoding" icon={<DocumentIcon />} className="mb-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <StatBadge
+              label="Tamang field"
+              value={`${display(m.encodingFieldAccuracy)}%`}
+              hint={p && hasEncodingPart(p) ? change(m.encodingFieldAccuracy, p.encodingFieldAccuracy, '%') : undefined}
+              help={HELP.fieldAccuracy}
+            />
+            <StatBadge
+              label="Bilis (KPH)"
+              value={display(m.encodingKph).toLocaleString()}
+              hint={p && hasEncodingPart(p) ? change(m.encodingKph, p.encodingKph) : undefined}
+              help={HELP.encodingKph}
+            />
+            <StatBadge
+              label="Natapos na dokumento"
+              value={m.encodingDocuments}
+              hint={`${m.encodingCorrectFields} sa ${m.encodingTotalFields} field ang tama`}
+            />
+          </div>
+          <Targets checks={checks.filter((c) => c.section === 'encoding')} />
+        </Card>
+      )}
+
       <div className="space-y-6">
         <TypingMistakesCard
           mistakes={assessment.mistakes.filter((x) => x.section === 'typing')}
           errors={m.typingErrors}
         />
         <NumpadMistakesCard mistakes={assessment.mistakes.filter((x) => x.section === 'numpad')} />
-        {hasCopyPart(m) && <CopyMistakesCard mistakes={assessment.mistakes.filter((x) => x.section === 'copy')} />}
+        {hasCopyPart(m) && (
+          <CopyMistakesCard
+            title="Copy Test: mga maling field"
+            mistakes={assessment.mistakes.filter((x) => x.section === 'copy')}
+          />
+        )}
+        {hasEncodingPart(m) && (
+          <FieldMistakesCard
+            mistakes={assessment.mistakes.filter((x) => x.section === 'encoding')}
+            labels={ENCODING_FIELD_LABEL}
+            unitLabel="Dokumento"
+            title="Document Encoding: mga maling field"
+          />
+        )}
       </div>
     </div>
   );

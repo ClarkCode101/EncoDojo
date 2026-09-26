@@ -3,11 +3,12 @@
  * report card. Saved automatically, so improvement over time is honest
  * (it can be deleted later from the history).
  *
- * Steps: intro -> typing -> break -> numpad -> break -> copy -> report
+ * Steps: intro -> typing -> break -> numpad -> break -> copy -> break -> encoding -> report
  * (A past report can also be opened from the history list on the intro.)
  */
 import { useEffect, useMemo, useState } from 'react';
-import { AssessmentIcon, ClockIcon, CopyIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import EntryFormRunner from '../../components/entry/EntryFormRunner';
+import { AssessmentIcon, ClockIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, Card, ConfirmButton, HelpTip, Kbd, PageHeader } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
@@ -15,11 +16,21 @@ import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
 import { clearSessions, removeSession, saveSession, useAppData } from '../../lib/useAppData';
 import CopyRunner from '../copy/CopyRunner';
+import { encodingItems } from '../encoding/encodingItems';
+import EncodingRules from '../encoding/EncodingRules';
+import { buildEncodingSession } from '../encoding/scoreEncoding';
 import NumpadRunner from '../numpad/NumpadRunner';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
 import AssessmentReport from './AssessmentReport';
-import { ASSESSMENT, assessmentCopyKph, buildAssessmentSession, hasCopyPart, previousAssessment } from './evaluate';
+import {
+  ASSESSMENT,
+  assessmentCopyKph,
+  buildAssessmentSession,
+  hasCopyPart,
+  hasEncodingPart,
+  previousAssessment,
+} from './evaluate';
 
 type Step =
   | { name: 'intro' }
@@ -28,9 +39,11 @@ type Step =
   | { name: 'numpad'; typing: Session }
   | { name: 'break2'; typing: Session; numpad: Session }
   | { name: 'copy'; typing: Session; numpad: Session }
+  | { name: 'break3'; typing: Session; numpad: Session; copy: Session }
+  | { name: 'encoding'; typing: Session; numpad: Session; copy: Session }
   | { name: 'report'; assessment: Session; fromHistory: boolean };
 
-const TOTAL_PARTS = 3;
+const TOTAL_PARTS = 4;
 
 /** "Bahagi 2 sa 3" with a simple progress bar (one segment per part). */
 function PartProgress({ part }: { part: number }) {
@@ -51,7 +64,7 @@ function PartProgress({ part }: { part: number }) {
 function Rules() {
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
           <KeyboardIcon className="h-8 w-8 shrink-0 text-brand-700" />
           <div>
@@ -71,6 +84,15 @@ function Rules() {
           <div>
             <div className="text-lg font-bold">Bahagi 3: Copy Test (2 minuto)</div>
             <div className="text-stone-700">Kopyahin ang pangalan, petsa, address, contact no., at ID sa form.</div>
+          </div>
+        </div>
+        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
+          <DocumentIcon className="h-8 w-8 shrink-0 text-brand-700" />
+          <div>
+            <div className="text-lg font-bold">Bahagi 4: Document Encoding (3 minuto)</div>
+            <div className="text-stone-700">
+              I-encode ang mahahalagang detalye mula sa invoice, delivery receipt, at application form.
+            </div>
           </div>
         </div>
       </div>
@@ -108,6 +130,7 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
               <th className="py-2 pr-4 font-semibold">Typing</th>
               <th className="py-2 pr-4 font-semibold">Numpad</th>
               <th className="py-2 pr-4 font-semibold">Copy</th>
+              <th className="py-2 pr-4 font-semibold">Encoding</th>
               <th className="py-2 font-semibold">
                 <span className="sr-only">Mga aksyon</span>
               </th>
@@ -133,6 +156,11 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
                 <td className="py-3 pr-4">
                   {hasCopyPart(s.metrics)
                     ? `${display(s.metrics.copyFieldAccuracy)}% · ${display(assessmentCopyKph(s.metrics)).toLocaleString()} KPH`
+                    : '—'}
+                </td>
+                <td className="py-3 pr-4">
+                  {hasEncodingPart(s.metrics)
+                    ? `${display(s.metrics.encodingFieldAccuracy)}% · ${display(s.metrics.encodingKph).toLocaleString()} KPH`
                     : '—'}
                 </td>
                 <td className="py-3">
@@ -179,6 +207,10 @@ export default function AssessmentPage() {
     [seed],
   );
 
+  // A new mix of documents (invoice -> delivery -> application, repeated) for each attempt.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `seed` is here on purpose: new documents for each attempt
+  const encodingNextItem = useMemo(() => encodingItems('mix'), [seed]);
+
   const history = useMemo(
     () =>
       data.sessions
@@ -201,8 +233,8 @@ export default function AssessmentPage() {
     setStep({ name: 'typing' });
   }
 
-  function finishCopy(typing: Session, numpad: Session, copy: Session) {
-    const assessment = buildAssessmentSession(typing, numpad, copy);
+  function finishEncoding(typing: Session, numpad: Session, copy: Session, encoding: Session) {
+    const assessment = buildAssessmentSession(typing, numpad, copy, encoding);
     saveSession(assessment);
     setStep({ name: 'report', assessment, fromHistory: false });
   }
@@ -298,7 +330,7 @@ export default function AssessmentPage() {
         <PageHeader
           icon={<ClockIcon className="h-8 w-8" />}
           title="Tapos na ang Bahagi 2! 👏"
-          description="Isa na lang! Naka-save na ang typing at numpad result mo para sa report."
+          description="Naka-save na ang typing at numpad result mo para sa report."
         />
         <PartProgress part={3} />
         <Card title="Susunod: Bahagi 3, Copy Test (2 minuto)" icon={<CopyIcon />}>
@@ -339,7 +371,71 @@ export default function AssessmentPage() {
           showLiveStats={false}
           allowFinishEarly={false}
           sound={sound}
-          onFinish={(copy) => finishCopy(step.typing, step.numpad, copy)}
+          onFinish={(copy) => setStep({ name: 'break3', typing: step.typing, numpad: step.numpad, copy })}
+        />
+      </div>
+    );
+  }
+
+  if (step.name === 'break3') {
+    return (
+      <div>
+        <PageHeader
+          icon={<ClockIcon className="h-8 w-8" />}
+          title="Tapos na ang Bahagi 3! 👏"
+          description="Isa na lang! Naka-save na ang typing, numpad, at copy test result mo para sa report."
+        />
+        <PartProgress part={4} />
+        <Card title="Susunod: Bahagi 4, Document Encoding (3 minuto)" icon={<DocumentIcon />}>
+          <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
+            <li>Makikita mo ang isang dokumento: invoice, delivery receipt, o application form (salitan).</li>
+            <li>Hanapin sa dokumento ang 5 detalyeng hinihingi ng form. Hindi lahat ng nasa papel ay ie-encode.</li>
+            <li>Sundin ang mga patakaran sa ibaba — lalo na sa petsa at halaga.</li>
+            <li>
+              <Kbd>Tab</Kbd> para sa susunod na field, <Kbd>Enter</Kbd> sa huling field para ipasa ang dokumento.
+            </li>
+          </ol>
+          <EncodingRules />
+          <div className="mt-6">
+            <Button
+              size="lg"
+              autoFocus
+              onClick={() => setStep({ name: 'encoding', typing: step.typing, numpad: step.numpad, copy: step.copy })}
+            >
+              Simulan ang Bahagi 4
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step.name === 'encoding') {
+    return (
+      <div>
+        <PageHeader
+          icon={<DocumentIcon className="h-8 w-8" />}
+          title="Assessment: Document Encoding"
+          description="I-encode ang bawat dokumento ayon sa patakaran. 3 minuto."
+        />
+        <PartProgress part={4} />
+        <EncodingRules className="mb-6" />
+        <EntryFormRunner
+          seconds={ASSESSMENT.encodingSeconds}
+          showLiveStats={false}
+          allowFinishEarly={false}
+          sound={sound}
+          nextItem={encodingNextItem}
+          unit="dokumento"
+          wideSource
+          onFinish={({ submitted, unfinished, elapsedSec }) =>
+            finishEncoding(
+              step.typing,
+              step.numpad,
+              step.copy,
+              buildEncodingSession(submitted, unfinished, elapsedSec, ASSESSMENT.encodingSeconds, 'form', 'mix'),
+            )
+          }
         />
       </div>
     );
@@ -359,7 +455,7 @@ export default function AssessmentPage() {
           <Button size="lg" onClick={start}>
             Simulan ang Assessment
           </Button>
-          <span className="text-stone-600">Mga 4–5 minuto ito, kasama ang pahinga.</span>
+          <span className="text-stone-600">Mga 8–10 minuto ito, kasama ang pahinga.</span>
         </div>
       </Card>
 

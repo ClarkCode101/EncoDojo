@@ -5,9 +5,9 @@
  */
 import { display, normalizeEntry } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
-import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
 import { mistakeKind } from '../../lib/alignTyping';
-import { assessmentChecks, assessmentCopyKph, hasCopyPart } from './evaluate';
+import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart } from './evaluate';
 
 /** A tip only counts as a "pattern" when it happens at least this often... */
 const MIN_PATTERN_COUNT = 3;
@@ -189,16 +189,74 @@ function copyComments(m: Record<string, number>, mistakes: SessionMistake[]): st
   return out;
 }
 
+/** A tip for each Document Encoding field, used when that field is wrong most often. */
+const ENCODING_FIELD_TIPS: Record<string, string> = {
+  date: 'Madalas mali ang Date. Kahit "Sept. 14, 2026" o "14-Sep-2026" ang nasa papel, i-type ito bilang mm/dd/yyyy (09/14/2026).',
+  birthDate: 'Madalas mali ang Birth Date. Laging mm/dd/yyyy, kahit iba ang itsura ng petsa sa form.',
+  total: 'Madalas mali ang Total Amount. Numero at tuldok lang — walang ₱ at walang comma (₱5,115.25 → 5115.25).',
+  totalQty: 'Madalas mali ang Total Qty. Kunin ang TOTAL QTY sa ibaba ng delivery receipt, hindi ang isang linya lang.',
+  customer: 'Madalas mali ang Customer. Ito ang nasa "Sold to:", hindi ang kumpanyang nasa itaas ng invoice.',
+  deliverTo: 'Madalas mali ang Deliver To. Ingat sa pangalan ng kumpanya o tao at sa bawat tuldok.',
+  address: 'Madalas mali ang Address. Ingat sa "Brgy.", "Blk", "Lot", mga comma, at pangalan ng lugar.',
+  lastName: 'Madalas mali ang Last Name. Ito ang nasa "Surname" na kahon ng form.',
+  firstName: 'Madalas mali ang First Name. Ito ang nasa "Given Name" na kahon — hindi kasama ang middle name.',
+  contactNo: 'Madalas mali ang Contact No. Tingnan ang panaklong ( ), space, gitling (-), at bawat digit.',
+  invoiceNo: 'Madalas mali ang Invoice No. Tingnan ang bawat digit at gitling (-) ng pulang numero.',
+  drNo: 'Madalas mali ang DR No. Tingnan ang bawat digit at gitling (-) ng pulang numero.',
+  terms: 'Madalas mali ang Terms. Kopyahin nang eksakto, hal. "30 days" o "COD".',
+};
+
+function encodingComments(m: Record<string, number>, mistakes: SessionMistake[]): string[] {
+  const t = JOB_READY_ENCODING;
+  if (m.encodingDocuments === 0) {
+    return ['Document Encoding: walang natapos na dokumento. Tandaan: pindutin ang Enter sa huling field para maipasa.'];
+  }
+  const speed = display(m.encodingKph);
+  const speedText = `${speed.toLocaleString('en-US')} KPH`;
+  const acc = display(m.encodingFieldAccuracy);
+  const speedOk = speed >= t.kph;
+  const accOk = acc >= t.fieldAccuracy;
+  const out: string[] = [];
+
+  if (speedOk && accOk) {
+    out.push(`Document Encoding: pasado ka sa tamang field at bilis (${acc}% tama, ${speedText}). Ang galing!`);
+  } else if (speedOk) {
+    out.push(
+      `Document Encoding: sapat ang bilis mo (${speedText}), pero ${acc}% lang ng field ang tama (target: ${t.fieldAccuracy}%). ` +
+        'Sundin ang mga patakaran: petsa → mm/dd/yyyy, halaga → walang ₱ at comma.',
+    );
+  } else if (accOk) {
+    out.push(
+      `Document Encoding: tama ang pag-encode mo (${acc}%). Bilisan pa ang paghahanap sa dokumento — ` +
+        `${(t.kph - speed).toLocaleString('en-US')} KPH pa para sa target.`,
+    );
+  } else {
+    out.push(
+      `Document Encoding: unahin muna ang tamang pag-encode (${acc}% tama, target: ${t.fieldAccuracy}%), saka ang bilis (${speedText}).`,
+    );
+  }
+
+  const counts = new Map<string, number>();
+  for (const x of mistakes) if (x.field) counts.set(x.field, (counts.get(x.field) ?? 0) + 1);
+  const [topField, topCount] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] ?? ['', 0];
+  if (topCount >= 2 && topCount / mistakes.length >= MIN_PATTERN_SHARE && ENCODING_FIELD_TIPS[topField]) {
+    out.push(ENCODING_FIELD_TIPS[topField]);
+  }
+  return out;
+}
+
 /** All feedback for one saved assessment, most important first. */
 export function assessmentComments(assessment: Session): string[] {
   const m = assessment.metrics;
   const typingMistakes = assessment.mistakes.filter((x) => x.section === 'typing');
   const numpadMistakes = assessment.mistakes.filter((x) => x.section === 'numpad');
   const copyMistakes = assessment.mistakes.filter((x) => x.section === 'copy');
+  const encodingMistakes = assessment.mistakes.filter((x) => x.section === 'encoding');
   return [
     overallComment(m),
     ...typingComments(m, typingMistakes),
     ...numpadComments(m, numpadMistakes),
     ...(hasCopyPart(m) ? copyComments(m, copyMistakes) : []),
+    ...(hasEncodingPart(m) ? encodingComments(m, encodingMistakes) : []),
   ];
 }

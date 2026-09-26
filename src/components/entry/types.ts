@@ -29,8 +29,12 @@ export type EntryRunnerProps = {
   showLiveStats: boolean;
   allowFinishEarly: boolean;
   sound: boolean;
-  /** Makes the next item to encode (called once at the start, then after each submit). */
-  nextItem: () => EntryItem;
+  /**
+   * Makes item number `index` (0 = the first). Called once at the start, then
+   * after each submit. The index keeps a fixed order (e.g. the Assessment's
+   * document mix) even if React calls it twice in development.
+   */
+  nextItem: (index: number) => EntryItem;
   /** Word for one item in messages, e.g. "record" or "dokumento". */
   unit: string;
   onStart?: () => void;

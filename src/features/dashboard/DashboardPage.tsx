@@ -104,7 +104,7 @@ function StepCard({
 }
 
 function assessmentStatus(latest: Session | null): string {
-  if (!latest) return 'Hindi mo pa ito nasusubukan. Mga 4–5 minuto lang.';
+  if (!latest) return 'Hindi mo pa ito nasusubukan. Mga 8–10 minuto lang.';
   const m = latest.metrics;
   const when = new Date(latest.startedAt).toLocaleDateString(undefined, { dateStyle: 'medium' });
   return m.jobReady === 1

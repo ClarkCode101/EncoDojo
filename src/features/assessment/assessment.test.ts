@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { assessmentComments } from './comments';
-import { assessmentChecks, buildAssessmentSession, hasCopyPart, previousAssessment } from './evaluate';
+import { assessmentChecks, buildAssessmentSession, hasCopyPart, hasEncodingPart, previousAssessment } from './evaluate';
 
 function typingSession(metrics: Partial<Record<string, number>>, mistakes: SessionMistake[] = []): Session {
   return {
@@ -36,26 +36,56 @@ function copySession(metrics: Partial<Record<string, number>>, mistakes: Session
   };
 }
 
-/** All three parts; the copy part defaults to a passing one. */
-function build(typing: Session, numpad: Session, copy: Session = copySession({})) {
-  return buildAssessmentSession(typing, numpad, copy);
+function encodingSession(metrics: Partial<Record<string, number>>, mistakes: SessionMistake[] = []): Session {
+  return {
+    id: 'e1',
+    type: 'encoding',
+    startedAt: '2026-09-26T08:07:00.000Z',
+    durationSec: 180,
+    metrics: { kph: 7000, fieldAccuracy: 100, documents: 3, correctFields: 15, totalFields: 15, ...metrics } as Record<string, number>,
+    mistakes,
+  };
+}
+
+/** All four parts; the copy and encoding parts default to passing ones. */
+function build(
+  typing: Session,
+  numpad: Session,
+  copy: Session = copySession({}),
+  encoding: Session = encodingSession({}),
+) {
+  return buildAssessmentSession(typing, numpad, copy, encoding);
 }
 
 describe('buildAssessmentSession', () => {
-  it('combines all three parts and marks job-ready when all targets pass', () => {
+  it('combines all four parts and marks job-ready when all targets pass', () => {
     const a = build(typingSession({}), numpadSession({}));
     expect(a.type).toBe('assessment');
-    expect(a.durationSec).toBe(240);
+    expect(a.durationSec).toBe(420);
     expect(a.metrics).toMatchObject({
       typingNetWpm: 45,
       numpadKph: 9000,
       copyFieldAccuracy: 100,
       copyKph: 9000,
       copyNetWpm: 35,
-      targetsMet: 6,
-      targetsTotal: 6,
+      encodingFieldAccuracy: 100,
+      encodingKph: 7000,
+      encodingDocuments: 3,
+      targetsMet: 8,
+      targetsTotal: 8,
       jobReady: 1,
     });
+  });
+
+  it('an encoding part with no documents counts as 0%', () => {
+    const a = build(typingSession({}), numpadSession({}), copySession({}), encodingSession({ documents: 0, totalFields: 0, correctFields: 0, kph: 0 }));
+    expect(a.metrics.encodingFieldAccuracy).toBe(0);
+    expect(a.metrics.jobReady).toBe(0);
+  });
+
+  it('encoding below 6,000 KPH fails only that target', () => {
+    const a = build(typingSession({}), numpadSession({}), copySession({}), encodingSession({ kph: 5400 }));
+    expect(a.metrics).toMatchObject({ targetsMet: 7, targetsTotal: 8, jobReady: 0 });
   });
 
   it('a copy part with no records counts as 0% (not "100% of nothing")', () => {
@@ -66,7 +96,7 @@ describe('buildAssessmentSession', () => {
 
   it('is not job-ready when any target fails', () => {
     const a = build(typingSession({ accuracy: 90 }), numpadSession({}));
-    expect(a.metrics).toMatchObject({ targetsMet: 5, jobReady: 0 });
+    expect(a.metrics).toMatchObject({ targetsMet: 7, jobReady: 0 });
   });
 
   it('tags each mistake with its part', () => {
@@ -74,8 +104,9 @@ describe('buildAssessmentSession', () => {
       typingSession({}, [{ expected: 'a', typed: 's', index: 3 }]),
       numpadSession({}, [{ expected: '123', typed: '124', index: 1 }]),
       copySession({}, [{ expected: 'Dela Cruz', typed: 'De la Cruz', index: 1, field: 'name' }]),
+      encodingSession({}, [{ expected: '09/14/2026', typed: 'Sept. 14, 2026', index: 1, field: 'date' }]),
     );
-    expect(a.mistakes.map((m) => m.section)).toEqual(['typing', 'numpad', 'copy']);
+    expect(a.mistakes.map((m) => m.section)).toEqual(['typing', 'numpad', 'copy', 'encoding']);
   });
 });
 
@@ -84,6 +115,13 @@ describe('assessmentChecks', () => {
     const old = { typingNetWpm: 45, typingAccuracy: 97, numpadKph: 9000, numpadEntryAccuracy: 100 };
     expect(hasCopyPart(old)).toBe(false);
     expect(assessmentChecks(old).map((c) => c.section)).toEqual(['typing', 'typing', 'numpad', 'numpad']);
+  });
+
+  it('assessments from before Document Encoding keep their 6 checks', () => {
+    const three = { typingNetWpm: 45, typingAccuracy: 97, numpadKph: 9000, numpadEntryAccuracy: 100, copyFieldAccuracy: 100, copyKph: 9000 };
+    expect(hasCopyPart(three)).toBe(true);
+    expect(hasEncodingPart(three)).toBe(false);
+    expect(assessmentChecks(three)).toHaveLength(6);
   });
 
   it('compares the rounded value (39.6 WPM counts as 40)', () => {
@@ -109,7 +147,8 @@ describe('previousAssessment', () => {
 describe('assessmentComments', () => {
   it('congratulates when everything passes', () => {
     const c = assessmentComments(build(typingSession({}), numpadSession({})));
-    expect(c[0]).toMatch(/pasado ka sa lahat ng 6/);
+    expect(c[0]).toMatch(/pasado ka sa lahat ng 8/);
+    expect(c.join(' ')).toMatch(/Document Encoding: pasado ka/);
     expect(c.join(' ')).toMatch(/Copy Test: pasado ka/);
     expect(c.join(' ')).toMatch(/Typing: pasado ka sa bilis at accuracy/);
     expect(c.join(' ')).toMatch(/Numpad: pasado ka sa bilis at accuracy/);
@@ -173,11 +212,26 @@ describe('assessmentComments', () => {
     expect(c).toMatch(/walang naipasang record/);
   });
 
+  it('points out an unconverted date in Document Encoding', () => {
+    const mistakes = [1, 2, 3].map((i) => ({ expected: '09/14/2026', typed: 'Sept. 14, 2026', index: i, field: 'date' }));
+    const c = assessmentComments(
+      build(typingSession({}), numpadSession({}), copySession({}), encodingSession({ fieldAccuracy: 80, correctFields: 12 }, mistakes)),
+    ).join(' ');
+    expect(c).toMatch(/Madalas mali ang Date.*mm\/dd\/yyyy/);
+  });
+
+  it('reminds to press Enter when no document was finished', () => {
+    const c = assessmentComments(
+      build(typingSession({}), numpadSession({}), copySession({}), encodingSession({ documents: 0, totalFields: 0, correctFields: 0, kph: 0 })),
+    ).join(' ');
+    expect(c).toMatch(/walang natapos na dokumento/);
+  });
+
   it('old assessments get no Copy Test comments', () => {
     const old: Session = {
       id: 'old', type: 'assessment', startedAt: '2026-09-01T00:00:00.000Z', durationSec: 120, mistakes: [],
       metrics: { typingNetWpm: 45, typingAccuracy: 97, typingKeystrokeAccuracy: 95, numpadKph: 9000, numpadEntryAccuracy: 100, numpadEntries: 20, numpadCorrectEntries: 20 },
     };
-    expect(assessmentComments(old).join(' ')).not.toMatch(/Copy Test/);
+    expect(assessmentComments(old).join(' ')).not.toMatch(/Copy Test|Document Encoding/);
   });
 });

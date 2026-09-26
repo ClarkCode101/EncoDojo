@@ -36,15 +36,18 @@ export default function FieldMistakesCard({
   mistakes,
   labels,
   unitLabel,
+  title = 'Mga maling field',
 }: {
   mistakes: SessionMistake[];
   /** field key -> display name, e.g. { date: "Date (Petsa)" } */
   labels: Record<string, string>;
   /** Column header for the item number, e.g. "Record" or "Dokumento". */
   unitLabel: string;
+  /** Card title; the count is added after it. */
+  title?: string;
 }) {
   return (
-    <Card title={`Mga maling field (${mistakes.length})`}>
+    <Card title={`${title} (${mistakes.length})`}>
       {mistakes.length === 0 ? (
         <p className="text-lg text-stone-700">Walang maling field. Ang galing! 👏</p>
       ) : (

@@ -52,7 +52,7 @@ export default function EntrySheetRunner({
   scrollSource?: boolean;
 }) {
   // items[i] is the source for rows[i]. The LAST one is the row being typed.
-  const [items, setItems] = useState<EntryItem[]>(() => [nextItem()]);
+  const [items, setItems] = useState<EntryItem[]>(() => [nextItem(0)]);
   const [rows, setRows] = useState<Values[]>(() => [emptyValues(items[0].fields)]);
   const [message, setMessage] = useState<{ row: number; wrong: number } | null>(null);
   const cellRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -104,7 +104,7 @@ export default function EntrySheetRunner({
 
     const isLastRow = row === rowsRef.current.length - 1;
     if (isLastRow) {
-      setItems((all) => [...all, nextItem()]);
+      setItems((all) => [...all, nextItem(all.length)]);
       setRows((all) => [...all, emptyValues(fields)]);
     }
     focusCell(row + 1, 0);

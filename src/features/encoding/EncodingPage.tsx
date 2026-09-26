@@ -9,14 +9,13 @@
 import { useMemo, useState } from 'react';
 import EntryFormRunner from '../../components/entry/EntryFormRunner';
 import EntrySheetRunner from '../../components/entry/EntrySheetRunner';
-import type { EntryItem, EntryResult } from '../../components/entry/types';
+import type { EntryResult } from '../../components/entry/types';
 import { DocumentIcon } from '../../components/icons';
 import { Card, Kbd, PageHeader, SegmentedPicker, Step } from '../../components/ui';
-import { makeRng, randomSeed } from '../../lib/random';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
-import DocumentView from './DocumentView';
-import { DOC_INFO, DOC_TYPES, expectedValues, makeDocument, type DocType } from './documents';
+import { DOC_INFO, DOC_TYPES, type DocType } from './documents';
+import { encodingItems } from './encodingItems';
 import EncodingResults from './EncodingResults';
 import EncodingRules from './EncodingRules';
 import { buildEncodingSession } from './scoreEncoding';
@@ -62,19 +61,8 @@ export default function EncodingPage() {
   const [saved, setSaved] = useState(false);
 
   // A new random source of documents for every run.
-  const nextItem = useMemo(() => {
-    const rng = makeRng(randomSeed());
-    return (): EntryItem => {
-      const doc = makeDocument(rng, docType);
-      return {
-        title: DOC_INFO[docType].label,
-        source: <DocumentView doc={doc} />,
-        fields: DOC_INFO[docType].fields,
-        expected: expectedValues(doc),
-      };
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `attempt` is here on purpose: new documents for each try
-  }, [docType, attempt]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `attempt` is here on purpose: new documents for each try
+  const nextItem = useMemo(() => encodingItems(docType), [docType, attempt]);
 
   function handleFinish({ submitted, unfinished, elapsedSec }: EntryResult, finishedEarly: boolean) {
     const session = buildEncodingSession(submitted, unfinished, elapsedSec, seconds, mode, docType);

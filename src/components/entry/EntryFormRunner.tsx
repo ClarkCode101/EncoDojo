@@ -32,7 +32,7 @@ export default function EntryFormRunner({
   /** Documents are wider than record cards, so they get more room. */
   wideSource?: boolean;
 }) {
-  const [item, setItem] = useState<EntryItem>(() => nextItem());
+  const [item, setItem] = useState<EntryItem>(() => nextItem(0));
   const [values, setValues] = useState<Values>(() => emptyValues(item.fields));
   const [submitted, setSubmitted] = useState<FilledRecord[]>([]);
   const [lastWrongFields, setLastWrongFields] = useState<number | null>(null);
@@ -79,10 +79,11 @@ export default function EntryFormRunner({
 
     setSubmitted((list) => [...list, { fields: item.fields, expected: item.expected, typed }]);
     setLastWrongFields(wrong);
-    const next = nextItem();
+    const next = nextItem(submittedRef.current.length + 1);
     setItem(next);
     setValues(emptyValues(next.fields));
-    inputRefs.current[0]?.focus();
+    // Wait for React to draw the next item (its fields may differ) before focusing.
+    requestAnimationFrame(() => inputRefs.current[0]?.focus());
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>, index: number) {
