@@ -2,7 +2,7 @@
  * Plain-language (Taglish) explanations of every number the app shows.
  * Used by the "Ano ito?" buttons so every screen explains things the same way.
  */
-import { JOB_READY_COPY, JOB_READY_NUMPAD, JOB_READY_TYPING } from './targets';
+import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_TYPING } from './targets';
 
 const kph = JOB_READY_NUMPAD.kph.toLocaleString('en-US');
 
@@ -34,6 +34,13 @@ export const HELP = {
   copyWpm:
     'Ang Net WPM dito ay para lang maikumpara sa Typing Practice. Ang KPH ang target sa Copy Test. ' +
     'Mas mabagal talagang i-type ang pangalan, address, at ID kaysa sa ordinaryong pangungusap.',
+  encodingKph:
+    `Bilis ng pag-encode (net KPH) = ilang tamang pindot kada oras, bawas na ang mga mali. ` +
+    `${JOB_READY_ENCODING.kph.toLocaleString('en-US')} pataas ang target — mas mababa kaysa sa Copy Test dahil kailangan mo munang ` +
+    `HANAPIN ang tamang value sa dokumento at i-convert ang petsa at halaga. Tantiya ito ng EncoDojo (walang iisang pamantayan).`,
+  encodingRules:
+    'Sa totoong trabaho, iba-iba ang itsura ng petsa at halaga sa bawat dokumento, pero IISA ang format sa system ' +
+    'o spreadsheet. Kaya bago i-type, i-convert muna: petsa → mm/dd/yyyy, halaga → numero lang (walang ₱ at comma).',
   streak:'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
   numpad:
     'Ang numpad ay ang mga number key sa KANAN ng keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +

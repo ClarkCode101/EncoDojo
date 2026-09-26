@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import {
   AssessmentIcon,
   CopyIcon,
+  DocumentIcon,
   HomeIcon,
   KeyboardIcon,
   Logo,
@@ -27,6 +28,7 @@ const groups: NavGroup[] = [
       { to: '/typing', label: 'Typing Practice', icon: <KeyboardIcon /> },
       { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon /> },
       { to: '/copy', label: 'Copy Test', icon: <CopyIcon /> },
+      { to: '/encoding', label: 'Document Encoding', icon: <DocumentIcon /> },
     ],
   },
   { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },

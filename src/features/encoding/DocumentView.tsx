@@ -82,14 +82,15 @@ function InvoiceView({ doc }: { doc: InvoiceDoc }) {
       </div>
 
       <div className="mt-5 overflow-x-auto">
-        <table className="w-full min-w-[32rem] border-collapse">
+        {/* Narrow enough to fit beside the form, so TOTAL AMOUNT DUE is never hidden. */}
+        <table className="w-full min-w-[26rem] border-collapse">
           <thead>
             <tr>
-              <th className={`${th} w-16 text-right`}>Qty</th>
-              <th className={`${th} w-20`}>Unit</th>
+              <th className={`${th} w-12 text-right`}>Qty</th>
+              <th className={`${th} w-16`}>Unit</th>
               <th className={th}>Articles / Description</th>
-              <th className={`${th} w-28 text-right`}>Unit Price</th>
-              <th className={`${th} w-32 text-right`}>Amount</th>
+              <th className={`${th} w-24 text-right`}>Unit Price</th>
+              <th className={`${th} w-28 text-right`}>Amount</th>
             </tr>
           </thead>
           <tbody className="tabular-nums">

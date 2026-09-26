@@ -80,7 +80,16 @@ export const CopyIcon = (p: IconProps) => (
   </Icon>
 );
 
-export const SettingsIcon = (p: IconProps) => (
+/** A document with a folded corner and lines: encoding from paper documents. */
+export const DocumentIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+    <path d="M14 3v5h5" />
+    <path d="M9 12h6M9 15h6M9 18h4" />
+  </Icon>
+);
+
+export const SettingsIcon =(p: IconProps) => (
   <Icon {...p}>
     <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
     <circle cx="15" cy="6" r="2" />

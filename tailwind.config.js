@@ -56,5 +56,8 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `large-text:` = only when Settings -> "Mas malaking text" is on (html.large-text).
+    ({ addVariant }) => addVariant('large-text', 'html.large-text &'),
+  ],
 };

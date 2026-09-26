@@ -11,7 +11,7 @@ import {
   type InvoiceDoc,
 } from './documents';
 import { DATE_STYLES, encodeAmount, formatDateShown, formatPeso } from './rules';
-import { buildEncodingSession, docTypeFromCode, scoreEncoding } from './scoreEncoding';
+import { buildEncodingSession, docRecord, docTypeFromCode, scoreEncoding } from './scoreEncoding';
 
 /** "12,450.75" or "₱12,450.75" -> 1245075 centavos */
 const cents = (text: string) => Math.round(Number(text.replace(/[₱,]/g, '')) * 100);
@@ -154,7 +154,7 @@ describe('scoreEncoding', () => {
   });
 
   it('buildEncodingSession saves documents, layout, and document type', () => {
-    const s = buildEncodingSession([{ doc: invoice, typed: expectedValues(invoice) }], null, 60, 180, 'sheet', 'invoice');
+    const s = buildEncodingSession([docRecord(invoice, expectedValues(invoice))], null, 60, 180, 'sheet', 'invoice');
     expect(s.type).toBe('encoding');
     expect(s.metrics).toMatchObject({ documents: 1, sheet: 1, docType: 1, seconds: 180 });
     expect(docTypeFromCode(s.metrics.docType)).toBe('invoice');

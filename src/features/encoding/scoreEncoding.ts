@@ -3,7 +3,7 @@
  * (lib/fieldScoring.ts), where each document brings its own 5 fields and its
  * correct values come from the encoding rules (see documents.ts / rules.ts).
  */
-import { scoreRecords, type Values } from '../../lib/fieldScoring';
+import { scoreRecords, type FieldSpec, type FilledRecord, type Values } from '../../lib/fieldScoring';
 import { makeId, type CopyMode, type Session } from '../../lib/storage';
 import { DOC_INFO, expectedValues, type DocType, type EncodingDoc } from './documents';
 
@@ -18,9 +18,14 @@ export function docTypeFromCode(code: number | undefined): DocType | null {
   return found ?? null;
 }
 
+/** A document + what was typed, in the shape the shared scoring (and the entry runners) use. */
+export function docRecord(doc: EncodingDoc, typed: Values): FilledRecord {
+  return { fields: DOC_INFO[doc.type].fields, expected: expectedValues(doc), typed };
+}
+
 export function scoreEncoding(submitted: EncodedDoc[], unfinished: EncodedDoc | null, elapsedSec: number) {
   return scoreRecords(
-    submitted.map(({ doc, typed }) => ({ fields: DOC_INFO[doc.type].fields, expected: expectedValues(doc), typed })),
+    submitted.map(({ doc, typed }) => docRecord(doc, typed)),
     unfinished ? { fields: DOC_INFO[unfinished.doc.type].fields, typed: unfinished.typed } : null,
     elapsedSec,
   );
@@ -35,14 +40,14 @@ const MAX_SAVED_MISTAKES = 100;
  * spreadsheet layout, metrics.docType = which document (0 = a mix).
  */
 export function buildEncodingSession(
-  submitted: EncodedDoc[],
-  unfinished: EncodedDoc | null,
+  submitted: FilledRecord[],
+  unfinished: { fields: readonly FieldSpec[]; typed: Values } | null,
   elapsedSec: number,
   seconds: number,
   mode: CopyMode,
   docType: DocType | 'mix',
 ): Session {
-  const { metrics, mistakes } = scoreEncoding(submitted, unfinished, elapsedSec);
+  const { metrics, mistakes } = scoreRecords(submitted, unfinished, elapsedSec);
   return {
     id: makeId(),
     type: 'encoding',
