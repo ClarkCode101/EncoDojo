@@ -94,7 +94,7 @@ export default function NumpadPage() {
                 onChange={setSeconds}
               />
             </div>
-            <p className="mt-3 rounded-lg bg-slate-100 px-4 py-2 text-slate-800">
+            <p className="mt-3 rounded-lg bg-stone-100 px-4 py-2 text-stone-800">
               <strong>Level {difficulty}:</strong> {NUMPAD_DIFFICULTY_LABELS[difficulty]}
             </p>
           </Step>

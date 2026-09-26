@@ -31,10 +31,10 @@ type Step =
 function PartProgress({ part }: { part: 1 | 2 }) {
   return (
     <div className="mb-6">
-      <div className="mb-2 text-base font-semibold text-slate-700">Bahagi {part} sa 2</div>
+      <div className="mb-2 text-base font-semibold text-stone-700">Bahagi {part} sa 2</div>
       <div className="flex gap-2" aria-hidden="true">
-        <div className="h-3 flex-1 rounded-full bg-blue-700" />
-        <div className={'h-3 flex-1 rounded-full ' + (part === 2 ? 'bg-blue-700' : 'bg-slate-300')} />
+        <div className="h-3 flex-1 rounded-full bg-brand-700" />
+        <div className={'h-3 flex-1 rounded-full ' + (part === 2 ? 'bg-brand-700' : 'bg-stone-300')} />
       </div>
     </div>
   );
@@ -44,25 +44,25 @@ function Rules() {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex gap-3 rounded-xl bg-slate-50 p-4">
-          <KeyboardIcon className="h-8 w-8 shrink-0 text-blue-700" />
+        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
+          <KeyboardIcon className="h-8 w-8 shrink-0 text-brand-700" />
           <div>
             <div className="text-lg font-bold">Bahagi 1: Typing (1 minuto)</div>
-            <div className="text-slate-700">I-type ang ordinaryong text, gaya sa karaniwang hiring test.</div>
+            <div className="text-stone-700">I-type ang ordinaryong text, gaya sa karaniwang hiring test.</div>
           </div>
         </div>
-        <div className="flex gap-3 rounded-xl bg-slate-50 p-4">
-          <NumpadIcon className="h-8 w-8 shrink-0 text-blue-700" />
+        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
+          <NumpadIcon className="h-8 w-8 shrink-0 text-brand-700" />
           <div>
             <div className="text-lg font-bold">Bahagi 2: Numpad (1 minuto)</div>
-            <div className="text-slate-700">I-type ang mga numero, halaga, at reference number.</div>
+            <div className="text-stone-700">I-type ang mga numero, halaga, at reference number.</div>
           </div>
         </div>
       </div>
 
       <div>
-        <h3 className="mb-2 text-lg font-bold text-slate-900">Mga paalala</h3>
-        <ul className="list-disc space-y-1 pl-6 text-slate-800">
+        <h3 className="mb-2 text-lg font-bold text-stone-900">Mga paalala</h3>
+        <ul className="list-disc space-y-1 pl-6 text-stone-800">
           <li>Parang totoong exam: walang score habang nagta-type, walang &quot;Tapusin na&quot;, at walang ulitan kapag nasimulan na.</li>
           <li>Magsisimula ang oras sa unang pindot mo. May pahinga sa pagitan ng dalawang bahagi.</li>
           <li>Huwag umalis sa page na ito hangga't hindi lumalabas ang resulta.</li>
@@ -75,13 +75,13 @@ function Rules() {
 
 function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Session) => void }) {
   if (sessions.length === 0) {
-    return <p className="text-lg text-slate-700">Wala ka pang nagagawang assessment. Dito lalabas ang mga resulta mo.</p>;
+    return <p className="text-lg text-stone-700">Wala ka pang nagagawang assessment. Dito lalabas ang mga resulta mo.</p>;
   }
   return (
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-base">
-          <thead className="text-slate-600">
+          <thead className="text-stone-600">
             <tr>
               <th className="py-2 pr-4 font-semibold">Petsa</th>
               <th className="py-2 pr-4 font-semibold">Resulta</th>
@@ -94,8 +94,8 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
           </thead>
           <tbody className="tabular-nums">
             {sessions.map((s) => (
-              <tr key={s.id} className="border-t border-slate-200">
-                <td className="py-3 pr-4 text-slate-700">
+              <tr key={s.id} className="border-t border-stone-200">
+                <td className="py-3 pr-4 text-stone-700">
                   {new Date(s.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                 </td>
                 <td className="py-3 pr-4 font-semibold">
@@ -128,7 +128,7 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
         </table>
       </div>
 
-      <div className="mt-5 flex justify-end border-t border-slate-200 pt-5">
+      <div className="mt-5 flex justify-end border-t border-stone-200 pt-5">
         <ConfirmButton
           label="Burahin lahat ng assessment"
           question={
@@ -225,7 +225,7 @@ export default function AssessmentPage() {
         />
         <PartProgress part={2} />
         <Card title="Susunod: Bahagi 2, Numpad (1 minuto)" icon={<NumpadIcon />}>
-          <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-slate-800">
+          <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
             <li>
               Siguraduhing naka-ON ang <strong>Num Lock</strong>.
             </li>
@@ -280,7 +280,7 @@ export default function AssessmentPage() {
           <Button size="lg" onClick={start}>
             Simulan ang Assessment
           </Button>
-          <span className="text-slate-600">Mga 2 minuto lang ito.</span>
+          <span className="text-stone-600">Mga 2 minuto lang ito.</span>
         </div>
       </Card>
 

@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#0f172a" />
-  <text x="16" y="22" font-family="monospace" font-size="16" font-weight="bold" fill="#38bdf8" text-anchor="middle">EP</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- EncoDojo logo: a tied belt on a gold tile (same as <Logo /> in src/components/icons.tsx) -->
+  <rect width="48" height="48" rx="12" fill="#F5B301" />
+  <rect x="5" y="17" width="38" height="8" rx="2" fill="#231F55" />
+  <path d="M21.5 27 L15 40 h5.5 L24.5 30 Z" fill="#231F55" />
+  <path d="M26.5 27 L33 40 h-5.5 L23.5 30 Z" fill="#231F55" />
+  <rect x="18.5" y="14" width="11" height="14" rx="3" fill="#231F55" stroke="#F5B301" stroke-width="2" />
 </svg>

@@ -4,6 +4,7 @@ import {
   AssessmentIcon,
   HomeIcon,
   KeyboardIcon,
+  Logo,
   NumpadIcon,
   SettingsIcon,
 } from '../components/icons';
@@ -32,8 +33,8 @@ const groups: NavGroup[] = [
 function navClass({ isActive }: { isActive: boolean }) {
   return (
     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-semibold transition-colors ' +
-    'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-blue-300 ' +
-    (isActive ? 'bg-white text-blue-900 shadow' : 'text-blue-50 hover:bg-blue-800')
+    'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
+    (isActive ? 'bg-white text-brand-900 shadow' : 'text-brand-50 hover:bg-brand-800')
   );
 }
 
@@ -54,17 +55,12 @@ export default function Layout() {
         Lumaktaw sa nilalaman
       </a>
 
-      <aside className="bg-blue-900 text-white md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:overflow-y-auto">
+      <aside className="bg-brand-900 text-white md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:overflow-y-auto">
         <div className="flex items-center gap-3 px-5 py-6">
-          <div
-            aria-hidden="true"
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-400 text-2xl font-black text-blue-950"
-          >
-            E
-          </div>
+          <Logo className="h-12 w-12 shrink-0" />
           <div>
             <div className="text-xl font-bold leading-tight">EncoDojo</div>
-            <div className="text-sm leading-tight text-blue-200">Encoder at Data Entry practice</div>
+            <div className="text-sm leading-tight text-brand-200">Encoder at Data Entry practice</div>
           </div>
         </div>
 
@@ -73,7 +69,7 @@ export default function Layout() {
             {groups.map((group, i) => (
               <div key={i} className="md:mb-5">
                 {group.heading && (
-                  <div className="hidden px-3 pb-1 text-sm font-semibold text-blue-300 md:block">{group.heading}</div>
+                  <div className="hidden px-3 pb-1 text-sm font-semibold text-brand-300 md:block">{group.heading}</div>
                 )}
                 <ul className="flex flex-wrap gap-1 md:block md:space-y-1">
                   {group.items.map((item) => (
@@ -93,7 +89,7 @@ export default function Layout() {
 
       <main id="main" className="flex-1 px-4 py-8 md:px-10">
         <div className="mx-auto max-w-5xl">
-          <Suspense fallback={<p className="text-lg text-slate-700">Naglo-load…</p>}>
+          <Suspense fallback={<p className="text-lg text-stone-700">Naglo-load…</p>}>
             <Outlet />
           </Suspense>
         </div>

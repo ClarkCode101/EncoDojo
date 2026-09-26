@@ -125,10 +125,10 @@ export default function NumpadRunner({
       </div>
 
       <Card>
-        <div className="rounded-xl bg-slate-50 py-8 text-center">
-          <div className="text-lg font-semibold text-slate-700">I-type ang numerong ito:</div>
+        <div className="rounded-md border border-stone-200 bg-white py-8 text-center shadow-paper">
+          <div className="text-lg font-semibold text-stone-700">I-type ang numerong ito:</div>
           <div
-            className="mt-2 select-none font-mono text-6xl font-bold tabular-nums tracking-wide text-slate-900"
+            className="mt-2 select-none font-mono text-6xl font-bold tabular-nums tracking-wide text-stone-900"
             aria-live="polite"
           >
             {current}
@@ -142,11 +142,11 @@ export default function NumpadRunner({
             submit();
           }}
         >
-          <label htmlFor="numpad-input" className="mb-2 block text-lg font-bold text-slate-900">
+          <label htmlFor="numpad-input" className="mb-2 block text-lg font-bold text-stone-900">
             Dito ka mag-type 👇
           </label>
           {!timer.started && (
-            <p className="mb-2 rounded-lg bg-blue-50 px-4 py-2 text-blue-950">
+            <p className="mb-2 rounded-lg bg-brand-50 px-4 py-2 text-brand-950">
               I-type ang numero, tapos pindutin ang <strong>Enter</strong>. Magsisimula ang oras sa unang numero na
               ita-type mo.
             </p>
@@ -169,9 +169,9 @@ export default function NumpadRunner({
             onPaste={(e) => e.preventDefault()}
             onDrop={(e) => e.preventDefault()}
             placeholder="I-type dito…"
-            className="w-full rounded-xl border-2 border-slate-400 bg-white p-4 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200"
+            className="w-full rounded-xl border-2 border-stone-400 bg-white p-4 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
           />
-          <p className="mt-2 text-center text-slate-600">Hindi kailangan ang comma (,). Pindutin ang Enter pagkatapos.</p>
+          <p className="mt-2 text-center text-stone-600">Hindi kailangan ang comma (,). Pindutin ang Enter pagkatapos.</p>
         </form>
 
         <div className="mt-4 flex min-h-12 flex-wrap items-center justify-between gap-3">

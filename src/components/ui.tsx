@@ -14,9 +14,9 @@ type Variant = 'primary' | 'secondary' | 'danger';
 type Size = 'lg' | 'md' | 'sm';
 
 const variantClasses: Record<Variant, string> = {
-  primary: 'bg-blue-700 text-white shadow-sm hover:bg-blue-800 disabled:bg-blue-300',
+  primary: 'bg-brand-700 text-white shadow-sm hover:bg-brand-800 disabled:bg-brand-300',
   secondary:
-    'bg-white text-slate-800 border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 disabled:text-slate-400',
+    'bg-white text-stone-800 border-2 border-stone-300 hover:border-stone-400 hover:bg-stone-50 disabled:text-stone-400',
   danger: 'bg-red-700 text-white shadow-sm hover:bg-red-800 disabled:bg-red-300',
 };
 
@@ -29,7 +29,7 @@ const sizeClasses: Record<Size, string> = {
 const baseButton =
   'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors ' +
   'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 ' +
-  'focus-visible:outline-blue-600 disabled:cursor-not-allowed';
+  'focus-visible:outline-brand-600 disabled:cursor-not-allowed';
 
 export function Button({
   variant = 'primary',
@@ -93,7 +93,7 @@ export function ConfirmButton({
   }
   return (
     <span role="alertdialog" aria-label={question} className="inline-flex flex-wrap items-center justify-end gap-2">
-      <span className={`font-medium text-slate-900 ${size === 'sm' ? 'text-sm' : 'text-base'}`}>{question}</span>
+      <span className={`font-medium text-stone-900 ${size === 'sm' ? 'text-sm' : 'text-base'}`}>{question}</span>
       <Button
         variant="danger"
         size={size}
@@ -124,10 +124,10 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm ${className}`}>
+    <section className={`rounded-xl border border-stone-200 bg-white p-6 shadow-sm ${className}`}>
       {title && (
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900">
-          {icon && <span className="text-blue-700">{icon}</span>}
+        <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-stone-900">
+          {icon && <span className="text-brand-700">{icon}</span>}
           {title}
         </h2>
       )}
@@ -143,13 +143,13 @@ export function Card({
 export function HelpTip({ children, label = 'Ano ito?' }: { children: ReactNode; label?: string }) {
   return (
     <details className="group mt-1 text-sm">
-      <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded font-medium text-blue-700 underline decoration-dotted underline-offset-2 hover:text-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded font-medium text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden">
         <span aria-hidden="true" className="inline-block transition-transform group-open:rotate-90">
           ›
         </span>
         {label}
       </summary>
-      <div className="mt-1 rounded-md bg-blue-50 px-3 py-2 text-slate-800">{children}</div>
+      <div className="mt-1 rounded-md bg-brand-50 px-3 py-2 text-stone-800">{children}</div>
     </details>
   );
 }
@@ -167,10 +167,10 @@ export function StatBadge({
   help?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-      <div className="text-sm font-medium text-slate-600">{label}</div>
-      <div className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{value}</div>
-      {hint && <div className="mt-0.5 text-sm text-slate-600">{hint}</div>}
+    <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
+      <div className="text-sm font-medium text-stone-600">{label}</div>
+      <div className="mt-1 text-3xl font-bold tabular-nums text-stone-900">{value}</div>
+      {hint && <div className="mt-0.5 text-sm text-stone-600">{hint}</div>}
       {help && <HelpTip>{help}</HelpTip>}
     </div>
   );
@@ -192,12 +192,12 @@ export function TimeLeft({
     <div
       className={
         'rounded-xl border-2 px-4 py-3 shadow-sm ' +
-        (almostDone ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white')
+        (almostDone ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white')
       }
     >
-      <div className="text-sm font-medium text-slate-600">Natitirang oras</div>
-      <div className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{formatClock(seconds)}</div>
-      {!started && <div className="mt-0.5 text-sm text-slate-600">{waitingText}</div>}
+      <div className="text-sm font-medium text-stone-600">Natitirang oras</div>
+      <div className="mt-1 text-3xl font-bold tabular-nums text-stone-900">{formatClock(seconds)}</div>
+      {!started && <div className="mt-0.5 text-sm text-stone-600">{waitingText}</div>}
     </div>
   );
 }
@@ -214,13 +214,13 @@ export function PageHeader({
   return (
     <header className="mb-8 flex items-start gap-4">
       {icon && (
-        <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-800 sm:flex">
+        <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-800 sm:flex">
           {icon}
         </div>
       )}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
-        {description && <p className="mt-1 text-lg text-slate-700">{description}</p>}
+        <h1 className="text-3xl font-bold text-stone-900">{title}</h1>
+        {description && <p className="mt-1 text-lg text-stone-700">{description}</p>}
       </div>
     </header>
   );
@@ -240,12 +240,12 @@ export function Step({
     <div className="flex gap-4">
       <div
         aria-hidden="true"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-700 text-lg font-bold text-white"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-lg font-bold text-white"
       >
         {number}
       </div>
       <div className="min-w-0 flex-1">
-        <h2 className="pt-1 text-lg font-bold text-slate-900">
+        <h2 className="pt-1 text-lg font-bold text-stone-900">
           <span className="sr-only">Hakbang {number}: </span>
           {title}
         </h2>
@@ -271,13 +271,13 @@ export function Checkbox({
     <label className="flex cursor-pointer items-start gap-3">
       <input
         type="checkbox"
-        className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-blue-700"
+        className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-brand-700"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
       />
       <span>
-        <span className="block text-base font-semibold text-slate-900">{label}</span>
-        {description && <span className="block text-sm text-slate-600">{description}</span>}
+        <span className="block text-base font-semibold text-stone-900">{label}</span>
+        {description && <span className="block text-sm text-stone-600">{description}</span>}
       </span>
     </label>
   );
@@ -286,7 +286,7 @@ export function Checkbox({
 type NoticeKind = 'info' | 'success' | 'warning';
 
 const noticeClasses: Record<NoticeKind, string> = {
-  info: 'border-blue-300 bg-blue-50 text-blue-950',
+  info: 'border-brand-300 bg-brand-50 text-brand-950',
   success: 'border-green-400 bg-green-50 text-green-950',
   warning: 'border-amber-400 bg-amber-50 text-amber-950',
 };
@@ -326,7 +326,7 @@ export function SegmentedPicker<T extends string | number>({
 }) {
   return (
     <fieldset disabled={disabled}>
-      <legend className="mb-2 text-base font-semibold text-slate-800">{label}</legend>
+      <legend className="mb-2 text-base font-semibold text-stone-800">{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const selected = option === value;
@@ -338,11 +338,11 @@ export function SegmentedPicker<T extends string | number>({
               onClick={() => onChange(option)}
               className={
                 'min-h-[2.75rem] min-w-[3rem] rounded-lg border-2 px-4 py-2 text-base font-semibold transition-colors ' +
-                'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-blue-600 ' +
+                'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 ' +
                 'disabled:cursor-not-allowed disabled:opacity-60 ' +
                 (selected
-                  ? 'border-blue-700 bg-blue-700 text-white'
-                  : 'border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50')
+                  ? 'border-brand-700 bg-brand-700 text-white'
+                  : 'border-stone-300 bg-white text-stone-800 hover:border-stone-400 hover:bg-stone-50')
               }
             >
               {selected && <span aria-hidden="true">✓ </span>}

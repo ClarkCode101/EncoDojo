@@ -40,11 +40,11 @@ export function TypingMistakesCard({ mistakes, errors }: { mistakes: SessionMist
   return (
     <Card title={`Mga mali sa typing (${errors})`}>
       {mistakes.length === 0 ? (
-        <p className="text-lg text-slate-700">Walang mali. Ang galing! 👏</p>
+        <p className="text-lg text-stone-700">Walang mali. Ang galing! 👏</p>
       ) : (
         <div className="max-h-96 overflow-y-auto">
           <table className="w-full text-left text-base">
-            <thead className="sticky top-0 bg-white text-slate-600">
+            <thead className="sticky top-0 bg-white text-stone-600">
               <tr>
                 <th className="py-2 pr-4 font-semibold">Puwesto</th>
                 <th className="py-2 pr-4 font-semibold">Uri ng mali</th>
@@ -54,9 +54,9 @@ export function TypingMistakesCard({ mistakes, errors }: { mistakes: SessionMist
             </thead>
             <tbody>
               {mistakes.map((mistake, i) => (
-                <tr key={i} className="border-t border-slate-200">
-                  <td className="py-2 pr-4 text-slate-600">{mistake.index + 1}</td>
-                  <td className="py-2 pr-4 text-slate-800">{KIND_LABEL[mistakeKind(mistake)]}</td>
+                <tr key={i} className="border-t border-stone-200">
+                  <td className="py-2 pr-4 text-stone-600">{mistake.index + 1}</td>
+                  <td className="py-2 pr-4 text-stone-800">{KIND_LABEL[mistakeKind(mistake)]}</td>
                   <td className="py-2 pr-4 font-mono text-lg text-green-800">{showChar(mistake.expected) || '—'}</td>
                   <td className="py-2 font-mono text-lg text-red-700">{showChar(mistake.typed) || '—'}</td>
                 </tr>
@@ -64,7 +64,7 @@ export function TypingMistakesCard({ mistakes, errors }: { mistakes: SessionMist
             </tbody>
           </table>
           {errors > mistakes.length && (
-            <p className="mt-2 text-sm text-slate-600">Ipinapakita ang unang {mistakes.length} na mali.</p>
+            <p className="mt-2 text-sm text-stone-600">Ipinapakita ang unang {mistakes.length} na mali.</p>
           )}
         </div>
       )}
@@ -102,13 +102,13 @@ export default function TypingResults({
       <section
         aria-label="Buod ng resulta"
         className={
-          'mb-6 rounded-2xl border-2 p-6 ' + (ready ? 'border-green-400 bg-green-50' : 'border-blue-200 bg-white')
+          'mb-6 rounded-2xl border-2 p-6 ' + (ready ? 'border-green-400 bg-green-50' : 'border-brand-200 bg-white')
         }
       >
-        <p className="text-2xl leading-relaxed text-slate-900">
+        <p className="text-2xl leading-relaxed text-stone-900">
           Ang bilis mo ay <strong>{net} WPM</strong> at <strong>{acc}%</strong> ang tama.
         </p>
-        <p className="mt-2 text-lg text-slate-700">
+        <p className="mt-2 text-lg text-stone-700">
           {ready
             ? '🎉 Pasado ka sa karaniwang target ng hiring test! Subukan ang Assessment para makasigurado.'
             : `Ang target ay ${t.netWpm} WPM at ${t.accuracy}% na tama. Tuloy lang ang practice — kaya mo 'yan!`}
@@ -125,7 +125,7 @@ export default function TypingResults({
 
       <SaveBanner saved={saved} finishedEarly={finishedEarly} onToggle={onToggleSaved} />
 
-      <h2 className="mb-3 text-xl font-bold text-slate-900">Mga detalye</h2>
+      <h2 className="mb-3 text-xl font-bold text-stone-900">Mga detalye</h2>
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StatBadge label="Bilis (Net WPM)" value={net} hint={comparisonText(m.netWpm, comparison)} help={HELP.netWpm} />
         <StatBadge label="Accuracy (tama)" value={`${acc}%`} help={HELP.accuracy} />

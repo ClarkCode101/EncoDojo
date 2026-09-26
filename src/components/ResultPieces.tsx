@@ -45,6 +45,25 @@ export function SaveBanner({
   );
 }
 
+/**
+ * A tilted rubber stamp, like the ones used in offices: "PASADO" or "HINDI PA".
+ * It "lands" with a short animation (skipped if the user prefers less motion).
+ */
+export function Stamp({ passed }: { passed: boolean }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={
+        'inline-block -rotate-[8deg] select-none rounded-lg border-[5px] border-double px-5 py-1 ' +
+        'text-3xl font-black tracking-[0.2em] opacity-90 motion-safe:animate-stamp ' +
+        (passed ? 'border-green-700 text-green-700' : 'border-amber-700 text-amber-700')
+      }
+    >
+      {passed ? 'PASADO' : 'HINDI PA'}
+    </div>
+  );
+}
+
 /** One "✅ Net WPM  43  / 40 ang kailangan" line. Compares the ROUNDED value, like the screen shows. */
 export function TargetRow({
   label,
@@ -67,12 +86,12 @@ export function TargetRow({
       <span aria-hidden="true" className="text-xl">
         {pass ? '✅' : '❌'}
       </span>
-      <span className="w-44 font-medium text-slate-800">{label}</span>
-      <span className="text-lg font-bold tabular-nums text-slate-900">
+      <span className="w-44 font-medium text-stone-800">{label}</span>
+      <span className="text-lg font-bold tabular-nums text-stone-900">
         {display(value).toLocaleString()}
         {unit}
       </span>
-      <span className="text-slate-600">
+      <span className="text-stone-600">
         / {target.toLocaleString()}
         {unit} ang kailangan
       </span>

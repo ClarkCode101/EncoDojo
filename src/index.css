@@ -17,5 +17,5 @@ html.large-text {
 }
 
 body {
-  @apply bg-slate-100 text-slate-900 antialiased;
+  @apply bg-paper text-stone-900 antialiased;
 }

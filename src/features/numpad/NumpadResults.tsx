@@ -12,11 +12,11 @@ export function NumpadMistakesCard({ mistakes }: { mistakes: SessionMistake[] })
   return (
     <Card title={`Mga maling numero (${mistakes.length})`}>
       {mistakes.length === 0 ? (
-        <p className="text-lg text-slate-700">Walang maling numero. Ang galing! 👏</p>
+        <p className="text-lg text-stone-700">Walang maling numero. Ang galing! 👏</p>
       ) : (
         <div className="max-h-96 overflow-y-auto">
           <table className="w-full text-left text-base">
-            <thead className="sticky top-0 bg-white text-slate-600">
+            <thead className="sticky top-0 bg-white text-stone-600">
               <tr>
                 <th className="py-2 pr-4 font-semibold">Pang-ilan</th>
                 <th className="py-2 pr-4 font-semibold">Dapat</th>
@@ -25,8 +25,8 @@ export function NumpadMistakesCard({ mistakes }: { mistakes: SessionMistake[] })
             </thead>
             <tbody className="font-mono text-lg tabular-nums">
               {mistakes.map((mistake, i) => (
-                <tr key={i} className="border-t border-slate-200">
-                  <td className="py-2 pr-4 font-sans text-base text-slate-600">#{mistake.index}</td>
+                <tr key={i} className="border-t border-stone-200">
+                  <td className="py-2 pr-4 font-sans text-base text-stone-600">#{mistake.index}</td>
                   <td className="py-2 pr-4 text-green-800">{mistake.expected}</td>
                   <td className="py-2 text-red-700">{mistake.typed}</td>
                 </tr>
@@ -65,14 +65,14 @@ export default function NumpadResults({
       <section
         aria-label="Buod ng resulta"
         className={
-          'mb-6 rounded-2xl border-2 p-6 ' + (ready ? 'border-green-400 bg-green-50' : 'border-blue-200 bg-white')
+          'mb-6 rounded-2xl border-2 p-6 ' + (ready ? 'border-green-400 bg-green-50' : 'border-brand-200 bg-white')
         }
       >
-        <p className="text-2xl leading-relaxed text-slate-900">
+        <p className="text-2xl leading-relaxed text-stone-900">
           <strong>{m.correctEntries}</strong> sa <strong>{m.entries}</strong> na numero ang tama, sa bilis na{' '}
           <strong>{speed.toLocaleString()} KPH</strong>.
         </p>
-        <p className="mt-2 text-lg text-slate-700">
+        <p className="mt-2 text-lg text-stone-700">
           {ready
             ? '🎉 Pasado ka sa karaniwang target! Subukan ang Assessment para makasigurado.'
             : `Ang target ay ${t.kph.toLocaleString()} KPH at ${t.entryAccuracy}% na tama. Tuloy lang ang practice!`}
@@ -86,7 +86,7 @@ export default function NumpadResults({
 
       <SaveBanner saved={saved} finishedEarly={finishedEarly} onToggle={onToggleSaved} />
 
-      <h2 className="mb-3 text-xl font-bold text-slate-900">Mga detalye</h2>
+      <h2 className="mb-3 text-xl font-bold text-stone-900">Mga detalye</h2>
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatBadge label="Bilis (KPH)" value={speed.toLocaleString()} help={HELP.kph} />
         <StatBadge label="Tamang numero" value={`${acc}%`} help={HELP.entryAccuracy} />

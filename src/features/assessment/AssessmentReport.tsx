@@ -2,7 +2,7 @@
  * The report card for one saved assessment: verdict, targets, comments,
  * change since the previous assessment, and the mistake lists.
  */
-import { TargetRow } from '../../components/ResultPieces';
+import { Stamp, TargetRow } from '../../components/ResultPieces';
 import { AssessmentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
@@ -64,29 +64,37 @@ export default function AssessmentReport({
           (ready ? 'border-green-500 bg-green-50 text-green-950' : 'border-amber-400 bg-amber-50 text-amber-950')
         }
       >
-        <div className="text-3xl font-bold">{ready ? '✅ Job-ready ka na!' : 'Hindi pa job-ready'}</div>
-        <p className="mt-2 text-xl">
-          <strong>
-            {m.targetsMet} sa {m.targetsTotal}
-          </strong>{' '}
-          na target ang pasado.
-          {!ready && " Ayos lang 'yan — tingnan sa ibaba kung ano ang dapat i-practice."}
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button size="lg" onClick={onBack} autoFocus>
-            {backLabel}
-          </Button>
-          <Button size="lg" variant="secondary" onClick={onRetake}>
-            Subukan ulit
-          </Button>
+        {/* Text on the left, stamp on the right (stamp goes on top on small screens). */}
+        <div className="flex flex-col-reverse gap-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-3xl font-bold">{ready ? '✅ Job-ready ka na!' : 'Hindi pa job-ready'}</div>
+            <p className="mt-2 text-xl">
+              <strong>
+                {m.targetsMet} sa {m.targetsTotal}
+              </strong>{' '}
+              na target ang pasado.
+              {!ready && " Ayos lang 'yan — tingnan sa ibaba kung ano ang dapat i-practice."}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button size="lg" onClick={onBack} autoFocus>
+                {backLabel}
+              </Button>
+              <Button size="lg" variant="secondary" onClick={onRetake}>
+                Subukan ulit
+              </Button>
+            </div>
+          </div>
+          <div className="shrink-0 px-4 py-2 md:px-6">
+            <Stamp passed={ready} />
+          </div>
         </div>
       </section>
 
       <Card title="Ano ang dapat i-practice?" className="mb-6">
-        <ul className="space-y-3 text-lg text-slate-800">
+        <ul className="space-y-3 text-lg text-stone-800">
           {assessmentComments(assessment).map((comment) => (
             <li key={comment} className="flex gap-3">
-              <span aria-hidden="true" className="text-blue-700">
+              <span aria-hidden="true" className="text-brand-700">
                 •
               </span>
               <span>{comment}</span>

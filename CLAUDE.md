@@ -5,6 +5,14 @@
 
 The owner is learning while building. When you finish a task, **explain what you did in simple terms (Taglish is fine)**, and point out anything they should test manually.
 
+## Brand (decided 2026-09-26): "Dojo Indigo + Belt Gold"
+- Colors are defined ONCE in `tailwind.config.js`: `brand-*` (indigo, main `brand-800` #2E2A6B), `belt-*` (gold accent, `belt-400` #F5B301), `paper` (#FBF8F1 page background). Neutrals use Tailwind `stone-*` (warm gray). Never use raw `blue-*`/`slate-*` for UI.
+- Gold is for fills/badges with dark text on top — never gold text on white (low contrast).
+- Red = mistake, green = correct, amber = warning: keep these meanings; they are never brand colors.
+- Logo: a tied belt on a gold tile (`<Logo />` in `components/icons.tsx`, same drawing in `public/favicon.svg`).
+- Signature touches: the passage looks like a sheet of paper (`shadow-paper`), and the Assessment report has a rubber stamp ("PASADO" / "HINDI PA", `Stamp` in `components/ResultPieces.tsx`).
+- Planned: belt ranks (White → Yellow → Orange → Green → Blue → Black) as the Phase 4 level system; optional "Sensei" tips character; optional on-screen keyboard/numpad guide.
+
 ## UI & Language Rules (decided 2026-09-26)
 The app must be easy for **older and non-techy users**:
 - **All UI text is Taglish** (simple, conversational). Keep job terms in English (WPM, KPH, Accuracy, Encoder, Assessment). Code, comments, and commit messages stay in English.

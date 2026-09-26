@@ -18,8 +18,8 @@ function downloadText(fileName: string, text: string) {
 }
 
 const inputClass =
-  'w-full max-w-sm rounded-lg border-2 border-slate-400 bg-white px-4 py-2.5 text-lg ' +
-  'focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200';
+  'w-full max-w-sm rounded-lg border-2 border-stone-400 bg-white px-4 py-2.5 text-lg ' +
+  'focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200';
 
 export default function SettingsPage() {
   const data = useAppData();
@@ -73,7 +73,7 @@ export default function SettingsPage() {
       <Card title="Ikaw at ang itsura ng app">
         <div className="space-y-6">
           <div>
-            <label htmlFor="display-name" className="mb-2 block text-lg font-semibold text-slate-900">
+            <label htmlFor="display-name" className="mb-2 block text-lg font-semibold text-stone-900">
               Pangalan mo
             </label>
             <input
@@ -87,7 +87,7 @@ export default function SettingsPage() {
               }
               className={inputClass}
             />
-            <p className="mt-1 text-sm text-slate-600">Para batiin ka sa Home page. Hindi ito ipinapadala kahit saan.</p>
+            <p className="mt-1 text-sm text-stone-600">Para batiin ka sa Home page. Hindi ito ipinapadala kahit saan.</p>
           </div>
 
           <Checkbox
@@ -112,7 +112,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card title="Backup ng progress">
-        <p className="mb-2 text-slate-800">
+        <p className="mb-2 text-stone-800">
           Ang progress mo ay naka-save <strong>sa browser na ito lang</strong>. Kapag nag-clear ka ng browser data o
           lumipat ng computer, mawawala ito — kaya mag-backup paminsan-minsan.
         </p>
@@ -159,11 +159,11 @@ export default function SettingsPage() {
       </Card>
 
       <Card title="Burahin lahat" className="border-red-200">
-        <p className="mb-4 text-slate-800">
+        <p className="mb-4 text-stone-800">
           Buburahin nito ang <strong>lahat</strong> ng session, assessment, at settings. Mag-backup muna kung gusto mo
           pang itago ang mga ito.
         </p>
-        <label htmlFor="reset-confirm" className="mb-2 block font-semibold text-slate-900">
+        <label htmlFor="reset-confirm" className="mb-2 block font-semibold text-stone-900">
           Para sigurado, i-type ang salitang <span className="font-mono text-red-700">{RESET_WORD}</span>
         </label>
         <div className="flex flex-wrap gap-3">
@@ -173,7 +173,7 @@ export default function SettingsPage() {
             autoComplete="off"
             value={resetText}
             onChange={(e) => setResetText(e.target.value)}
-            className="w-56 rounded-lg border-2 border-slate-400 px-4 py-2.5 font-mono text-lg focus:border-red-600 focus:outline-none focus:ring-4 focus:ring-red-200"
+            className="w-56 rounded-lg border-2 border-stone-400 px-4 py-2.5 font-mono text-lg focus:border-red-600 focus:outline-none focus:ring-4 focus:ring-red-200"
           />
           <Button variant="danger" disabled={resetText.trim().toUpperCase() !== RESET_WORD} onClick={resetAll}>
             Burahin ang lahat

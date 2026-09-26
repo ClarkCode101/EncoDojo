@@ -68,18 +68,18 @@ function StepCard({
       to={to}
       className={
         'group flex flex-col rounded-2xl border-2 p-5 shadow-sm transition ' +
-        'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-blue-600 ' +
-        (highlight ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white hover:border-blue-400')
+        'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 ' +
+        (highlight ? 'border-belt-400 bg-belt-50' :'border-stone-200 bg-white hover:border-brand-400')
       }
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-800">{icon}</div>
-        <div className="text-sm font-semibold text-slate-600">Hakbang {number}</div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-800">{icon}</div>
+        <div className="text-sm font-semibold text-stone-600">Hakbang {number}</div>
       </div>
-      <h2 className="mt-3 text-xl font-bold text-slate-900">{title}</h2>
-      <p className="mt-1 flex-1 text-slate-700">{text}</p>
-      {footer && <div className="mt-3 text-sm font-medium text-slate-800">{footer}</div>}
-      <div className="mt-4 inline-flex items-center gap-2 text-lg font-bold text-blue-800 group-hover:text-blue-950">
+      <h2 className="mt-3 text-xl font-bold text-stone-900">{title}</h2>
+      <p className="mt-1 flex-1 text-stone-700">{text}</p>
+      {footer && <div className="mt-3 text-sm font-medium text-stone-800">{footer}</div>}
+      <div className="mt-4 inline-flex items-center gap-2 text-lg font-bold text-brand-800 group-hover:text-brand-950">
         {action} <ArrowRightIcon className="h-5 w-5" />
       </div>
     </Link>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
       />
 
       <section aria-labelledby="start-heading">
-        <h2 id="start-heading" className="mb-4 text-2xl font-bold text-slate-900">
+        <h2 id="start-heading" className="mb-4 text-2xl font-bold text-stone-900">
           Paano magsimula
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -154,8 +154,8 @@ export default function DashboardPage() {
       </section>
 
       <section aria-labelledby="progress-heading">
-        <h2 id="progress-heading" className="mb-4 flex items-center gap-2 text-2xl font-bold text-slate-900">
-          <StarIcon className="h-7 w-7 text-amber-500" /> Ang progress mo sa practice
+        <h2 id="progress-heading" className="mb-4 flex items-center gap-2 text-2xl font-bold text-stone-900">
+          <StarIcon className="h-7 w-7 text-belt-500" /> Ang progress mo sa practice
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatBadge
@@ -187,13 +187,13 @@ export default function DashboardPage() {
 
       <Card title="Mga huling ginawa" icon={<ClockIcon />}>
         {recent.length === 0 ? (
-          <p className="text-lg text-slate-700">
+          <p className="text-lg text-stone-700">
             Wala ka pang nagagawa. Simulan sa <strong>Hakbang 1: Typing Practice</strong> sa itaas!
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-base">
-              <thead className="text-slate-600">
+              <thead className="text-stone-600">
                 <tr>
                   <th className="py-2 pr-4 font-semibold">Petsa</th>
                   <th className="py-2 pr-4 font-semibold">Ginawa</th>
@@ -206,8 +206,8 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {recent.map((s) => (
-                  <tr key={s.id} className="border-t border-slate-200">
-                    <td className="py-3 pr-4 text-slate-700">
+                  <tr key={s.id} className="border-t border-stone-200">
+                    <td className="py-3 pr-4 text-stone-700">
                       {new Date(s.startedAt).toLocaleString(undefined, {
                         month: 'short',
                         day: 'numeric',
@@ -234,8 +234,8 @@ export default function DashboardPage() {
         )}
 
         {training.length > 0 && (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
-            <p className="max-w-md text-sm text-slate-600">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-5">
+            <p className="max-w-md text-sm text-stone-600">
               Kapag nagbura ka, magbabago rin ang pinakamabilis mong score at streak. Ang assessments ay
               binubura sa Assessment page.
             </p>
@@ -253,16 +253,16 @@ export default function DashboardPage() {
         )}
       </Card>
 
-      <section aria-labelledby="soon-heading" className="rounded-2xl border-2 border-dashed border-slate-300 p-6">
-        <h2 id="soon-heading" className="text-xl font-bold text-slate-800">
+      <section aria-labelledby="soon-heading" className="rounded-2xl border-2 border-dashed border-stone-300 p-6">
+        <h2 id="soon-heading" className="text-xl font-bold text-stone-800">
           Parating pa sa EncoDojo
         </h2>
-        <p className="mt-1 text-slate-600">Hindi pa ito magagamit, pero idadagdag sa mga susunod na update.</p>
+        <p className="mt-1 text-stone-600">Hindi pa ito magagamit, pero idadagdag sa mga susunod na update.</p>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {comingSoon.map((item) => (
             <li key={item.name} className="rounded-lg bg-white px-4 py-3">
-              <div className="font-semibold text-slate-800">{item.name}</div>
-              <div className="text-sm text-slate-600">{item.text}</div>
+              <div className="font-semibold text-stone-800">{item.name}</div>
+              <div className="text-sm text-stone-600">{item.text}</div>
             </li>
           ))}
         </ul>

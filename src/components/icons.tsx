@@ -24,6 +24,23 @@ function Icon({ children, className = 'h-6 w-6' }: { children: ReactNode; classN
 
 type IconProps = { className?: string };
 
+/**
+ * The EncoDojo logo: a tied martial-arts belt on a gold tile.
+ * Colors match `belt-400` and `brand-900` in tailwind.config.js.
+ */
+export const Logo = ({ className = 'h-11 w-11' }: IconProps) => (
+  <svg viewBox="0 0 48 48" aria-hidden="true" className={className}>
+    <rect width="48" height="48" rx="12" fill="#F5B301" />
+    {/* belt going across */}
+    <rect x="5" y="17" width="38" height="8" rx="2" fill="#231F55" />
+    {/* the two hanging ends */}
+    <path d="M21.5 27 L15 40 h5.5 L24.5 30 Z" fill="#231F55" />
+    <path d="M26.5 27 L33 40 h-5.5 L23.5 30 Z" fill="#231F55" />
+    {/* the knot, outlined in gold so it stands out from the belt */}
+    <rect x="18.5" y="14" width="11" height="14" rx="3" fill="#231F55" stroke="#F5B301" strokeWidth="2" />
+  </svg>
+);
+
 export const HomeIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M3 11l9-8 9 8" />

@@ -124,15 +124,14 @@ export default function TypingRunner({
       </div>
 
       <Card>
-        <h3 className="mb-2 text-base font-semibold text-slate-700">Ito ang ita-type mo:</h3>
         <PassageView passage={passage} alignment={alignment} />
         <ColorLegend />
 
-        <label htmlFor="typing-input" className="mb-2 mt-6 block text-lg font-bold text-slate-900">
+        <label htmlFor="typing-input" className="mb-2 mt-6 block text-lg font-bold text-stone-900">
           Dito ka mag-type 👇
         </label>
         {!timer.started && (
-          <p className="mb-2 rounded-lg bg-blue-50 px-4 py-2 text-blue-950">
+          <p className="mb-2 rounded-lg bg-brand-50 px-4 py-2 text-brand-950">
             I-click ang kahon sa ibaba at simulan ang pag-type. <strong>Magsisimula ang oras sa unang letra</strong>{' '}
             na ita-type mo.
           </p>
@@ -153,11 +152,11 @@ export default function TypingRunner({
           autoCorrect="off"
           autoCapitalize="off"
           rows={3}
-          className="w-full rounded-xl border-2 border-slate-400 bg-white p-4 font-mono text-xl placeholder:text-slate-500 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200"
+          className="w-full rounded-xl border-2 border-stone-400 bg-white p-4 font-mono text-xl placeholder:text-stone-500 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
         />
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-slate-700">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-stone-700">
           <span>
-            Puwede ang <kbd className="rounded border border-slate-400 bg-slate-100 px-1.5 text-sm">Backspace</kbd>{' '}
+            Puwede ang <kbd className="rounded border border-stone-400 bg-stone-100 px-1.5 text-sm">Backspace</kbd>{' '}
             para magbura. Bawat maling, sobra, o nalaktawang letra ay isang mali.
           </span>
           {allowFinishEarly && timer.started && (
@@ -174,12 +173,12 @@ export default function TypingRunner({
 /** Explains the colors used in the passage. */
 function ColorLegend() {
   return (
-    <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-700" aria-label="Kahulugan ng mga kulay">
+    <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-stone-700" aria-label="Kahulugan ng mga kulay">
       <li>
         <span className="rounded bg-yellow-200 px-1 font-mono underline decoration-2">a</span> = susunod na letra
       </li>
       <li>
-        <span className="font-mono text-slate-900">a</span> = tama
+        <span className="font-mono text-stone-900">a</span> = tama
       </li>
       <li>
         <span className="rounded bg-red-200 px-1 font-mono text-red-800">a</span> = mali
