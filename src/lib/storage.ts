@@ -7,7 +7,7 @@
  * - Export/Import use the same JSON shape that is stored.
  */
 
-export const STORAGE_KEY = 'eps:v1';
+export const STORAGE_KEY = 'encodojo:v1';
 export const CURRENT_VERSION = 1;
 export const MAX_SESSIONS = 500;
 
