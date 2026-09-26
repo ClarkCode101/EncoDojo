@@ -2,7 +2,7 @@
  * Home: where to start (4 practice steps + the Assessment), your progress, and recent sessions.
  * Written for people who are new to computers: big cards, clear order, Taglish.
  */
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRightIcon,
@@ -15,7 +15,7 @@ import {
   NumpadIcon,
   StarIcon,
 } from '../../components/icons';
-import { Button, Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
+import { Card, ConfirmButton, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
@@ -64,9 +64,8 @@ function encodingDetail(session: Session): string {
   return session.metrics.sheet === 1 ? `${doc} · spreadsheet` : doc;
 }
 
-/** Recent sessions shown at first, and how many more each "Ipakita pa" adds. */
-const RECENT_FIRST = 5;
-const RECENT_MORE = 10;
+/** About this many rows fit in the recent list; the rest scroll inside the list. */
+const RECENT_VISIBLE = 5;
 
 const typeLabel: Record<Session['type'], string> = {
   typing: 'Typing Practice',
@@ -167,10 +166,7 @@ export default function DashboardPage() {
   const withFinishedItems = sessions.filter(
     (s) => !(s.type === 'copy' && s.metrics.records === 0) && !(s.type === 'encoding' && s.metrics.documents === 0),
   );
-  // Show a few at first so Home stays short; "Ipakita pa" adds more.
-  const [shown, setShown] = useState(RECENT_FIRST);
-  const allRecent = recentSessions(sessions, sessions.length);
-  const recent = allRecent.slice(0, shown);
+  const recent = recentSessions(sessions, sessions.length);
   const streak = currentStreak(sessions);
   const latestAssessment = recentSessions(sessions.filter((s) => s.type === 'assessment'), 1)[0] ?? null;
 
@@ -286,9 +282,10 @@ export default function DashboardPage() {
             Wala ka pang nagagawa. Simulan sa <strong>Hakbang 1: Typing Practice</strong> sa itaas!
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          // About 5 rows tall; more rows scroll inside the list (the header row stays put).
+          <div className="max-h-[25rem] overflow-auto">
             <table className="w-full text-left text-base">
-              <thead className="text-stone-600">
+              <thead className="sticky top-0 z-[1] bg-white text-stone-600">
                 <tr>
                   <th className="py-2 pr-4 font-semibold">Petsa</th>
                   <th className="py-2 pr-4 font-semibold">Ginawa</th>
@@ -341,22 +338,10 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {allRecent.length > RECENT_FIRST && (
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <span className="text-stone-600">
-              {recent.length} sa {allRecent.length} ang nakikita
-            </span>
-            {recent.length < allRecent.length && (
-              <Button size="sm" variant="secondary" onClick={() => setShown((n) => n + RECENT_MORE)}>
-                Ipakita pa ({Math.min(RECENT_MORE, allRecent.length - recent.length)})
-              </Button>
-            )}
-            {shown > RECENT_FIRST && (
-              <Button size="sm" variant="secondary" onClick={() => setShown(RECENT_FIRST)}>
-                Itago
-              </Button>
-            )}
-          </div>
+        {recent.length > RECENT_VISIBLE && (
+          <p className="mt-2 text-sm text-stone-600">
+            {recent.length} lahat — i-scroll ang listahan para makita ang iba.
+          </p>
         )}
 
         {training.length > 0 && (
