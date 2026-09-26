@@ -4,6 +4,7 @@ import Layout from './Layout';
 
 // Each screen is loaded only when you open it (smaller first download).
 const Dashboard = lazy(() => import('../features/dashboard/DashboardPage'));
+const Assessment = lazy(() => import('../features/assessment/AssessmentPage'));
 const TypingTest = lazy(() => import('../features/typing/TypingPage'));
 const NumpadDrill = lazy(() => import('../features/numpad/NumpadPage'));
 const Settings = lazy(() => import('../features/settings/SettingsPage'));
@@ -25,6 +26,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
+          <Route path="assessment" element={<Assessment />} />
           <Route path="typing" element={<TypingTest />} />
           <Route path="numpad" element={<NumpadDrill />} />
           <Route path="settings" element={<Settings />} />

@@ -20,6 +20,23 @@ export function charsNeeded(minutes: number): number {
 }
 
 /**
+ * For the Assessment: generated paragraphs that rotate through levels
+ * 1 -> 2 -> 3 (plain sentences, then names/addresses, then numbers), so every
+ * attempt tests the same mix of skills.
+ */
+export function buildMixedPassage(rng: Rng, minChars: number): string {
+  const levels: PassageLevel[] = [1, 2, 3];
+  const parts: string[] = [];
+  let length = 0;
+  for (let i = 0; length < minChars; i++) {
+    const text = generateParagraph(rng, levels[i % levels.length]);
+    parts.push(text);
+    length += text.length + 1;
+  }
+  return parts.join(' ');
+}
+
+/**
  * Join paragraphs of one level (with single spaces) until the text is at
  * least `minChars` long. Most paragraphs are freshly generated so passages
  * can't be memorized; now and then a hand-written one is mixed in.

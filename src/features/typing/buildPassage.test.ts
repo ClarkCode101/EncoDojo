@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPassage, charsNeeded, levelForDifficulty } from './buildPassage';
+import { buildMixedPassage, buildPassage, charsNeeded, levelForDifficulty } from './buildPassage';
 import { makeRng } from '../../lib/random';
 import { passages } from '../../data/passages';
 
@@ -22,6 +22,14 @@ describe('buildPassage', () => {
   it('has no double spaces or line breaks', () => {
     const text = buildPassage(makeRng(7), 3, 3000);
     expect(text).not.toMatch(/ {2}|\n/);
+  });
+
+  it('mixed passage (assessment) includes all three kinds of text', () => {
+    const text = buildMixedPassage(makeRng(11), charsNeeded(1));
+    expect(text.length).toBeGreaterThanOrEqual(charsNeeded(1));
+    expect(text).toMatch(/PHP \d/); // level 3: amounts
+    expect(text).toMatch(/\d{2}\/\d{2}\/\d{4}/); // level 2/3: dates
+    expect(text).not.toMatch(/ {2}/);
   });
 
   it('only uses characters found on a normal keyboard', () => {

@@ -11,11 +11,17 @@ typing speed & accuracy and numpad (10-key) speed, with more drills planned.
 
 ## Features (Phase 1)
 
+EncoDojo has two modes:
+
+- **Training** — practice any skill as often as you like; saving results is optional.
+- **Assessment** — every skill in a row under exam rules, then a report card that says whether you're job-ready, with tips.
+
 | Screen | What it does |
 | --- | --- |
-| Dashboard | Best Net WPM, latest accuracy, best KPH, total sessions, daily streak, recent sessions |
-| Typing Test | 30 sec practice (not saved) or 1 min recorded test, fresh passages every time (fake PH names, addresses, invoices, payroll), Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
-| Numpad Drill | 2 / 5 minute drills, integers → amounts → reference numbers, KPH and entry accuracy |
+| Dashboard | Latest assessment result, best Net WPM, latest accuracy, best KPH, total sessions, daily streak, recent sessions |
+| Assessment | Typing (1 min) + Numpad (1 min), no live stats or early finish; report card with job-ready targets, comments, change since last time, and history |
+| Typing Test | 30 sec or 1 min training, fresh passages every time (fake PH names, addresses, invoices, payroll), Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
+| Numpad Drill | 30 sec or 1 min training, integers → amounts → reference numbers, KPH, entry accuracy, job-ready check |
 | Settings | Name, difficulty 1–6, live stats, sound, export/import JSON, reset all data |
 
 ### How scores are calculated

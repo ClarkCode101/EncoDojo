@@ -1,11 +1,23 @@
 import { Suspense } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
-const links = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/typing', label: 'Typing Test' },
-  { to: '/numpad', label: 'Numpad Drill' },
-  { to: '/settings', label: 'Settings' },
+type NavGroup = { heading?: string; links: { to: string; label: string }[] };
+
+const groups: NavGroup[] = [
+  {
+    links: [
+      { to: '/', label: 'Dashboard' },
+      { to: '/assessment', label: 'Assessment' },
+    ],
+  },
+  {
+    heading: 'Training',
+    links: [
+      { to: '/typing', label: 'Typing Test' },
+      { to: '/numpad', label: 'Numpad Drill' },
+    ],
+  },
+  { links: [{ to: '/settings', label: 'Settings' }] },
 ];
 
 // Shown in the sidebar so the roadmap is visible, but not clickable yet.
@@ -43,17 +55,28 @@ export default function Layout() {
         </div>
 
         <nav aria-label="Main" className="px-2 pb-4">
-          <ul className="flex flex-wrap gap-1 md:block md:space-y-1">
-            {links.map((link) => (
-              <li key={link.to}>
-                <NavLink to={link.to} end={link.to === '/'} className={navClass}>
-                  {link.label}
-                </NavLink>
-              </li>
+          <div className="flex flex-wrap gap-1 md:block">
+            {groups.map((group, i) => (
+              <div key={i} className="md:mb-4">
+                {group.heading && (
+                  <div className="hidden px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400 md:block">
+                    {group.heading}
+                  </div>
+                )}
+                <ul className="flex flex-wrap gap-1 md:block md:space-y-1">
+                  {group.links.map((link) => (
+                    <li key={link.to}>
+                      <NavLink to={link.to} end={link.to === '/'} className={navClass}>
+                        {link.label}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
 
-          <div className="mt-6 hidden md:block">
+          <div className="mt-2 hidden md:block">
             <div className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Coming soon
             </div>
