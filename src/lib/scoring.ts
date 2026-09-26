@@ -58,6 +58,18 @@ export function accuracyPct(correctChars: number, totalTypedChars: number): numb
 }
 
 /**
+ * How many of the keys just typed added a mistake (for keystroke accuracy).
+ * Unlike normal accuracy, a mistake still counts here even if it is later
+ * fixed with Backspace — it shows how often you slip while typing.
+ *
+ * Keystroke accuracy % = accuracyPct(totalKeys - wrongKeys, totalKeys)
+ */
+export function wrongKeystrokes(addedChars: number, errorsBefore: number, errorsAfter: number): number {
+  if (addedChars <= 0) return 0; // Backspace / delete is not a keystroke here
+  return Math.min(addedChars, Math.max(0, errorsAfter - errorsBefore));
+}
+
+/**
  * KPH = correct keystrokes / elapsed hours.
  * Counts digits, the decimal point, and Enter (see `keystrokesForEntry`).
  */

@@ -57,6 +57,7 @@ src/
 - **Gross WPM** = (total typed characters ÷ 5) ÷ minutes
 - **Net WPM** = Gross WPM − (uncorrected errors ÷ minutes), minimum 0
 - **Accuracy %** = correct characters ÷ (correct characters + mistakes) × 100, where mistakes = wrong + extra + skipped keys. (Same as correct ÷ typed when there are no extra/skipped keys.)
+- **Keystroke accuracy %** (typing) = keys that did not add a mistake ÷ all keys that added text × 100. Counts mistakes even if later fixed with Backspace.
 - **KPH (numpad)** = correct keystrokes ÷ elapsed hours (count digits, decimal point, and Enter)
 - **Entry accuracy (numpad/encoding)** = fully correct entries ÷ total entries × 100
 - Round displayed values to whole numbers; store raw values.
@@ -97,6 +98,9 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 
 ### 2. Typing Test (`features/typing`)
 - Modes: **30 sec (practice — results shown, NOT saved)** and **1 min (recorded to progress)**. (Changed from 1/3/5 min at the owner's request.)
+- 1 min results are saved by default; the results screen has "Don't save this result" / "Save it again".
+- Results also show: keystroke accuracy, comparison with the last saved test + personal best, and a job-ready check (targets in `lib/targets.ts`: 40 Net WPM, 95% accuracy).
+- Passages: ~75% generated from fake PH data (`features/typing/generatePassage.ts`, `data/ph/`), ~25% hand-written (`data/passages/`). Generated invoices/payroll must add up.
 - Typed text is compared with the passage by **alignment** (edit distance, `features/typing/alignTyping.ts`), not position by position. Each wrong key, extra key (incl. double space or a space inside a word), or skipped letter = 1 mistake, and the following letters stay in sync (no "domino" of errors).
 - Show passage; highlight current character; mark correct (neutral) vs wrong (red) as the user types.
 - Timer starts on first keystroke. Backspace allowed.

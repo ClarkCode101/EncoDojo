@@ -14,7 +14,7 @@ typing speed & accuracy and numpad (10-key) speed, with more drills planned.
 | Screen | What it does |
 | --- | --- |
 | Dashboard | Best Net WPM, latest accuracy, best KPH, total sessions, daily streak, recent sessions |
-| Typing Test | 30 sec practice (not saved) or 1 min recorded test, live highlighting, Gross/Net WPM, accuracy, mistakes list |
+| Typing Test | 30 sec practice (not saved) or 1 min recorded test, fresh passages every time (fake PH names, addresses, invoices, payroll), Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
 | Numpad Drill | 2 / 5 minute drills, integers → amounts → reference numbers, KPH and entry accuracy |
 | Settings | Name, difficulty 1–6, live stats, sound, export/import JSON, reset all data |
 
@@ -23,6 +23,7 @@ typing speed & accuracy and numpad (10-key) speed, with more drills planned.
 - **Gross WPM** = (typed characters ÷ 5) ÷ minutes
 - **Net WPM** = Gross WPM − (uncorrected errors ÷ minutes), never below 0
 - **Accuracy** = correct characters ÷ (correct characters + mistakes) × 100
+- **Keystroke accuracy** = keys typed without a mistake ÷ all keys typed × 100 (mistakes fixed with Backspace still count)
 - **Mistakes** = wrong keys + extra keys (e.g. a double space) + skipped letters. Your typing is lined up with
   the passage like a "diff", so one slip counts as one mistake and doesn't make the rest of the line wrong.
 - **KPH** = correct keystrokes ÷ hours (digits, decimal point, and Enter; commas are optional and not counted)

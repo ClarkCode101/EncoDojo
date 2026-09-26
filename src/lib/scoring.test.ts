@@ -9,6 +9,7 @@ import {
   kph,
   netWpm,
   normalizeEntry,
+  wrongKeystrokes,
 } from './scoring';
 
 describe('display', () => {
@@ -109,6 +110,29 @@ describe('entryAccuracyPct', () => {
 
   it('is 0 when every entry is wrong', () => {
     expect(entryAccuracyPct(0, 8)).toBe(0);
+  });
+});
+
+describe('wrongKeystrokes', () => {
+  it('counts a key that added a mistake', () => {
+    expect(wrongKeystrokes(1, 2, 3)).toBe(1);
+  });
+
+  it('does not count a correct key', () => {
+    expect(wrongKeystrokes(1, 2, 2)).toBe(0);
+  });
+
+  it('does not count Backspace, even when it fixes a mistake', () => {
+    expect(wrongKeystrokes(-1, 3, 2)).toBe(0);
+    expect(wrongKeystrokes(0, 3, 3)).toBe(0);
+  });
+
+  it('never counts more wrong keys than keys typed', () => {
+    expect(wrongKeystrokes(1, 0, 5)).toBe(1);
+  });
+
+  it('never goes negative when a key makes the line-up better', () => {
+    expect(wrongKeystrokes(1, 3, 2)).toBe(0);
   });
 });
 
