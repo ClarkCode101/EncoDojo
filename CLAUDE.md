@@ -18,6 +18,7 @@ The app must be easy for **older and non-techy users**:
 - **"Taglish ang gabay, English ang trabaho"** (decided 2026-09-26):
   - Guidance is **Taglish**: instructions, explanations ("Ano ito?"), results, comments, Settings. Keep job terms in English (WPM, KPH, Accuracy, Encoder, Assessment).
   - The work itself looks like a real **English** hiring test/form: field labels and in-test buttons are English with the Taglish meaning smaller beside them, via `EnTl` (e.g. "Name (Pangalan)", "Submit (Ipasa)", "Finish (Tapusin na)"). Typing passages stay English; records use real-looking Filipino names/places.
+  - Exception (owner's choice, 2026-09-26): **spreadsheet column headers are English only** + the format hint (e.g. "Date" + `mm/dd/yyyy`), no Taglish, to keep them short like a real sheet.
   - Code, comments, and commit messages stay in English.
 - Big readable text (root 17px; Settings → "Mas malaking text" = 19px via `html.large-text`, `settings.largeText`). Buttons at least 44px tall. No ALL-CAPS labels.
 - Every page: icon + title + one-sentence explanation, then numbered steps (`Step` component) for what to do.
@@ -27,10 +28,12 @@ The app must be easy for **older and non-techy users**:
 - Deletes always ask first (ConfirmButton). Sidebar shows only usable pages; "coming soon" features are listed on Home.
 
 ## Product Direction: Training + Assessment (decided 2026-09-26)
-- **Training (the "dojo")**: every feature (Typing, Numpad, and later Copy Test, Encoding, QC, Excel) is a training ground. User picks settings, can "Finish now", can retry. Results are saved by default but optional ("Don't save this result" / "Save it again"). A run ended with "Finish now" starts **unsaved** ("Save anyway") because short runs inflate WPM/KPH.
+- **Training (the "dojo")**: every feature (Typing, Numpad, Copy Test, Document Encoding, and later QC, Excel) is a training ground. User picks settings, can "Finish now", can retry. Results are saved by default but optional ("Don't save this result" / "Save it again"). A run ended with "Finish now" starts **unsaved** ("Save anyway") because short runs inflate WPM/KPH.
 - **Assessment** (`features/assessment`): runs every feature in a fixed order under exam rules — fixed duration/difficulty, no live stats, no "Finish now", no retry — then shows a **report card**: per-target ✅/❌, overall "Job-ready" verdict, rule-based comments (no AI), change vs previous assessment, and mistake lists. Always saved as ONE session of type `'assessment'`.
-- Each drill has a **Runner** component (`TypingRunner`, `NumpadRunner`) that runs one attempt and returns a Session without saving; training pages and the Assessment both use it. **When adding a new feature, build its Runner first, then add it as a new part of the Assessment** (`evaluate.ts` checks, `comments.ts` rules, `AssessmentReport.tsx` section).
-- Job-ready targets live in `lib/targets.ts` (typing 40 Net WPM / 95%; numpad 8,000 net KPH / 95%; copy 95% fields / 8,000 net KPH — KPH is the commonly quoted alphanumeric data entry test minimum; per-FIELD accuracy is EncoDojo's stricter choice). KPH levels (`KPH_LEVELS`): 8,000 Pasado (entry-level), 10,000 Karaniwang hinihingi, 12,000 Magaling — commonly quoted 10-key benchmarks (checked 2026-09 on typing/hiring sites; PH job posts usually state WPM, not KPH). Shown by `KphLevels` on Numpad results and the Assessment report.
+- Each drill has a **Runner** component (`TypingRunner`, `NumpadRunner`, `CopyRunner`) that runs one attempt and returns a Session without saving; training pages and the Assessment both use it. **When adding a new feature, build its Runner first, then add it as a new part of the Assessment** (`evaluate.ts` checks + a `has…Part()` guard for older saved assessments, `comments.ts` rules, `AssessmentReport.tsx` section, history column).
+- Field-by-field entry drills (Copy Test, Document Encoding) share the **entry runners** in `components/entry/`: `EntryFormRunner` (form) and `EntrySheetRunner` (Excel-like), fed by `nextItem(index)` → `{ title, source, fields, expected }`, scored by `lib/fieldScoring.ts`, mistakes shown by `FieldMistakesCard`. Reuse them for new entry-style drills instead of copying code.
+- Practice "clear all" uses `PRACTICE_TYPES` (every session type except `'assessment'`), so new session types are included automatically.
+- Job-ready targets live in `lib/targets.ts` (typing 40 Net WPM / 95%; numpad 8,000 net KPH / 95%; copy 95% fields / 8,000 net KPH — KPH is the commonly quoted alphanumeric data entry test minimum; per-FIELD accuracy is EncoDojo's stricter choice; encoding 95% fields / 6,000 net KPH — EncoDojo estimates, no public standard). KPH levels (`KPH_LEVELS`): 8,000 Pasado (entry-level), 10,000 Karaniwang hinihingi, 12,000 Magaling — commonly quoted 10-key benchmarks (checked 2026-09 on typing/hiring sites; PH job posts usually state WPM, not KPH). Shown by `KphLevels` on Numpad results and the Assessment report.
 
 ## Hard Constraints (never break these)
 - **Zero cost.** No backend, no database, no login, no paid APIs, no paid services, no API keys or secrets.
@@ -68,8 +71,11 @@ src/
     dashboard/
     typing/
     numpad/
+    copy/         # Copy Test
+    encoding/     # Document Encoding (documents, rules, paper views)
+    assessment/
     settings/
-    (later) copy-test/, encoding/, qc/, excel/, review/, reports/
+    (later) qc/, excel/, reports/
   lib/
     storage.ts    # localStorage read/write, schema versioning, export/import
     scoring.ts    # WPM, accuracy, KPH calculations
@@ -77,7 +83,7 @@ src/
   data/
     passages/     # typing passages (original text only)
     ph/           # fake Filipino names, streets, barangays, amounts
-  components/     # shared UI (Button, Card, Timer, StatBadge)
+  components/     # shared UI (Button, Card, Timer, StatBadge); entry/ = form + spreadsheet runners
 ```
 
 ## Scoring Definitions (single source of truth: `lib/scoring.ts`)
@@ -100,6 +106,7 @@ type AppData = {
     sound: boolean;
     showLiveStats: boolean;                  // UNUSED: practice always shows live stats, Assessment always hides them; drop at next schema bump
     largeText: boolean;                      // v3: "Mas malaking text" in Settings
+    copyMode?: 'form' | 'sheet';             // optional, missing = 'sheet'; shared by Copy Test + Document Encoding practice (no schema bump)
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
   // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).
@@ -108,14 +115,15 @@ type AppData = {
 
 type Session = {
   id: string;
-  type: 'typing' | 'numpad' | 'copy' | 'assessment';  // extend in later phases (SESSION_TYPES)
+  type: 'typing' | 'numpad' | 'copy' | 'encoding' | 'assessment';  // extend in later phases (SESSION_TYPES)
   startedAt: string;                // ISO
   durationSec: number;
   metrics: Record<string, number>;  // e.g. { grossWpm, netWpm, accuracy } or { kph, entryAccuracy }
-  mistakes: { expected: string; typed: string; index: number; section?: 'typing' | 'numpad' | 'copy'; field?: string }[];
+  mistakes: { expected: string; typed: string; index: number; section?: 'typing' | 'numpad' | 'copy' | 'encoding'; field?: string }[];
 };
 ```
-- Assessment sessions store flattened metrics with a part prefix (`typingNetWpm`, `numpadKph`, `copyFieldAccuracy`, ... plus `targetsMet`, `targetsTotal`, `jobReady` 0/1) and tag each mistake with `section`. The report is always recomputed from the saved session. Assessments from before the Copy Test have no `copy*` metrics: `hasCopyPart()` hides that part (4 targets instead of 6).
+- Assessment sessions store flattened metrics with a part prefix (`typingNetWpm`, `numpadKph`, `copyFieldAccuracy`, ... plus `targetsMet`, `targetsTotal`, `jobReady` 0/1) and tag each mistake with `section`. The report is always recomputed from the saved session. Assessments from before the Copy Test have no `copy*` metrics: `hasCopyPart()` hides that part (4 targets instead of 6). Assessments from before Document Encoding have no `encoding*` metrics: `hasEncodingPart()` hides Part 4 (6 targets instead of 8).
+- Encoding practice sessions store `metrics.documents`, `sheet` (0/1), `seconds`, and `docType` (1 invoice, 2 delivery, 3 application, 0 mix; see `DOC_TYPE_CODE`).
 - Wrap all reads/writes in try/catch; if data is missing or corrupt, fall back to defaults and never crash.
 - Include a `migrate()` function so future schema versions can upgrade old data.
 - **Export:** download `encodojo-progress-YYYY-MM-DD.json`. **Import:** validate shape before replacing; show a confirm dialog.
@@ -174,18 +182,18 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 
 ## Later Phases (do not build yet — for context only)
 
-**Assessment — DONE (2026-09-26):** Typing (1 min, plain office text) + Numpad (1 min, Halo-halo) + Copy Test (2 min) with report card (6 targets). Every later feature must also be added as a new Assessment part (see "Product Direction").
+**Assessment — DONE (2026-09-26):** Typing (1 min, plain office text) + Numpad (1 min, Halo-halo) + Copy Test (2 min, Form) + Document Encoding (3 min, Form, fixed mix invoice → delivery → application, repeated) with report card (8 targets). About 8–10 minutes with breaks. Every later feature must also be added as a new Assessment part (see "Product Direction").
 
-**Phase 2 (IN PROGRESS):**
+**Phase 2 — DONE (2026-09-26):**
 - ✅ **Copy Test** (`features/copy`, DONE 2026-09-26): copy fake records (Pangalan, Petsa ng kapanganakan, Address, Contact No. `(0NN) 000-NNNN` — local part starting with 0 can never be a real line, ID No. `ED-YYYY-NNNNN-L`) into a 5-field form, like an alphanumeric data entry hiring test. **Tab** is taught as the way to move between fields (real forms/software); Enter also moves to the next field for beginners, and Enter on the last field submits. Speed shown as net KPH (target) + Net WPM (extra); `copyKphOf()` falls back to WPM×300 for the first sessions saved before KPH.
   - **Two layouts** (owner's decision): **Spreadsheet** (`CopySheetRunner`, the DEFAULT in practice because most encoder jobs use Excel/Google Sheets; like Excel/Google Sheets: one row per record, column letters A–E, headers on row 1, Tab = next cell, Enter = next row, earlier rows can be fixed; the final sheet contents are scored) and **Form** (`CopyRunner`; like hiring tests and company software). Saved as optional `settings.copyMode` ('form' | 'sheet', missing = sheet; no schema bump). Sessions store `metrics.sheet` 0/1. The Assessment always uses the Form layout, because hiring tests use forms ("Spreadsheet para sa trabaho, Form para makapasa sa hiring test"). A field is correct only on an exact match (outer spaces ignored). Practice 1 or 2 min; Assessment part 3 (2 min). Wrong fields show the exact wrong/missing characters.
 - ❌ **Mistake Review — REMOVED on purpose** (owner's decision, 2026-09-26): built, then removed because an extra menu confused non-techy users; practicing the feature itself again works better, and results/reports already show mistakes. Do NOT add it back unless the owner asks (the code is in git history, commit ed61290).
-- ⏳ **Source Document Encoding — PLANNED** (owner's decisions, 2026-09-26; build in this order, one commit each):
+- ✅ **Source Document Encoding** (`features/encoding`, DONE 2026-09-26; owner's decisions, built in this order):
   1. Document generators + encoding rules + scoring (tests). Generalize Copy Test scoring to any field list and reuse it.
   2. Paper-like HTML views for 3 documents: **Sales Invoice** (encode: Invoice No., Date, Customer ["Sold to:" on paper], Terms, Total Amount), **Delivery Receipt** (DR No., Date, Deliver To, Address, Total Qty), **Application Form** (Last Name, First Name, Birth Date, Address, Contact No.; names in "Surname / Given Name" boxes on paper). KEY FIELDS only, not every line item. Invoice math must add up (tested).
-  3. Practice page: pick document type + 3 or 5 minutes; **Spreadsheet** layout default (one row per document, like an invoice log in Excel) + **Form** layout; results with highlighted mistakes.
-  4. Assessment **Part 4** (3 min, Form layout, a fixed mix of the 3 document types) + report section + comments. Assessment becomes ~8 minutes.
-  5. Home (5 feature cards — rework layout so it doesn't get cramped), sidebar, docs.
+  3. Practice page: pick document type + 3 or 5 minutes; **Spreadsheet** layout default (one row per document, like an invoice log in Excel; headers show the format hint) + **Form** layout; encoding rules always visible (`EncodingRules`); results with highlighted mistakes. Built on the shared entry runners (the Copy Test was moved onto them too).
+  4. Assessment **Part 4** (3 min, Form layout, a fixed mix of the 3 document types) + report section + comments.
+  5. Home: Typing, Numpad, Copy Test, Document Encoding as steps 1–4 in one row; Assessment is a wide card (step 5) below. Sidebar link. Docs.
   - **Encoding rules** shown on screen: dates → mm/dd/yyyy (paper may show "Sept. 14, 2026", "September 14, 2026", "14-Sep-2026"); amounts → digits and decimal point only, no ₱ or commas (₱5,115.25 → 5115.25); names/text → exact copy. Fields are scored exactly against the rule-converted value.
   - **Targets (EncoDojo estimates, no public standard):** 95% fields correct, 6,000 net KPH (lower than Copy Test's 8,000 because of searching and converting). Also show documents completed.
   - Fake data only: fake companies/people, made-up "Ref. No." (never a TIN/SSS-like pattern).
@@ -193,7 +201,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 
 Original Phase 2 plan: Alphanumeric Copy Test (timed list of fake names/addresses/IDs), Source Document Encoding (rendered fake invoices, receipts, application forms, delivery receipts, timesheets → form fields, per-field QC), Mistake Review screen with "Retry mistakes only" (built, then removed — see above).
 
-**Phase 3:** Excel Drills with react-data-grid + HyperFormula and auto-checker, in this order: shortcuts/navigation → formatting (dates, numbers, leading zeros) → sort/filter/find & replace/remove duplicates → SUM/COUNT/IF/COUNTIF/SUMIF → text cleanup (TRIM, PROPER, split/combine names) → VLOOKUP/XLOOKUP → pivot tables (bonus). Also Spot-the-Difference / QC drill.
+**Phase 3 (NEXT — ask before adding react-data-grid / HyperFormula):** Excel Drills with react-data-grid + HyperFormula and auto-checker, in this order: shortcuts/navigation → formatting (dates, numbers, leading zeros) → sort/filter/find & replace/remove duplicates → SUM/COUNT/IF/COUNTIF/SUMIF → text cleanup (TRIM, PROPER, split/combine names) → VLOOKUP/XLOOKUP → pivot tables (bonus). Also Spot-the-Difference / QC drill.
 
 **Phase 4:** (The Assessment now covers the "diagnostic test" and "L6 hiring-exam simulation" ideas.) 6-level unlock system (90%+ accuracy to advance), daily loop, weekly review with weakest-skill highlight, Progress & Reports with Chart.js, PDF "Practice Certificate — self-assessed" via jsPDF at Job-ready (95%+ accuracy, 40+ Net WPM, target KPH).
 
