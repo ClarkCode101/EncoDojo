@@ -12,6 +12,10 @@ The owner is learning while building. When you finish a task, **explain what you
 - Logo: a tied belt on a gold tile (`<Logo />` in `components/icons.tsx`, same drawing in `public/favicon.svg`).
 - Signature touches: the passage looks like a sheet of paper (`shadow-paper`), and the Assessment report has a rubber stamp ("PASADO" / "HINDI PA", `Stamp` in `components/ResultPieces.tsx`).
 - **Belt ranks — early version LIVE** (owner's decision, 2026-09-26): `lib/belts.ts` + `components/BeltCard.tsx` at the bottom of the sidebar ("Ang belt mo", progress bar, what to do next; links to the Assessment; icon only when the sidebar is collapsed). The belt comes from the BEST Assessment, so it is never taken away: White (none / <25% of targets), Yellow 25%+, Orange 50%+, Green 75%+, Blue = Job-ready once, Black = Job-ready on 3 different (local) days. Percentages, so older 4- and 6-target assessments still count. Phase 4 may extend this (e.g. per-skill levels), but keep these rules unless the owner changes them.
+- **Sidebar coach** (owner's decision, 2026-09-27), rule-based, no AI — `features/dashboard/coach.ts` (tested):
+  - "Ensayo ngayong araw": a green ✓ beside each practice page done today (local day) and "N sa 4 ngayon" beside the Practice heading ("Tapos lahat ngayon! 🎉" at 4/4). Collapsed sidebar: a small green dot on the icon.
+  - "Susunod na gagawin" card above the belt card (`NextFocusCard`): first a practice never tried yet (Home order), else the practice whose LATEST result is furthest below its target (speed or accuracy, whichever is weaker, with the number), else the Assessment. Links to it.
+  - On short screens (<760px tall) the sidebar spacing tightens and the card/belt hint lines hide (hover title keeps them), so the sidebar doesn't scroll.
 - Planned: optional "Sensei" tips character; optional on-screen keyboard/numpad guide.
 
 ## UI & Language Rules (decided 2026-09-26)
