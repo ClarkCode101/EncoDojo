@@ -245,18 +245,30 @@ function encodingComments(m: Record<string, number>, mistakes: SessionMistake[])
   return out;
 }
 
+export type CommentsBySection = {
+  overall: string;
+  typing: string[];
+  numpad: string[];
+  /** Empty for older assessments without that part. */
+  copy: string[];
+  encoding: string[];
+};
+
+/** The feedback grouped by part (the report shows only the parts that need work). */
+export function assessmentCommentsBySection(assessment: Session): CommentsBySection {
+  const m = assessment.metrics;
+  const of = (section: string) => assessment.mistakes.filter((x) => x.section === section);
+  return {
+    overall: overallComment(m),
+    typing: typingComments(m, of('typing')),
+    numpad: numpadComments(m, of('numpad')),
+    copy: hasCopyPart(m) ? copyComments(m, of('copy')) : [],
+    encoding: hasEncodingPart(m) ? encodingComments(m, of('encoding')) : [],
+  };
+}
+
 /** All feedback for one saved assessment, most important first. */
 export function assessmentComments(assessment: Session): string[] {
-  const m = assessment.metrics;
-  const typingMistakes = assessment.mistakes.filter((x) => x.section === 'typing');
-  const numpadMistakes = assessment.mistakes.filter((x) => x.section === 'numpad');
-  const copyMistakes = assessment.mistakes.filter((x) => x.section === 'copy');
-  const encodingMistakes = assessment.mistakes.filter((x) => x.section === 'encoding');
-  return [
-    overallComment(m),
-    ...typingComments(m, typingMistakes),
-    ...numpadComments(m, numpadMistakes),
-    ...(hasCopyPart(m) ? copyComments(m, copyMistakes) : []),
-    ...(hasEncodingPart(m) ? encodingComments(m, encodingMistakes) : []),
-  ];
+  const c = assessmentCommentsBySection(assessment);
+  return [c.overall, ...c.typing, ...c.numpad, ...c.copy, ...c.encoding];
 }
