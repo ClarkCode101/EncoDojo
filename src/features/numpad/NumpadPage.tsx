@@ -112,7 +112,7 @@ export default function NumpadPage() {
       <PracticeHeader
         icon={<NumpadIcon className="h-6 w-6" />}
         title="Numpad Practice"
-        summary={`${NUMPAD_MODES[mode].label} · ${durationLabel(seconds)}`}
+        summary={`${NUMPAD_MODES[mode].label}, ${durationLabel(seconds)}`}
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />

@@ -21,7 +21,7 @@ export const NUMPAD_MODES: Record<NumpadMode, { difficulty: Difficulty; label: s
   mixed: {
     difficulty: 6,
     label: 'Halo-halo (gaya ng Assessment)',
-    description: 'Mahahabang numero, halaga na may sentimo, at reference number — gaya mismo sa Assessment.',
+    description: 'Mahahabang numero, halaga na may sentimo at reference number, gaya mismo sa Assessment.',
   },
   beginner: {
     difficulty: 1,

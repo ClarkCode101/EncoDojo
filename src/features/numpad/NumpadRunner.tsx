@@ -7,7 +7,7 @@
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
+import { Button, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display, entryAccuracyPct, isEntryCorrect, keystrokesForEntry, kph } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
@@ -113,14 +113,18 @@ export default function NumpadRunner({
           { label: 'Natapos', value: tally.entries },
           ...(showLiveStats
             ? [
-                { label: 'Bilis (KPH)', value: timer.started ? display(kph(tally.keystrokes, elapsed)).toLocaleString() : '–' },
+                {
+                  label: 'Bilis (KPH)',
+                  value: timer.started ? display(kph(tally.keystrokes, elapsed)).toLocaleString() : '–',
+                },
                 { label: 'Tamang numero', value: `${display(entryAccuracyPct(tally.correctEntries, tally.entries))}%` },
               ]
             : []),
         ]}
       />
 
-      <Card compact>
+      {/* No box around the drill: the number is shown on a small sheet of paper. */}
+      <div>
         <div className="rounded-md border border-stone-200 bg-white py-5 text-center shadow-paper">
           <div className="text-lg font-semibold text-stone-700">I-type ang numerong ito:</div>
           <div
@@ -139,7 +143,7 @@ export default function NumpadRunner({
           }}
         >
           <label htmlFor="numpad-input" className="mb-2 block text-lg font-bold text-stone-900">
-            Dito ka mag-type 👇
+            Dito ka mag-type
           </label>
           <input
             id="numpad-input"
@@ -159,7 +163,7 @@ export default function NumpadRunner({
             onPaste={(e) => e.preventDefault()}
             onDrop={(e) => e.preventDefault()}
             placeholder="I-type dito…"
-            className="w-full rounded-xl border-2 border-stone-400 bg-white p-3 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
+            className="w-full rounded-lg border-[1.5px] border-stone-500 bg-white p-3 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
           />
           <div className="mt-3 flex justify-center">
             <KeyTips tips={[{ key: 'Enter', text: 'pagkatapos ng bawat numero' }, { text: 'Walang comma (,)' }]} />
@@ -177,7 +181,7 @@ export default function NumpadRunner({
             </Button>
           )}
         </div>
-      </Card>
+      </div>
     </>
   );
 }
