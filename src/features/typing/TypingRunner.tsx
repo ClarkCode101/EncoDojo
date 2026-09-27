@@ -7,7 +7,7 @@
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
+import { Button, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { accuracyPct, display, netWpm, wrongKeystrokes } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { makeId, type Session } from '../../lib/storage';
@@ -123,12 +123,13 @@ export default function TypingRunner({
         }
       />
 
-      <Card compact className="flex min-h-0 flex-col">
+      {/* No box around the drill: the passage is already a sheet of paper on the page. */}
+      <div className="flex min-h-0 flex-col">
         <PassageView passage={passage} alignment={alignment} />
         <ColorLegend />
 
         <label htmlFor="typing-input" className="mb-2 mt-4 block text-lg font-bold text-stone-900">
-          Dito ka mag-type 👇
+          Dito ka mag-type
         </label>
         <textarea
           id="typing-input"
@@ -146,7 +147,7 @@ export default function TypingRunner({
           autoCorrect="off"
           autoCapitalize="off"
           rows={2}
-          className="w-full rounded-xl border-2 border-stone-400 bg-white p-4 font-mono text-xl placeholder:text-stone-500 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
+          className="w-full rounded-lg border-[1.5px] border-stone-500 bg-white p-4 font-mono text-xl placeholder:text-stone-500 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
         />
         <div className="mt-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
           <KeyTips tips={[{ key: 'Backspace', text: 'para magbura' }]} />
@@ -156,7 +157,7 @@ export default function TypingRunner({
             </Button>
           )}
         </div>
-      </Card>
+      </div>
     </>
   );
 }

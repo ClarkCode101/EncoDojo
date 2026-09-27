@@ -1,6 +1,6 @@
-import { SaveBanner, TargetRow } from '../../components/ResultPieces';
+import { ResultSummary, SaveBanner, TargetRow } from '../../components/ResultPieces';
 import { KeyboardIcon } from '../../components/icons';
-import { Button, Card, PageHeader, StatBadge } from '../../components/ui';
+import { Button, PageHeader, Section, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
@@ -9,18 +9,17 @@ import { formatClock } from '../../lib/useCountdown';
 import { mistakeKind } from '../../lib/alignTyping';
 import type { TypingComparison } from './compare';
 
-/** e.g. "↑3 kumpara sa huli · Best: 45" or "Bagong personal best! (dati: 42)". */
+/** e.g. "↑3 kumpara sa huli, best: 45" or "Bagong personal best! (dati: 42)". */
 function comparisonText(netWpm: number, comparison: TypingComparison): string {
   const { previousNetWpm, bestNetWpm } = comparison;
   if (previousNetWpm === null || bestNetWpm === null) return 'Una mong na-save na practice';
 
   const now = display(netWpm);
-  if (now > display(bestNetWpm)) return `🎉 Bagong personal best! (dati: ${display(bestNetWpm)})`;
+  if (now > display(bestNetWpm)) return `Bagong personal best! (dati: ${display(bestNetWpm)})`;
 
   const diff = now - display(previousNetWpm);
-  const vsLast =
-    diff > 0 ? `↑${diff} kumpara sa huli` : diff < 0 ? `↓${-diff} kumpara sa huli` : 'Pareho sa huli';
-  return `${vsLast} · Best: ${display(bestNetWpm)}`;
+  const vsLast = diff > 0 ? `↑${diff} kumpara sa huli` : diff < 0 ? `↓${-diff} kumpara sa huli` : 'Pareho sa huli';
+  return `${vsLast}, best: ${display(bestNetWpm)}`;
 }
 
 /** Mistake kinds in Taglish for the table. */
@@ -38,13 +37,13 @@ function showChar(char: string): string {
 /** The list of typing mistakes (also used by the Assessment report). */
 export function TypingMistakesCard({ mistakes, errors }: { mistakes: SessionMistake[]; errors: number }) {
   return (
-    <Card title={`Mga mali sa typing (${errors})`}>
+    <Section title={`Mga mali sa typing (${errors})`}>
       {mistakes.length === 0 ? (
-        <p className="text-lg text-stone-700">Walang mali. Ang galing! 👏</p>
+        <p className="text-lg text-stone-700">Walang mali. Ang galing!</p>
       ) : (
         <div className="max-h-96 overflow-y-auto">
           <table className="w-full text-left text-base">
-            <thead className="sticky top-0 bg-white text-stone-600">
+            <thead className="sticky top-0 bg-paper text-sm text-stone-600">
               <tr>
                 <th className="py-2 pr-4 font-semibold">Puwesto</th>
                 <th className="py-2 pr-4 font-semibold">Uri ng mali</th>
@@ -68,7 +67,7 @@ export function TypingMistakesCard({ mistakes, errors }: { mistakes: SessionMist
           )}
         </div>
       )}
-    </Card>
+    </Section>
   );
 }
 
@@ -99,52 +98,59 @@ export default function TypingResults({
     <div>
       <PageHeader icon={<KeyboardIcon className="h-8 w-8" />} title="Resulta ng Typing Practice" />
 
-      <section
-        aria-label="Buod ng resulta"
-        className={
-          'mb-6 rounded-2xl border-2 p-6 ' + (ready ? 'border-green-400 bg-green-50' : 'border-brand-200 bg-white')
+      <ResultSummary
+        ready={ready}
+        headline={
+          <>
+            Ang bilis mo ay <strong>{net} WPM</strong> at <strong>{acc}%</strong> ang tama.
+          </>
+        }
+        message={
+          ready
+            ? 'Pasado ka sa karaniwang target ng hiring test. Subukan ang Assessment para makasigurado.'
+            : `Ang target ay ${t.netWpm} WPM at ${t.accuracy}% na tama. Tuloy lang ang practice.`
         }
       >
-        <p className="text-2xl leading-relaxed text-stone-900">
-          Ang bilis mo ay <strong>{net} WPM</strong> at <strong>{acc}%</strong> ang tama.
-        </p>
-        <p className="mt-2 text-lg text-stone-700">
-          {ready
-            ? '🎉 Pasado ka sa karaniwang target ng hiring test! Subukan ang Assessment para makasigurado.'
-            : `Ang target ay ${t.netWpm} WPM at ${t.accuracy}% na tama. Tuloy lang ang practice — kaya mo 'yan!`}
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button size="lg" onClick={onNewPassage} autoFocus>
-            Ulitin (ibang text)
-          </Button>
-          <Button size="lg" variant="secondary" onClick={onRetrySame}>
-            Ulitin ang parehong text
-          </Button>
-        </div>
-      </section>
+        <Button size="lg" onClick={onNewPassage} autoFocus>
+          Ulitin (ibang text)
+        </Button>
+        <Button size="lg" variant="secondary" onClick={onRetrySame}>
+          Ulitin ang parehong text
+        </Button>
+      </ResultSummary>
 
       <SaveBanner saved={saved} finishedEarly={finishedEarly} onToggle={onToggleSaved} />
 
-      <h2 className="mb-3 text-xl font-bold text-stone-900">Mga detalye</h2>
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <StatBadge label="Bilis (Net WPM)" value={net} hint={comparisonText(m.netWpm, comparison)} help={HELP.netWpm} />
-        <StatBadge label="Accuracy (tama)" value={`${acc}%`} help={HELP.accuracy} />
-        <StatBadge
-          label="Keystroke accuracy"
-          value={`${display(m.keystrokeAccuracy)}%`}
-          hint="kasama ang mga binura mo"
-          help={HELP.keystrokeAccuracy}
-        />
-        <StatBadge label="Gross WPM" value={display(m.grossWpm)} hint="bilis kasama ang mali" help={HELP.grossWpm} />
-        <StatBadge label="Tagal" value={formatClock(session.durationSec)} hint={`${m.typedChars} letra ang na-type`} />
-      </div>
+      <Section title="Mga detalye" className="mb-10">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+          <StatBadge
+            label="Bilis (Net WPM)"
+            value={net}
+            hint={comparisonText(m.netWpm, comparison)}
+            help={HELP.netWpm}
+          />
+          <StatBadge label="Accuracy (tama)" value={`${acc}%`} help={HELP.accuracy} />
+          <StatBadge
+            label="Keystroke accuracy"
+            value={`${display(m.keystrokeAccuracy)}%`}
+            hint="kasama ang mga binura mo"
+            help={HELP.keystrokeAccuracy}
+          />
+          <StatBadge label="Gross WPM" value={display(m.grossWpm)} hint="bilis kasama ang mali" help={HELP.grossWpm} />
+          <StatBadge
+            label="Tagal"
+            value={formatClock(session.durationSec)}
+            hint={`${m.typedChars} letra ang na-type`}
+          />
+        </div>
+      </Section>
 
-      <Card title="Target ng hiring test" className="mb-6">
-        <ul className="space-y-2">
+      <Section title="Target ng hiring test" className="mb-10">
+        <ul>
           <TargetRow label="Bilis (Net WPM)" value={m.netWpm} target={t.netWpm} />
           <TargetRow label="Accuracy (tama)" value={m.accuracy} target={t.accuracy} unit="%" />
         </ul>
-      </Card>
+      </Section>
 
       <TypingMistakesCard mistakes={session.mistakes} errors={m.errors} />
     </div>

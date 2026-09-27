@@ -36,8 +36,8 @@ export default function PassageView({
   return (
     // md:*: inside a PracticeFrame the box may shrink (never below ~3 lines) to fit the window.
     <div className="flex min-h-0 flex-col overflow-hidden rounded-md border border-stone-200 bg-white shadow-paper">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-dashed border-stone-200 px-5 py-2 text-sm">
-        <span className="font-semibold text-brand-800">📄 Ito ang ita-type mo</span>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-stone-300 px-6 py-2 text-sm">
+        <span className="font-display text-base font-bold text-stone-800">Ito ang ita-type mo</span>
         <span className="text-stone-600">Kopyahin nang eksakto</span>
       </div>
       <div

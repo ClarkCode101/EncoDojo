@@ -1,5 +1,5 @@
 /**
- * Typing Test — TRAINING mode. Two screens (components/Practice.tsx):
+ * Typing Test, TRAINING mode. Two screens (components/Practice.tsx):
  * setup (duration + short tips + "Simulan"), then the drill. Results after.
  * Results are saved by default (optional). The Assessment uses the same
  * TypingRunner with stricter rules.
@@ -98,9 +98,9 @@ export default function TypingPage() {
           <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
         }
         howTo={[
-          'I-type ang text nang eksakto — pati malalaking titik, tuldok, at comma.',
+          'I-type ang text nang eksakto, pati malalaking titik, tuldok at comma.',
           'Magsisimula ang oras sa unang letra na ita-type mo.',
-          'Bawat maling, sobra, o nalaktawang letra ay isang mali. Puwede kang magbura gamit ang Backspace.',
+          'Bawat mali, sobra o nalaktawang letra ay isang mali. Puwedeng magbura gamit ang Backspace.',
         ]}
         onStart={() => setScreen('practice')}
       />
