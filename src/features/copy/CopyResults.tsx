@@ -1,7 +1,7 @@
-import { SaveBanner, TargetRow } from '../../components/ResultPieces';
+import { ResultSummary, SaveBanner, TargetRow } from '../../components/ResultPieces';
 import { CopyIcon } from '../../components/icons';
 import FieldMistakesCard from '../../components/entry/FieldMistakesCard';
-import { Button, Card, PageHeader, StatBadge } from '../../components/ui';
+import { Button, PageHeader, Section, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
@@ -43,47 +43,49 @@ export default function CopyResults({
         description={m.sheet === 1 ? 'Spreadsheet (gaya ng Excel)' : 'Form (gaya ng hiring test)'}
       />
 
-      <section
-        aria-label="Buod ng resulta"
-        className={
-          'mb-6 rounded-2xl border-2 p-6 ' + (ready ? 'border-green-400 bg-green-50' : 'border-brand-200 bg-white')
+      <ResultSummary
+        ready={ready}
+        headline={
+          <>
+            <strong>{m.correctFields}</strong> sa <strong>{m.totalFields}</strong> na field ang eksaktong tama (
+            {m.records} record), sa bilis na <strong>{shownSpeed.toLocaleString()} KPH</strong>.
+          </>
         }
-      >
-        <p className="text-2xl leading-relaxed text-stone-900">
-          <strong>{m.correctFields}</strong> sa <strong>{m.totalFields}</strong> na field ang eksaktong tama (
-          {m.records} record), sa bilis na <strong>{shownSpeed.toLocaleString()} KPH</strong>.
-        </p>
-        <p className="mt-2 text-lg text-stone-700">
-          {m.records === 0
+        message={
+          m.records === 0
             ? 'Wala kang naipasang record. Tandaan: sa huling field (ID No.), pindutin ang Enter o ang "Submit".'
             : ready
-              ? '🎉 Pasado ka sa target! Subukan ang Assessment para makasigurado.'
-              : `Ang target ay ${t.fieldAccuracy}% na tamang field at ${t.kph.toLocaleString()} KPH. Unahin ang tamang pagkopya, saka ang bilis.`}
-        </p>
-        <div className="mt-5">
-          <Button size="lg" onClick={onRetry} autoFocus>
-            Ulitin
-          </Button>
-        </div>
-      </section>
+              ? 'Pasado ka sa target. Subukan ang Assessment para makasigurado.'
+              : `Ang target ay ${t.fieldAccuracy}% na tamang field at ${t.kph.toLocaleString()} KPH. Unahin ang tamang pagkopya, saka ang bilis.`
+        }
+      >
+        <Button size="lg" onClick={onRetry} autoFocus>
+          Ulitin
+        </Button>
+      </ResultSummary>
 
       <SaveBanner saved={saved} finishedEarly={finishedEarly} onToggle={onToggleSaved} />
 
-      <h2 className="mb-3 text-xl font-bold text-stone-900">Mga detalye</h2>
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <StatBadge label="Tamang field" value={`${acc}%`} help={HELP.fieldAccuracy} />
-        <StatBadge label="Bilis (KPH)" value={shownSpeed.toLocaleString()} help={HELP.copyKph} />
-        <StatBadge label="Natapos na record" value={m.records} hint={`${m.totalFields} field lahat`} />
-        <StatBadge label="Net WPM" value={display(m.netWpm)} hint="para maikumpara sa Typing" help={HELP.copyWpm} />
-        <StatBadge label="Tagal" value={formatClock(session.durationSec)} hint={`${m.typedChars} letra ang na-type`} />
-      </div>
+      <Section title="Mga detalye" className="mb-10">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+          <StatBadge label="Tamang field" value={`${acc}%`} help={HELP.fieldAccuracy} />
+          <StatBadge label="Bilis (KPH)" value={shownSpeed.toLocaleString()} help={HELP.copyKph} />
+          <StatBadge label="Natapos na record" value={m.records} hint={`${m.totalFields} field lahat`} />
+          <StatBadge label="Net WPM" value={display(m.netWpm)} hint="para maikumpara sa Typing" help={HELP.copyWpm} />
+          <StatBadge
+            label="Tagal"
+            value={formatClock(session.durationSec)}
+            hint={`${m.typedChars} letra ang na-type`}
+          />
+        </div>
+      </Section>
 
-      <Card title="Target" className="mb-6">
-        <ul className="space-y-2">
+      <Section title="Target" className="mb-10">
+        <ul>
           <TargetRow label="Tamang field" value={m.fieldAccuracy} target={t.fieldAccuracy} unit="%" />
           <TargetRow label="Bilis (KPH)" value={speed} target={t.kph} />
         </ul>
-      </Card>
+      </Section>
 
       <CopyMistakesCard mistakes={session.mistakes} />
     </div>

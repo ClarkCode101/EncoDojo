@@ -16,7 +16,7 @@ import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '..
 import { display } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { useCountdown } from '../../lib/useCountdown';
-import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../ui';
+import { Button, EnTl, KeyTips, LiveStatsBar } from '../ui';
 import { emptyValues, type EntryItem, type EntryRunnerProps } from './types';
 
 /** Excel-style column letters: A, B, C, ... */
@@ -131,17 +131,23 @@ export default function EntrySheetRunner({
       />
 
       {/* In a PracticeFrame the source shrinks (and scrolls inside) so the sheet stays in view. */}
-      <Card compact className="flex min-h-0 flex-col">
+      {/* No box around the drill: the source is a sheet of paper and the spreadsheet has its own grid. */}
+      <div className="flex min-h-0 flex-col">
         {/* The source to read from right now. */}
         <section aria-label={current.title} className="flex min-h-0 flex-col">
           {/* One toolbar line: which row to type in, the last row's result, key tips, Finish. */}
           <div className="mb-2 flex min-h-11 flex-wrap items-center justify-between gap-x-5 gap-y-2">
-            <span className="text-sm font-semibold text-brand-800">
-              📄 {current.title} #{items.length} → i-type sa row {excelRow(items.length - 1)}
+            <span>
+              <span className="font-display text-lg font-bold text-stone-900">
+                {current.title} #{items.length}
+              </span>
+              <span className="ml-2 text-stone-700">i-type sa row {excelRow(items.length - 1)}</span>
             </span>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
               <span role="status" className="font-bold">
-                {message?.wrong === 0 && <span className="text-green-800">✓ Row {excelRow(message.row)}: lahat tama!</span>}
+                {message?.wrong === 0 && (
+                  <span className="text-green-800">✓ Row {excelRow(message.row)}: lahat tama!</span>
+                )}
                 {message && message.wrong > 0 && (
                   <span className="text-red-700">
                     ✗ Row {excelRow(message.row)}: {message.wrong} cell ang mali
@@ -166,7 +172,6 @@ export default function EntrySheetRunner({
           </div>
         </section>
 
-
         {/* The spreadsheet. */}
         {/* Like Excel: the header rows stay put and the rows scroll inside the sheet. */}
         <div className="mt-3 max-h-[16rem] shrink-0 overflow-auto rounded-md border border-stone-300">
@@ -186,11 +191,18 @@ export default function EntrySheetRunner({
               </tr>
               {/* Row 1: the headers */}
               <tr>
-                <th scope="row" className="border border-stone-300 bg-stone-100 text-center text-xs font-semibold text-stone-500">
+                <th
+                  scope="row"
+                  className="border border-stone-300 bg-stone-100 text-center text-xs font-semibold text-stone-500"
+                >
                   1
                 </th>
                 {fields.map((f) => (
-                  <th key={f.key} scope="col" className="border border-stone-300 bg-white px-2 py-1.5 font-sans text-sm font-bold text-stone-900">
+                  <th
+                    key={f.key}
+                    scope="col"
+                    className="border border-stone-300 bg-white px-2 py-1.5 font-sans text-sm font-bold text-stone-900"
+                  >
                     {/* English only, like a real sheet (owner's choice: shorter headers). */}
                     {f.label}
                     {/* The format to use, like in the form (e.g. mm/dd/yyyy). */}
@@ -250,7 +262,7 @@ export default function EntrySheetRunner({
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </>
   );
 }

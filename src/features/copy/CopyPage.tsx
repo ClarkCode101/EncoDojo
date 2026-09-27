@@ -85,7 +85,7 @@ export default function CopyPage() {
       <PracticeSetup
         icon={<CopyIcon className="h-8 w-8" />}
         title="Copy Test"
-        description="Kopyahin ang mga record nang eksakto — gaya ng pag-encode sa Excel o sa hiring test."
+        description="Kopyahin ang mga record nang eksakto, gaya ng pag-encode sa Excel o sa hiring test."
         chooseTitle="Pumili kung saan mag-e-encode at gaano katagal"
         choices={
           <div className="flex flex-wrap items-end gap-6">
@@ -96,11 +96,17 @@ export default function CopyPage() {
               format={(m) => MODE_LABEL[m]}
               onChange={(m) => updateSettings({ copyMode: m })}
             />
-            <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
+            <SegmentedPicker
+              label="Gaano katagal?"
+              options={DURATIONS}
+              value={seconds}
+              format={durationLabel}
+              onChange={setSeconds}
+            />
           </div>
         }
         howTo={[
-          'Kopyahin ang bawat record nang eksakto — pati malalaking titik, tuldok, comma, at space.',
+          'Kopyahin ang bawat record nang eksakto, pati malalaking titik, tuldok, comma at space.',
           mode === 'sheet'
             ? 'Tab = susunod na cell. Enter sa dulo ng row = susunod na record. Puwede mong balikan ang naunang row.'
             : 'Tab = susunod na field. Enter sa huling field (ID No.) = ipasa ang record.',
@@ -116,7 +122,7 @@ export default function CopyPage() {
       <PracticeHeader
         icon={<CopyIcon className="h-6 w-6" />}
         title="Copy Test"
-        summary={`${MODE_LABEL[mode]} · ${durationLabel(seconds)}`}
+        summary={`${MODE_LABEL[mode]}, ${durationLabel(seconds)}`}
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />

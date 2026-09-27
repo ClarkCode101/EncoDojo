@@ -15,7 +15,7 @@ import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '..
 import { display } from '../../lib/scoring';
 import { errorBeep } from '../../lib/sound';
 import { useCountdown } from '../../lib/useCountdown';
-import { Button, Card, EnTl, KeyTips, LiveStatsBar } from '../ui';
+import { Button, EnTl, KeyTips, LiveStatsBar } from '../ui';
 import { emptyValues, type EntryItem, type EntryRunnerProps } from './types';
 
 export default function EntryFormRunner({
@@ -111,15 +111,16 @@ export default function EntryFormRunner({
         ]}
       />
 
-      <Card compact className="flex min-h-0 flex-col">
+      {/* No box around the drill: the source is already a sheet of paper, and the form has its own fields. */}
+      <div className="flex min-h-0 flex-col">
         {/*
           One toolbar line above both columns (like the spreadsheet): which item, the last result, key tips,
           Finish. Above BOTH columns so the document and the form start and end at the same height.
         */}
         <div className="mb-1.5 flex min-h-9 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span className="text-sm font-semibold text-brand-800">
-              📄 {item.title} #{submitted.length + 1}
+            <span className="font-display text-lg font-bold text-stone-900">
+              {item.title} #{submitted.length + 1}
             </span>
             <span role="status" className="font-bold">
               {/* "#1" = the number of the item just submitted (same as its title, e.g. "Sales Invoice #1"). */}
@@ -153,19 +154,21 @@ export default function EntryFormRunner({
           wider with large text). grid-rows-[minmax(0,1fr)...]: in a PracticeFrame everything may shrink.
         */}
         <div
-          className={`grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,auto)] gap-5 ${
+          className={`grid min-h-0 grid-rows-[minmax(8rem,1fr)_minmax(0,auto)] gap-5 ${
             wideSource
-              ? 'xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)] large-text:xl:grid-cols-1 large-text:xl:grid-rows-[minmax(0,1fr)_minmax(0,auto)] large-text:2xl:grid-cols-[minmax(0,1fr)_20rem] large-text:2xl:grid-rows-[minmax(0,1fr)]'
+              ? 'xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)] large-text:xl:grid-cols-1 large-text:xl:grid-rows-[minmax(8rem,1fr)_minmax(0,auto)] large-text:2xl:grid-cols-[minmax(0,1fr)_20rem] large-text:2xl:grid-rows-[minmax(0,1fr)]'
               : 'lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)]'
           }`}
         >
           {/* The source to read from. Side by side it is taken out of the height calculation (absolute); bottom-1 = ends exactly with the Submit button. */}
           <section aria-label={item.title} className="relative min-h-0 min-w-0">
             <div
-              className={`overflow-y-auto [&>*]:min-h-full ${
+              // Stacked (form under the source): the source keeps at least 8rem and scrolls inside its own
+              // box (h-full); the form fields scroll too, so the two never overlap. Side by side: absolute.
+              className={`h-full overflow-y-auto [&>*]:min-h-full ${
                 wideSource
-                  ? 'xl:absolute xl:inset-x-0 xl:top-0 xl:bottom-1 large-text:xl:static large-text:2xl:absolute'
-                  : 'lg:absolute lg:inset-x-0 lg:top-0 lg:bottom-1'
+                  ? 'xl:absolute xl:inset-x-0 xl:top-0 xl:bottom-1 xl:h-auto large-text:xl:static large-text:xl:h-full large-text:2xl:absolute large-text:2xl:h-auto'
+                  : 'lg:absolute lg:inset-x-0 lg:top-0 lg:bottom-1 lg:h-auto'
               }`}
             >
               {item.source}
@@ -206,7 +209,7 @@ export default function EntryFormRunner({
                     onKeyDown={(e) => handleKeyDown(e, i)}
                     onPaste={(e) => e.preventDefault()}
                     onDrop={(e) => e.preventDefault()}
-                    className="w-full rounded-lg border-2 border-stone-400 bg-white px-3 py-1 font-mono text-lg placeholder:font-sans placeholder:text-base placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
+                    className="w-full rounded-lg border-[1.5px] border-stone-500 bg-white px-3 py-1 font-mono text-lg placeholder:font-sans placeholder:text-base placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
                   />
                 </div>
               ))}
@@ -219,7 +222,7 @@ export default function EntryFormRunner({
             </div>
           </form>
         </div>
-      </Card>
+      </div>
     </>
   );
 }

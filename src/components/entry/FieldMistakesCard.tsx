@@ -4,7 +4,7 @@
  */
 import { alignTyping } from '../../lib/alignTyping';
 import type { SessionMistake } from '../../lib/storage';
-import { Card } from '../ui';
+import { Section } from '../ui';
 
 /**
  * The correct value, with the characters the user got wrong highlighted:
@@ -47,9 +47,9 @@ export default function FieldMistakesCard({
   title?: string;
 }) {
   return (
-    <Card title={`${title} (${mistakes.length})`}>
+    <Section title={`${title} (${mistakes.length})`}>
       {mistakes.length === 0 ? (
-        <p className="text-lg text-stone-700">Walang maling field. Ang galing! 👏</p>
+        <p className="text-lg text-stone-700">Walang maling field. Ang galing!</p>
       ) : (
         <>
           <p className="mb-3 text-sm text-stone-600">
@@ -58,7 +58,7 @@ export default function FieldMistakesCard({
           </p>
           <div className="max-h-[28rem] overflow-y-auto">
             <table className="w-full text-left text-base">
-              <thead className="sticky top-0 bg-white text-stone-600">
+              <thead className="sticky top-0 bg-paper text-sm text-stone-600">
                 <tr>
                   <th className="py-2 pr-4 font-semibold">{unitLabel}</th>
                   <th className="py-2 pr-4 font-semibold">Field</th>
@@ -83,6 +83,6 @@ export default function FieldMistakesCard({
           </div>
         </>
       )}
-    </Card>
+    </Section>
   );
 }
