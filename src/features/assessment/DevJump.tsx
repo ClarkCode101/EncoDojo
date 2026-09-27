@@ -14,7 +14,7 @@
  * AssessmentPage.tsx, BeltCard.tsx and useCountdown.ts.
  */
 /* eslint-disable react-refresh/only-export-components -- temporary file, kept in one place so it is easy to delete */
-import { useSyncExternalStore, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { BELTS, type BeltRank } from '../../lib/belts';
 import type { Session, SessionMistake } from '../../lib/storage';
 
@@ -177,13 +177,17 @@ const REPORTS: { preset: SamplePreset; label: string }[] = [
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="w-32 text-sm font-semibold text-amber-950">{label}</span>
-      {children}
+    <div>
+      <div className="mb-1 text-sm font-semibold text-amber-950">{label}</div>
+      <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
 }
 
+/**
+ * A small floating "🧪 Test" button at the bottom-right corner; the options open
+ * in a popup above it, so the Assessment page itself looks exactly like the real one.
+ */
 export function DevJumpPanel({
   onJump,
   onSampleReport,
@@ -192,38 +196,60 @@ export function DevJumpPanel({
   onSampleReport: (preset: SamplePreset) => void;
 }) {
   const belt = useBeltPreview();
+  const [open, setOpen] = useState(false);
   return (
-    <section className="rounded-xl border-2 border-dashed border-amber-400 bg-amber-50 px-5 py-4">
-      <h2 className="font-bold text-amber-950">🧪 Test lang (localhost lang, tatanggalin)</h2>
-      <p className="mb-3 text-sm text-amber-900">
-        Hindi ise-save ang mga test run. 0 ang mga nilaktawang bahagi. Sa bawat bahagi may &quot;Tapusin agad&quot; na button.
-      </p>
-      <div className="space-y-2">
-        <Row label="Tumalon sa:">
-          {JUMPS.map((j) => (
-            <button key={j.to} type="button" className={btn} onClick={() => onJump(j.to)}>
-              {j.label}
-            </button>
-          ))}
-        </Row>
-        <Row label="Sample na report:">
-          {REPORTS.map((r) => (
-            <button key={r.preset} type="button" className={btn} onClick={() => onSampleReport(r.preset)}>
-              {r.label}
-            </button>
-          ))}
-        </Row>
-        <Row label="Belt sa sidebar:">
-          <button type="button" className={belt === null ? btnOn : btn} onClick={() => setBeltPreview(null)}>
-            Totoo
-          </button>
-          {BELTS.map((b) => (
-            <button key={b.rank} type="button" className={belt === b.rank ? btnOn : btn} onClick={() => setBeltPreview(b.rank)}>
-              {b.label.replace(' Belt', '')}
-            </button>
-          ))}
-        </Row>
-      </div>
-    </section>
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+      {open && (
+        <section
+          aria-label="Test lang"
+          className="max-h-[calc(100dvh-6rem)] w-[36rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border-2 border-dashed border-amber-400 bg-amber-50 px-5 py-4 shadow-xl"
+        >
+          <h2 className="font-bold text-amber-950">🧪 Test lang (localhost lang, tatanggalin)</h2>
+          <p className="mb-3 text-sm text-amber-900">
+            Hindi ise-save ang mga test run. 0 ang mga nilaktawang bahagi. Sa bawat bahagi may &quot;Tapusin agad&quot; na
+            button.
+          </p>
+          <div className="space-y-3">
+            <Row label="Tumalon sa:">
+              {JUMPS.map((j) => (
+                <button key={j.to} type="button" className={btn} onClick={() => onJump(j.to)}>
+                  {j.label}
+                </button>
+              ))}
+            </Row>
+            <Row label="Sample na report:">
+              {REPORTS.map((r) => (
+                <button key={r.preset} type="button" className={btn} onClick={() => onSampleReport(r.preset)}>
+                  {r.label}
+                </button>
+              ))}
+            </Row>
+            <Row label="Belt sa sidebar:">
+              <button type="button" className={belt === null ? btnOn : btn} onClick={() => setBeltPreview(null)}>
+                Totoo
+              </button>
+              {BELTS.map((b) => (
+                <button
+                  key={b.rank}
+                  type="button"
+                  className={belt === b.rank ? btnOn : btn}
+                  onClick={() => setBeltPreview(b.rank)}
+                >
+                  {b.label.replace(' Belt', '')}
+                </button>
+              ))}
+            </Row>
+          </div>
+        </section>
+      )}
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="rounded-full border-2 border-amber-500 bg-amber-300 px-4 py-2 text-sm font-bold text-amber-950 shadow-lg hover:bg-amber-400 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-amber-600"
+      >
+        {open ? '✕ Isara' : '🧪 Test'}
+      </button>
+    </div>
   );
 }
