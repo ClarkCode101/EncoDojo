@@ -43,7 +43,7 @@ export default function PassageView({
       <div
         ref={boxRef}
         aria-hidden="true"
-        className="relative h-56 min-h-[7rem] shrink overflow-y-auto px-6 py-3 font-mono text-lg leading-loose"
+        className="passage-text relative h-56 min-h-[7rem] shrink overflow-y-auto px-6 py-3 font-mono text-lg leading-loose"
       >
         {Array.from(passage).map((char, i) => {
           let className = 'text-stone-500';

@@ -45,8 +45,8 @@ const navClass =
   (collapsed: boolean) =>
   ({ isActive }: { isActive: boolean }) => {
     return (
-      // Short screens (<760px tall): a little less space, so the sidebar never needs its own scrollbar.
-      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(max-height:760px)]:py-1.5 ' +
+      // Short screens (<800px tall): a little less space, so the sidebar never needs its own scrollbar.
+      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(max-height:800px)]:py-1.5 ' +
       (collapsed ? 'md:justify-center md:px-0 ' : '') +
       'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
       (isActive
@@ -57,7 +57,7 @@ const navClass =
   };
 
 export default function Layout() {
-  const { largeText, sidebarCollapsed, sensei } = useAppData().settings;
+  const { largeText, sidebarCollapsed, sensei, reduceMotion, bigSource } = useAppData().settings;
   // "Exam mode" (a running Assessment): no sidebar, the exam gets the whole screen.
   const focus = useIsFocusMode();
   // Room at the bottom of scrolling pages so Sensei never covers the last buttons.
@@ -69,6 +69,11 @@ export default function Layout() {
   useEffect(() => {
     document.documentElement.classList.toggle('large-text', largeText);
   }, [largeText]);
+  // Settings -> "Bawasan ang galaw" and "Mas malaking babasahin" (see index.css).
+  useEffect(() => {
+    document.documentElement.classList.toggle('reduce-motion', reduceMotion === true);
+    document.documentElement.classList.toggle('big-source', bigSource === true);
+  }, [reduceMotion, bigSource]);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -89,7 +94,7 @@ export default function Layout() {
         >
           <div
             className={
-              'flex items-center gap-3 px-5 py-5 [@media(max-height:760px)]:py-3 ' +
+              'flex items-center gap-3 px-5 py-5 [@media(max-height:800px)]:py-3 ' +
               (collapsed ? 'md:flex-col md:px-0' : '')
             }
           >
@@ -115,7 +120,7 @@ export default function Layout() {
           <nav id="main-nav" aria-label="Main" className="px-3 pb-4">
             <div className="flex flex-wrap gap-1 md:block">
               {groups.map((group, i) => (
-                <div key={i} className="md:mb-4 md:[@media(max-height:760px)]:mb-2">
+                <div key={i} className="md:mb-4 md:[@media(max-height:800px)]:mb-2">
                   {group.heading &&
                     (collapsed ? (
                       // Collapsed: a thin line instead of the heading.

@@ -16,7 +16,7 @@ The owner is learning while building. When you finish a task, **explain what you
 - **Sidebar coach** (owner's decision, 2026-09-27), rule-based, no AI — `features/dashboard/coach.ts` (tested):
   - No "done today" ✓ marks on the practice links (owner's decision, 2026-09-27): a ✓ made a practice look finished and not repeatable. Don't add completion marks to practice links.
   - "Susunod na gagawin" card above the belt card (`NextFocusCard`): first a practice never tried yet (Home order), else the practice whose LATEST result is furthest below its target (speed or accuracy, whichever is weaker, with the number), else the Assessment. Links to it.
-  - On short screens (<760px tall) the sidebar spacing tightens and the card/belt hint lines hide (hover title keeps them), so the sidebar doesn't scroll.
+  - On short screens (<800px tall) the sidebar spacing tightens and the card/belt hint lines hide (hover title keeps them), so the sidebar doesn't scroll.
 - **Sensei guide — LIVE** (owner's idea, 2026-09-27): `features/sensei/`. An original pixel-art Sensei (`SenseiArt`, one SVG rect per pixel: white beard, gold headband, indigo gi, black belt) fixed at the lower-right. A speech bubble pops up ~1s after a page opens and hides after ~9s; clicking him gives a new line. Lines are rule-based (`lines.ts`, tested): page tips, lines about the user's own results (next focus, near next belt, streak), encouragement; right after a practice he talks about the results (or cheers). He is **hidden while practicing and during the whole Assessment** (`useSenseiQuiet`, called by `PracticeFrame` and the Assessment) so he never covers the work. "Itago si Sensei" makes him small; Settings: Ipakita / Maliit lang / Wala (`settings.sensei`). Scrolling pages get bottom padding so he never covers the last buttons. The TEMPORARY "🧪 Test" dev button sits at the top-right so they don't overlap.
 - Planned: optional on-screen keyboard/numpad guide.
 
@@ -122,6 +122,14 @@ type AppData = {
     copyMode?: 'form' | 'sheet';             // optional, missing = 'sheet'; shared by Copy Test + Document Encoding practice (no schema bump)
     sidebarCollapsed?: boolean;              // optional, missing = open; desktop sidebar collapsed to icons (no schema bump)
     sensei?: 'on' | 'small' | 'off';          // optional, missing = 'on'; the Sensei guide (no schema bump)
+    // Optional, added 2026-09-27 without a schema bump (missing = old behavior):
+    lastBackupAt?: string;                   // ISO; set by "I-download ang backup"; backup reminder (lib/reminders.ts)
+    englishOnly?: boolean;                   // "English lang": EnTl shows only the English word
+    dailyGoal?: number;                      // 0 | 3 | 5 | 10 practices per day (DAILY_GOALS); sidebar + Sensei
+    bigSource?: boolean;                     // "Mas malaking babasahin": html.big-source (passage, numpad number, records/documents)
+    reduceMotion?: boolean;                  // "Bawasan ang galaw": html.reduce-motion; Sensei doesn't pop up by himself
+    soundCorrect?: boolean;                  // "Tunog kapag tama": correctTick() in lib/sound.ts
+    defaultLength?: 'short' | 'long';        // "Unang pipiliing tagal" (lib/practiceDefaults.ts)
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
   // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).
@@ -181,6 +189,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Recent sessions list (last 10).
 
 ### 5. Settings (`features/settings`)
+- Layout (owner's request 2026-09-27, "hindi nakaka-overwhelm"): ruled `SettingRow`s (name + one line left, control right: `Toggle` On/Off or `SegmentedPicker hideLabel`) in groups: Ikaw (name, daily goal) · Pagbasa at itsura (larger text, bigger reading text, less motion, Sensei) · Practice at tunog (starting duration, English lang, mistake sound, correct sound) · Backup (status "Huling backup: ...", amber reminder at 5+ sessions and 7+ days) · "Burahin ang lahat ng data" folded in a `<details>`.
 - Display name, larger text, sound. (No live-stats toggle: practice always shows live stats; the Assessment never does.) (Difficulty is not in Settings: Numpad Practice has a Halo-halo / Pang-baguhan picker; Typing has no level picker while it is plain text only.)
 - Export progress, Import progress, Reset all data (with typed confirmation).
 

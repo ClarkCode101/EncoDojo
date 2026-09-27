@@ -7,6 +7,7 @@
  * Short Taglish lines, easy to read in a small speech bubble.
  */
 import { beltStatus } from '../../lib/belts';
+import { dailyGoalText, doneToday, needsBackup } from '../../lib/reminders';
 import type { Session } from '../../lib/storage';
 import { nextFocus } from '../dashboard/coach';
 import { currentStreak } from '../dashboard/stats';
@@ -63,12 +64,24 @@ export const CHEERS: string[] = [
   'Ang galing mo. Ituloy mo lang!',
 ];
 
+/** The backup reminder (progress lives only in this browser). */
+export const BACKUP_LINE = 'Matagal ka nang walang backup. Pumunta sa Settings at i-download ang backup para hindi mawala ang progress mo.';
+
+/** The Settings choices Sensei looks at. */
+export type SenseiSettings = { dailyGoal?: number; lastBackupAt?: string };
+
 export const WELCOME = 'Maligayang pagdating sa dojo! Simulan natin sa Typing Practice.';
 
 /** Lines about the user's own results (empty for a brand-new user). */
-export function personalLines(sessions: Session[], today: Date = new Date()): string[] {
+export function personalLines(
+  sessions: Session[],
+  today: Date = new Date(),
+  settings: SenseiSettings = {},
+): string[] {
   if (sessions.length === 0) return [];
   const lines: string[] = [];
+  const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions, today));
+  if (goal) lines.push(goal.startsWith('Naabot') ? `${goal} Ang galing!` : `${goal} Kaya mo 'yan!`);
   const f = nextFocus(sessions);
   lines.push(f.skill === 'assessment' ? f.reason : `Susunod, subukan ang ${f.label}: ${f.reason}`);
   const b = beltStatus(sessions);
@@ -89,12 +102,21 @@ const pick = (list: string[], rand: () => number) => list[Math.floor(rand() * li
  * `rand` returns 0..1 (Math.random in the app; fixed in tests).
  */
 export function senseiLine(
-  { place, sessions, afterPractice = false }: { place: SenseiPlace; sessions: Session[]; afterPractice?: boolean },
+  {
+    place,
+    sessions,
+    afterPractice = false,
+    settings = {},
+  }: { place: SenseiPlace; sessions: Session[]; afterPractice?: boolean; settings?: SenseiSettings },
   rand: () => number = Math.random,
 ): string {
-  const personal = personalLines(sessions);
+  const personal = personalLines(sessions, new Date(), settings);
   if (place === 'home' && sessions.length === 0) return WELCOME;
   const r = rand();
+  // The backup reminder comes first on Home and Settings (often, not every time).
+  if (!afterPractice && (place === 'home' || place === 'settings') && r < 0.5) {
+    if (needsBackup(settings.lastBackupAt, sessions)) return BACKUP_LINE;
+  }
   if (afterPractice) return personal.length ? pick(personal, rand) : pick(CHEERS, rand);
   if (place === 'home') {
     if (r < 0.5 && personal.length) return pick(personal, rand);

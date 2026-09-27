@@ -13,6 +13,7 @@ import { CopyIcon } from '../../components/icons';
 import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { SegmentedPicker } from '../../components/ui';
 import type { CopyMode, Session } from '../../lib/storage';
+import { startingDuration } from '../../lib/practiceDefaults';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import CopyResults from './CopyResults';
 import CopyRunner from './CopyRunner';
@@ -38,7 +39,9 @@ export default function CopyPage() {
   // Default = spreadsheet (like most encoder jobs). The Assessment always uses the form.
   const mode: CopyMode = data.settings.copyMode ?? 'sheet';
 
-  const [seconds, setSeconds] = useState<Seconds>(60);
+  const [seconds, setSeconds] = useState<Seconds>(() =>
+    startingDuration(DURATIONS, 60, data.settings.defaultLength),
+  );
   const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
   const [running, setRunning] = useState(false);

@@ -10,7 +10,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display, entryAccuracyPct, isEntryCorrect, keystrokesForEntry, kph } from '../../lib/scoring';
-import { errorBeep } from '../../lib/sound';
+import { correctTick, errorBeep } from '../../lib/sound';
+import { useAppData } from '../../lib/useAppData';
 import { makeId, type Difficulty, type Session } from '../../lib/storage';
 import { useCountdown } from '../../lib/useCountdown';
 import { cleanNumpadInput, makeEntry } from './entries';
@@ -84,12 +85,16 @@ export default function NumpadRunner({
     [seconds, difficulty],
   );
 
+  // Settings -> "Tunog kapag tama": a soft sound for each correct entry.
+  const soundCorrect = useAppData().settings.soundCorrect === true;
+
   const timer = useCountdown(seconds, () => finish(seconds, false));
 
   function submit() {
     if (timer.finished || input === '') return;
     const correct = isEntryCorrect(current, input);
     if (!correct && sound) errorBeep();
+    if (correct && soundCorrect) correctTick();
 
     setTally((t) => ({
       entries: t.entries + 1,
@@ -128,7 +133,7 @@ export default function NumpadRunner({
         <div className="rounded-md border border-stone-200 bg-white py-5 text-center shadow-paper">
           <div className="text-lg font-semibold text-stone-700">I-type ang numerong ito:</div>
           <div
-            className="mt-2 select-none font-mono text-6xl font-bold tabular-nums tracking-wide text-stone-900"
+            className="numpad-number mt-2 select-none font-mono text-6xl font-bold tabular-nums tracking-wide text-stone-900"
             aria-live="polite"
           >
             {current}

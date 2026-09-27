@@ -72,7 +72,30 @@ export type Settings = {
    * lower-right corner. 'on' (default when missing), 'small', or 'off'.
    */
   sensei?: 'on' | 'small' | 'off';
+  /*
+   * More optional settings (owner's request, 2026-09-27; no schema version bump,
+   * missing = the old behavior):
+   */
+  /** When the last backup file was downloaded (ISO). Missing = never. Used for the backup reminder. */
+  lastBackupAt?: string;
+  /** true = hide the Taglish meanings beside English labels inside tests ("English lang"), like a real hiring test. */
+  englishOnly?: boolean;
+  /** Practices per day the user wants to do (3, 5 or 10). Missing or 0 = no daily goal. */
+  dailyGoal?: number;
+  /** true = bigger text in the passage, the number to type, and the documents (only what you read from). */
+  bigSource?: boolean;
+  /** true = no animations (stamp, Sensei popping up on his own). */
+  reduceMotion?: boolean;
+  /** true = a soft sound when an entry or record is correct. */
+  soundCorrect?: boolean;
+  /** The duration chosen first on every practice page. Missing = each page's usual choice. */
+  defaultLength?: DefaultLength;
 };
+
+export type DefaultLength = 'short' | 'long';
+
+/** The daily goals the user can pick in Settings (0 = none). */
+export const DAILY_GOALS = [0, 3, 5, 10] as const;
 
 export type AppData = {
   version: 4;
@@ -110,6 +133,20 @@ function isCopyModeOrMissing(value: unknown): boolean {
 
 function isBooleanOrMissing(value: unknown): boolean {
   return value === undefined || typeof value === 'boolean';
+}
+
+/** The optional settings added on 2026-09-27 (each may be missing). */
+function hasValidExtraSettings(settings: Record<string, unknown>): boolean {
+  return (
+    (settings.lastBackupAt === undefined ||
+      (typeof settings.lastBackupAt === 'string' && !Number.isNaN(Date.parse(settings.lastBackupAt)))) &&
+    isBooleanOrMissing(settings.englishOnly) &&
+    (settings.dailyGoal === undefined || (DAILY_GOALS as readonly unknown[]).includes(settings.dailyGoal)) &&
+    isBooleanOrMissing(settings.bigSource) &&
+    isBooleanOrMissing(settings.reduceMotion) &&
+    isBooleanOrMissing(settings.soundCorrect) &&
+    (settings.defaultLength === undefined || settings.defaultLength === 'short' || settings.defaultLength === 'long')
+  );
 }
 
 function isNumpadMode(value: unknown): value is NumpadMode {
@@ -153,7 +190,8 @@ export function isAppData(value: unknown): value is AppData {
     typeof settings.largeText === 'boolean' &&
     isCopyModeOrMissing(settings.copyMode) &&
     isBooleanOrMissing(settings.sidebarCollapsed) &&
-    (settings.sensei === undefined || settings.sensei === 'on' || settings.sensei === 'small' || settings.sensei === 'off')
+    (settings.sensei === undefined || settings.sensei === 'on' || settings.sensei === 'small' || settings.sensei === 'off') &&
+    hasValidExtraSettings(settings)
   );
 }
 

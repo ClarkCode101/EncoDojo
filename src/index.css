@@ -26,3 +26,28 @@ h2,
 h3 {
   @apply font-display;
 }
+
+/* Settings -> "Bawasan ang galaw": no animations or moving transitions anywhere. */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/*
+ * Settings -> "Mas malaking babasahin": bigger text ONLY in what you read from
+ * (the typing passage, the number to type, the record or document), so the
+ * rest of the screen keeps its size and still fits the window.
+ */
+html.big-source .passage-text {
+  font-size: 1.4rem;
+}
+html.big-source .numpad-number {
+  font-size: 4.5rem;
+}
+/* Records and documents are made of many small parts, so the whole sheet is scaled. */
+html.big-source .source-zoom > * {
+  zoom: 1.2;
+}

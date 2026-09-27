@@ -17,6 +17,7 @@ import { DocumentIcon } from '../../components/icons';
 import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { SegmentedPicker } from '../../components/ui';
 import type { CopyMode, Session } from '../../lib/storage';
+import { startingDuration } from '../../lib/practiceDefaults';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import { DOC_INFO, DOC_TYPES, type DocType } from './documents';
 import { encodingItems } from './encodingItems';
@@ -52,7 +53,9 @@ export default function EncodingPage() {
   const mode: CopyMode = data.settings.copyMode ?? 'sheet';
 
   const [docType, setDocType] = useState<DocType>('invoice');
-  const [seconds, setSeconds] = useState<Seconds>(180);
+  const [seconds, setSeconds] = useState<Seconds>(() =>
+    startingDuration(DURATIONS, 180, data.settings.defaultLength),
+  );
   const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
   const [running, setRunning] = useState(false);

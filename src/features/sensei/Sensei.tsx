@@ -33,10 +33,18 @@ export default function Sensei() {
   const [line, setLine] = useState<{ text: string; path: string; id: number } | null>(null);
   const sessionsRef = useRef(sessions);
   sessionsRef.current = sessions;
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   const say = useCallback(
     (afterPractice: boolean) => {
-      const text = senseiLine({ place: placeFromPath(pathname), sessions: sessionsRef.current, afterPractice });
+      const { dailyGoal, lastBackupAt } = settingsRef.current;
+      const text = senseiLine({
+        place: placeFromPath(pathname),
+        sessions: sessionsRef.current,
+        afterPractice,
+        settings: { dailyGoal, lastBackupAt },
+      });
       setLine((old) => ({ text, path: pathname, id: (old?.id ?? 0) + 1 }));
     },
     [pathname],
@@ -54,12 +62,13 @@ export default function Sensei() {
 
   // Speak when a page opens (and when coming back from a practice screen).
   useEffect(() => {
-    if (mode !== 'on' || quiet) return;
+    // "Bawasan ang galaw" (settings.reduceMotion): no bubble popping up by itself; clicking him still works.
+    if (mode !== 'on' || quiet || settings.reduceMotion) return;
     const afterPractice = wasQuiet.current;
     wasQuiet.current = false;
     const t = window.setTimeout(() => say(afterPractice), SPEAK_DELAY_MS);
     return () => window.clearTimeout(t);
-  }, [pathname, quiet, mode, say]);
+  }, [pathname, quiet, mode, say, settings.reduceMotion]);
 
   // Hide the bubble by itself after a while.
   useEffect(() => {

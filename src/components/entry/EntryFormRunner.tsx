@@ -13,7 +13,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '../../lib/fieldScoring';
 import { display } from '../../lib/scoring';
-import { errorBeep } from '../../lib/sound';
+import { correctTick, errorBeep } from '../../lib/sound';
+import { useAppData } from '../../lib/useAppData';
 import { useCountdown } from '../../lib/useCountdown';
 import { Button, EnTl, KeyTips, LiveStatsBar } from '../ui';
 import { emptyValues, type EntryItem, type EntryRunnerProps } from './types';
@@ -57,6 +58,9 @@ export default function EntryFormRunner({
     onFinishRef.current({ submitted: submittedRef.current, unfinished, elapsedSec }, finishedEarly);
   }, []);
 
+  // Settings -> "Tunog kapag tama": a soft sound for each correct entry.
+  const soundCorrect = useAppData().settings.soundCorrect === true;
+
   const timer = useCountdown(seconds, () => finish(seconds, false));
 
   function change(key: string, value: string) {
@@ -75,6 +79,7 @@ export default function EntryFormRunner({
 
     const wrong = item.fields.filter((f) => !isFieldCorrect(item.expected[f.key], typed[f.key] ?? '')).length;
     if (wrong > 0 && sound) errorBeep();
+    if (wrong === 0 && soundCorrect) correctTick();
 
     setSubmitted((list) => [...list, { fields: item.fields, expected: item.expected, typed }]);
     setLastWrongFields(wrong);
@@ -165,7 +170,7 @@ export default function EntryFormRunner({
             <div
               // Stacked (form under the source): the source keeps at least 8rem and scrolls inside its own
               // box (h-full); the form fields scroll too, so the two never overlap. Side by side: absolute.
-              className={`h-full overflow-y-auto [&>*]:min-h-full ${
+              className={`source-zoom h-full overflow-y-auto [&>*]:min-h-full ${
                 wideSource
                   ? 'xl:absolute xl:inset-x-0 xl:top-0 xl:bottom-1 xl:h-auto large-text:xl:static large-text:xl:h-full large-text:2xl:absolute large-text:2xl:h-auto'
                   : 'lg:absolute lg:inset-x-0 lg:top-0 lg:bottom-1 lg:h-auto'

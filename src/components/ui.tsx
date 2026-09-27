@@ -13,6 +13,7 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { listNumber } from '../lib/listNumber';
+import { useAppData } from '../lib/useAppData';
 import { formatClock } from '../lib/useCountdown';
 
 type Variant = 'primary' | 'secondary' | 'danger';
@@ -255,7 +256,11 @@ export function LiveStatsBar({
         <div className={label}>Natitirang oras</div>
         <div className={value}>
           {formatClock(seconds)}
-          {!started && <span className="ml-2 hidden whitespace-nowrap text-sm font-medium text-stone-600 sm:inline">hindi pa tumatakbo</span>}
+          {!started && (
+            <span className="ml-2 hidden whitespace-nowrap text-sm font-medium text-stone-600 sm:inline">
+              hindi pa tumatakbo
+            </span>
+          )}
         </div>
       </div>
       {stats.map((s) => (
@@ -284,15 +289,7 @@ export function KeyTips({ tips }: { tips: { key?: string; text: string }[] }) {
   );
 }
 
-export function PageHeader({
-  title,
-  description,
-  icon,
-}: {
-  title: string;
-  description?: ReactNode;
-  icon?: ReactNode;
-}) {
+export function PageHeader({ title, description, icon }: { title: string; description?: ReactNode; icon?: ReactNode }) {
   return (
     <header className="mb-8">
       <h1 className="flex items-center gap-3 text-4xl font-bold text-stone-900">
@@ -306,15 +303,7 @@ export function PageHeader({
 }
 
 /** A numbered step, e.g. "01  Pumili ng oras", so the order is obvious. */
-export function Step({
-  number,
-  title,
-  children,
-}: {
-  number: number;
-  title: string;
-  children?: ReactNode;
-}) {
+export function Step({ number, title, children }: { number: number; title: string; children?: ReactNode }) {
   return (
     <div className="grid grid-cols-[2.5rem_1fr] gap-x-4">
       <div aria-hidden="true" className="font-display text-2xl font-semibold leading-8 tabular-nums text-stone-400">
@@ -337,6 +326,9 @@ export function Step({
  * hiring tests and forms, while still understanding them.
  */
 export function EnTl({ en, tl }: { en: string; tl: string }) {
+  // Settings -> "English lang": only the English word, like a real hiring test.
+  const englishOnly = useAppData().settings.englishOnly === true;
+  if (englishOnly) return <>{en}</>;
   return (
     <>
       {en} <span className="text-[0.85em] font-normal opacity-80">({tl})</span>
@@ -350,6 +342,48 @@ export function Kbd({ children }: { children: ReactNode }) {
     <kbd className="mx-0.5 inline-block rounded-md border border-b-[3px] border-stone-400 bg-white px-1.5 py-0.5 font-mono text-[0.85em] font-semibold text-stone-800">
       {children}
     </kbd>
+  );
+}
+
+/**
+ * An On/Off switch (Settings rows). The words "On" / "Off" are shown too, so
+ * the state doesn't depend on color alone.
+ */
+export function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className="inline-flex min-h-[2.75rem] items-center gap-3 rounded-full pr-2 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+    >
+      <span
+        aria-hidden="true"
+        className={
+          'relative h-7 w-12 shrink-0 rounded-full transition-colors ' + (checked ? 'bg-brand-700' : 'bg-stone-400')
+        }
+      >
+        <span
+          className={
+            'absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ' +
+            (checked ? 'translate-x-6' : 'translate-x-1')
+          }
+        />
+      </span>
+      <span aria-hidden="true" className="w-8 text-left font-semibold text-stone-800">
+        {checked ? 'On' : 'Off'}
+      </span>
+    </button>
   );
 }
 
@@ -414,8 +448,11 @@ export function SegmentedPicker<T extends string | number>({
   onChange,
   format = String,
   disabled = false,
+  hideLabel = false,
 }: {
   label: string;
+  /** The label is already shown next to it (e.g. a Settings row): keep it for screen readers only. */
+  hideLabel?: boolean;
   options: readonly T[];
   value: T;
   onChange: (value: T) => void;
@@ -424,7 +461,7 @@ export function SegmentedPicker<T extends string | number>({
 }) {
   return (
     <fieldset disabled={disabled}>
-      <legend className="mb-2 text-base font-semibold text-stone-800">{label}</legend>
+      <legend className={hideLabel ? 'sr-only' : 'mb-2 text-base font-semibold text-stone-800'}>{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const selected = option === value;

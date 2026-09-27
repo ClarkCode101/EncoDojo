@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightIcon, AssessmentIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import { dailyGoalText, doneToday } from '../../lib/reminders';
 import { useAppData } from '../../lib/useAppData';
 import { nextFocus, type NextFocus } from './coach';
 
@@ -21,9 +22,11 @@ const focusRing =
   'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300';
 
 export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
-  const { sessions } = useAppData();
+  const { sessions, settings } = useAppData();
   const f = nextFocus(sessions);
-  const summary = `Susunod na gagawin: ${f.label}. ${f.reason}`;
+  // Settings -> "Araw-araw na target" (null when there is no goal).
+  const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions));
+  const summary = `Susunod na gagawin: ${f.label}. ${f.reason}${goal ? ` ${goal}` : ''}`;
 
   if (collapsed) {
     return (
@@ -51,8 +54,22 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
         {f.label}
         <ArrowRightIcon className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
       </div>
-      {/* Hidden on short screens so the sidebar never needs to scroll (the hover title has it). */}
-      <p className="mt-1 text-sm leading-snug text-brand-100 [@media(max-height:760px)]:hidden">{f.reason}</p>
+      {/*
+        Hidden on short screens so the sidebar never needs to scroll (the hover title has it).
+        With a daily goal there is one more line, so the reason already hides below 900px
+        (the goal line is the one kept there).
+      */}
+      <p
+        className={
+          'mt-1 text-sm leading-snug text-brand-100 [@media(max-height:800px)]:hidden ' +
+          (goal ? '[@media(max-height:900px)]:hidden' : '')
+        }
+      >
+        {f.reason}
+      </p>
+      {goal && (
+        <p className="mt-1 text-sm font-semibold text-belt-300 [@media(max-height:700px)]:hidden">{goal}</p>
+      )}
     </Link>
   );
 }

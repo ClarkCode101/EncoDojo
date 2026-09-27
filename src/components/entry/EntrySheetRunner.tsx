@@ -14,7 +14,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '../../lib/fieldScoring';
 import { display } from '../../lib/scoring';
-import { errorBeep } from '../../lib/sound';
+import { correctTick, errorBeep } from '../../lib/sound';
+import { useAppData } from '../../lib/useAppData';
 import { useCountdown } from '../../lib/useCountdown';
 import { Button, EnTl, KeyTips, LiveStatsBar } from '../ui';
 import { emptyValues, type EntryItem, type EntryRunnerProps } from './types';
@@ -80,6 +81,9 @@ export default function EntrySheetRunner({
     onFinishRef.current({ submitted, unfinished, elapsedSec }, finishedEarly);
   }, []);
 
+  // Settings -> "Tunog kapag tama": a soft sound for each correct entry.
+  const soundCorrect = useAppData().settings.soundCorrect === true;
+
   const timer = useCountdown(seconds, () => finish(seconds, false));
 
   function change(row: number, key: string, value: string) {
@@ -100,6 +104,7 @@ export default function EntrySheetRunner({
     const expected = itemsRef.current[row].expected;
     const wrong = fields.filter((f) => !isFieldCorrect(expected[f.key], typed[f.key] ?? '')).length;
     if (wrong > 0 && sound) errorBeep();
+    if (wrong === 0 && soundCorrect) correctTick();
     setMessage({ row, wrong });
 
     const isLastRow = row === rowsRef.current.length - 1;
@@ -167,7 +172,7 @@ export default function EntrySheetRunner({
               )}
             </div>
           </div>
-          <div className={`min-h-[6rem] shrink overflow-y-auto rounded-sm ${scrollSource ? 'max-h-[28rem]' : ''}`}>
+          <div className={`source-zoom min-h-[6rem] shrink overflow-y-auto rounded-sm ${scrollSource ? 'max-h-[28rem]' : ''}`}>
             {current.source}
           </div>
         </section>

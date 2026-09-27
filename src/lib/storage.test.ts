@@ -73,6 +73,28 @@ describe('optional settings', () => {
     }
     expect(isAppData({ ...base, settings: { ...base.settings, sensei: 'loud' } })).toBe(false);
   });
+
+  it('accepts the 2026-09-27 settings when valid, rejects wrong values', () => {
+    const base = defaultData();
+    const withSettings = (extra: Record<string, unknown>) => ({ ...base, settings: { ...base.settings, ...extra } });
+    expect(
+      isAppData(
+        withSettings({
+          lastBackupAt: '2026-09-27T08:00:00.000Z',
+          englishOnly: true,
+          dailyGoal: 5,
+          bigSource: true,
+          reduceMotion: false,
+          soundCorrect: true,
+          defaultLength: 'short',
+        }),
+      ),
+    ).toBe(true);
+    expect(isAppData(withSettings({ lastBackupAt: 'kahapon' }))).toBe(false);
+    expect(isAppData(withSettings({ dailyGoal: 7 }))).toBe(false);
+    expect(isAppData(withSettings({ englishOnly: 'yes' }))).toBe(false);
+    expect(isAppData(withSettings({ defaultLength: 'medium' }))).toBe(false);
+  });
 });
 
 describe('saveData', () => {

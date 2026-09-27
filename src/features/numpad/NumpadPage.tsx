@@ -9,6 +9,7 @@ import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/P
 import { HelpTip, SegmentedPicker } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import type { NumpadMode, Session } from '../../lib/storage';
+import { startingDuration } from '../../lib/practiceDefaults';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import NumpadResults from './NumpadResults';
 import NumpadRunner from './NumpadRunner';
@@ -28,7 +29,9 @@ export default function NumpadPage() {
   const { numpadMode: mode, sound } = data.settings;
   const difficulty = NUMPAD_MODES[mode].difficulty;
 
-  const [seconds, setSeconds] = useState<Seconds>(60);
+  const [seconds, setSeconds] = useState<Seconds>(() =>
+    startingDuration(DURATIONS, 60, data.settings.defaultLength),
+  );
   const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run
   const [running, setRunning] = useState(false);
