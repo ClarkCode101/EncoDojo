@@ -1,15 +1,18 @@
 /**
- * Scoring for Excel Practice (round 1: navigation and shortcuts).
+ * Scoring for the Excel Pagsusulit (the quiz at the end of a lesson).
  *
  * Each task ends one of three ways: done with the shortcut (few keys, no
  * mouse), done the long way (many keys or the mouse), or not done (skipped
- * or time ran out). Metrics (raw values):
+ * or not finished). Metrics (raw values):
  * - tasksTotal, tasksDone, tasksShortcut
  * - taskAccuracy (%): tasks done / all tasks
  * - shortcutRate (%): tasks done with the shortcut / all tasks
  * - avgSeconds: average time of the tasks that were done
+ * - passed (0/1): at least QUIZ_PASS tasks done (no timer, and the shortcut is
+ *   not required: this is learning; the shortcut is only shown as a tip)
  */
 import { makeId, type Session, type SessionMistake } from '../../lib/storage';
+import { QUIZ_PASS } from './tasks';
 
 export type TaskResult = {
   id: string;
@@ -48,21 +51,15 @@ export function scoreExcel(results: TaskResult[], tasksTotal: number) {
   };
 }
 
-/** The finished round as a Session (type 'excel'). `level` 1 = navigation and shortcuts. */
-export function buildExcelSession(
-  results: TaskResult[],
-  tasksTotal: number,
-  elapsedSec: number,
-  seconds: number,
-  level = 1,
-): Session {
+/** The finished Pagsusulit as a Session (type 'excel'). `level` = the lesson (1 = navigation and shortcuts). */
+export function buildExcelSession(results: TaskResult[], tasksTotal: number, elapsedSec: number, level = 1): Session {
   const { metrics, mistakes } = scoreExcel(results, tasksTotal);
   return {
     id: makeId(),
     type: 'excel',
     startedAt: new Date(Date.now() - elapsedSec * 1000).toISOString(),
     durationSec: elapsedSec,
-    metrics: { ...metrics, seconds, level },
+    metrics: { ...metrics, level, passed: metrics.tasksDone >= QUIZ_PASS ? 1 : 0 },
     mistakes,
   };
 }

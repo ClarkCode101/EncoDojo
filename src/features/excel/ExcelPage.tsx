@@ -1,121 +1,204 @@
 /**
- * Excel, a LEARNING TRACK ("Matuto", owner's decision 2026-09-27): lessons one
- * at a time, not part of the Assessment or the belt. Lesson 1 "Navigation at
- * shortcuts": 8 short tasks on an Excel-like sheet in 3 minutes. Two screens
- * (components/Practice.tsx): setup, then the round. Results after.
- * Later lessons (formatting, sort/filter, formulas...) are listed in lessons.ts.
+ * Excel, a LEARNING TRACK ("Matuto", owner's decision 2026-09-27): not part
+ * of the Assessment or the belt, and NO timer. Screens:
+ * 1. list: the lessons (ready ones can be started; "Pasado na" once passed);
+ * 2. lesson: Alamin + Subukan per topic (ExcelLesson);
+ * 3. lessonDone: "Tapos na ang aralin", then the Pagsusulit;
+ * 4. quiz: the Pagsusulit (ExcelQuiz), saved when finished;
+ * 5. result: the Pagsusulit result (ExcelResults).
+ * The Pagsusulit can also be started directly from the list ("May alam na ako").
  */
-import { useState } from 'react';
-import { ExcelIcon } from '../../components/icons';
-import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
+import { useState, type ReactNode } from 'react';
+import { ResultSummary } from '../../components/ResultPieces';
+import { ArrowRightIcon, ExcelIcon } from '../../components/icons';
+import { PracticeFrame } from '../../components/Practice';
+import { Button, PageHeader, Section } from '../../components/ui';
+import { listNumber } from '../../lib/listNumber';
 import type { Session } from '../../lib/storage';
-import { removeSession, saveSession, useAppData } from '../../lib/useAppData';
+import { saveSession, useAppData } from '../../lib/useAppData';
+import ExcelLesson from './ExcelLesson';
+import ExcelQuiz from './ExcelQuiz';
 import ExcelResults from './ExcelResults';
-import ExcelRunner from './ExcelRunner';
+import { LESSON_1 } from './lesson1';
 import { LESSONS, passedLessons } from './lessons';
+import { QUIZ_PASS, QUIZ_TASKS } from './tasks';
 
-const SECONDS = 180;
+type Screen =
+  | { name: 'list' }
+  | { name: 'lesson' }
+  | { name: 'lessonDone' }
+  | { name: 'quiz' }
+  | { name: 'result'; session: Session };
 
-type Result = { session: Session; finishedEarly: boolean };
+/** Only lesson 1 is ready for now. */
+const LEVEL = 1;
+const TITLE = LESSONS[0].title;
+
+/** The small header of the lesson and quiz screens. */
+function Header({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
+      <h1 className="flex items-center gap-3 text-2xl font-bold text-stone-900">
+        <span className="hidden text-brand-700 sm:inline-flex">
+          <ExcelIcon className="h-6 w-6" />
+        </span>
+        {title}
+      </h1>
+      <Button variant="secondary" onClick={onBack}>
+        ‹ Mga aralin
+      </Button>
+    </header>
+  );
+}
 
 export default function ExcelPage() {
   const passed = passedLessons(useAppData().sessions);
-  const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
-  const [attempt, setAttempt] = useState(0); // changes to start a fresh round
-  const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<Result | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  function handleFinish(session: Session, finishedEarly: boolean) {
-    // Finished early = not every task was tried, so don't save unless asked.
-    const save = !finishedEarly;
-    if (save) saveSession(session);
-    setSaved(save);
-    setRunning(false);
-    setResult({ session, finishedEarly });
-  }
-
-  function toggleSaved() {
-    if (!result) return;
-    if (saved) removeSession(result.session.id);
-    else saveSession(result.session);
-    setSaved(!saved);
-  }
-
-  function restart() {
-    setResult(null);
-    setSaved(false);
-    setRunning(false);
+  const [screen, setScreen] = useState<Screen>({ name: 'list' });
+  const [attempt, setAttempt] = useState(0); // a new key = a fresh lesson / quiz
+  const go = (s: Screen) => {
     setAttempt((n) => n + 1);
+    setScreen(s);
+  };
+
+  if (screen.name === 'lesson' || screen.name === 'quiz') {
+    return (
+      <PracticeFrame>
+        <Header
+          title={screen.name === 'lesson' ? `Aralin ${LEVEL}: ${TITLE}` : `Pagsusulit: ${TITLE}`}
+          onBack={() => go({ name: 'list' })}
+        />
+        {screen.name === 'lesson' ? (
+          <ExcelLesson key={attempt} topics={LESSON_1} onDone={() => go({ name: 'lessonDone' })} />
+        ) : (
+          <ExcelQuiz
+            key={attempt}
+            level={LEVEL}
+            onFinish={(session) => {
+              // A learning result is always saved (it can be deleted from the list on Home).
+              saveSession(session);
+              go({ name: 'result', session });
+            }}
+          />
+        )}
+      </PracticeFrame>
+    );
   }
 
-  if (result) {
+  if (screen.name === 'result') {
     return (
       <ExcelResults
-        session={result.session}
-        saved={saved}
-        finishedEarly={result.finishedEarly}
-        onToggleSaved={toggleSaved}
-        onRetry={restart}
+        session={screen.session}
+        lessonTitle={TITLE}
+        onRetryQuiz={() => go({ name: 'quiz' })}
+        onLesson={() => go({ name: 'lesson' })}
+        onList={() => go({ name: 'list' })}
       />
     );
   }
 
-  if (screen === 'setup') {
+  if (screen.name === 'lessonDone') {
     return (
-      <PracticeSetup
+      <div>
+        <PageHeader
+          icon={<ExcelIcon className="h-8 w-8" />}
+          title="Tapos na ang aralin!"
+          description={`Aralin ${LEVEL}: ${TITLE}`}
+        />
+        <ResultSummary
+          ready
+          headline="Nasubukan mo na ang lahat ng shortcut sa araling ito."
+          message={`Handa ka na ba sa pagsusulit? ${QUIZ_TASKS} tanong, walang hint at walang oras. Pasado kapag ${QUIZ_PASS} ang tama.`}
+        >
+          <Button size="lg" autoFocus onClick={() => go({ name: 'quiz' })}>
+            Simulan ang pagsusulit <ArrowRightIcon className="h-5 w-5" />
+          </Button>
+          <Button size="lg" variant="secondary" onClick={() => go({ name: 'lesson' })}>
+            Ulitin ang aralin
+          </Button>
+        </ResultSummary>
+      </div>
+    );
+  }
+
+  // The list of lessons
+  return (
+    <div>
+      <PageHeader
         icon={<ExcelIcon className="h-8 w-8" />}
         title="Excel"
-        description="Matuto ng Excel, isang aralin sa isang pagkakataon. Para matuto lang ito, hindi kasama sa Assessment."
-        chooseTitle="Mga aralin"
-        choices={
-          <ol className="space-y-1 text-lg">
-            {LESSONS.map((l) => (
-              <li key={l.level} className={l.ready ? 'text-stone-900' : 'text-stone-500'}>
-                <span className="mr-2 text-stone-500">Aralin {l.level}:</span>
-                <span className={l.ready ? 'font-semibold' : ''}>{l.title}</span>
-                {l.ready ? (
-                  <span className="ml-2 text-base text-stone-600">
-                    8 task, 3 minuto
-                    {passed.has(l.level) && (
-                      <span className="ml-2 font-semibold text-green-800">Pasado na, puwedeng ulitin</span>
-                    )}
-                  </span>
-                ) : (
-                  <span className="ml-2 text-sm">parating pa</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        }
-        howTo={[
-          'Basahin ang task sa itaas ng sheet at gawin ito gamit ang keyboard. Nakasulat din ang shortcut.',
-          'Kusang lilipat sa susunod na task kapag tama na. May "Laktawan" kung hindi mo alam.',
-          'Mas mataas ang score kapag shortcut ang ginamit, hindi mouse o maraming pindot.',
-        ]}
-        onStart={() => setScreen('practice')}
+        description="Matuto ng Excel, isang aralin sa isang pagkakataon. Walang oras, puwedeng ulitin."
       />
-    );
-  }
 
+      <Section title="Mga aralin" className="mb-10">
+        <ol className="-mt-4">
+          {LESSONS.map((l) => (
+            <LessonRow key={l.level} n={l.level} title={l.title} ready={l.ready} passed={passed.has(l.level)}>
+              {l.ready && (
+                <>
+                  <Button autoFocus={l.level === LEVEL} onClick={() => go({ name: 'lesson' })}>
+                    {passed.has(l.level) ? 'Ulitin ang aralin' : 'Simulan ang aralin'}
+                  </Button>
+                  <Button variant="secondary" onClick={() => go({ name: 'quiz' })}>
+                    Pagsusulit
+                  </Button>
+                </>
+              )}
+            </LessonRow>
+          ))}
+        </ol>
+      </Section>
+
+      <Section title="Paano ito gumagana">
+        <ul className="list-disc space-y-1 pl-6 text-lg text-stone-800">
+          <li>
+            <strong>Alamin</strong>: maikling paliwanag at ang mga key. <strong>Subukan</strong>: gawin ito sa sheet.
+            May hint at &quot;Ipakita kung paano&quot; kapag nahirapan.
+          </li>
+          <li>
+            <strong>Pagsusulit</strong> sa dulo: {QUIZ_TASKS} tanong, walang hint. Pasado kapag {QUIZ_PASS} ang tama.
+            Kung may alam ka na, puwede kang dumiretso sa pagsusulit.
+          </li>
+          <li>Para matuto lang ito. Hindi kasama sa Assessment at sa belt.</li>
+        </ul>
+      </Section>
+    </div>
+  );
+}
+
+function LessonRow({
+  n,
+  title,
+  ready,
+  passed,
+  children,
+}: {
+  n: number;
+  title: string;
+  ready: boolean;
+  passed: boolean;
+  children: ReactNode;
+}) {
   return (
-    <PracticeFrame>
-      <PracticeHeader
-        icon={<ExcelIcon className="h-6 w-6" />}
-        title="Excel"
-        summary="Aralin 1: Navigation at shortcuts, 3 minuto"
-        canChangeSettings={!running}
-        onChangeSettings={() => setScreen('setup')}
-      />
-
-      <ExcelRunner
-        key={attempt}
-        seconds={SECONDS}
-        showLiveStats // always shown in practice
-        allowFinishEarly
-        onStart={() => setRunning(true)}
-        onFinish={handleFinish}
-      />
-    </PracticeFrame>
+    <li className="grid grid-cols-[2.5rem_1fr] items-center gap-x-4 gap-y-2 border-b border-stone-300 py-4 sm:grid-cols-[2.5rem_1fr_auto]">
+      <span aria-hidden="true" className="font-display text-2xl font-semibold tabular-nums text-stone-400">
+        {listNumber(n)}
+      </span>
+      <span className="min-w-0">
+        <span className={'block text-lg font-bold ' + (ready ? 'text-stone-900' : 'text-stone-500')}>
+          <span className="sr-only">Aralin {n}: </span>
+          {title}
+        </span>
+        <span className="block text-stone-600">
+          {!ready ? (
+            'Parating pa'
+          ) : passed ? (
+            <span className="font-semibold text-green-800">Pasado na, puwedeng ulitin</span>
+          ) : (
+            'Hindi pa nasusubukan ang pagsusulit'
+          )}
+        </span>
+      </span>
+      {ready && <span className="col-start-2 flex flex-wrap gap-2 sm:col-start-auto">{children}</span>}
+    </li>
   );
 }

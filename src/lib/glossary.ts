@@ -5,7 +5,6 @@
 import {
   JOB_READY_COPY,
   JOB_READY_ENCODING,
-  JOB_READY_EXCEL,
   JOB_READY_NUMPAD,
   JOB_READY_QC,
   JOB_READY_TYPING,
@@ -55,10 +54,6 @@ export const HELP = {
   qcSpeed:
     `Bilis = ilang record ang na-check mo kada minuto. ${JOB_READY_QC.perMinute} pataas ang target ` +
     '(mga 20 segundo bawat record). Tantiya ito ng EncoDojo (walang iisang pamantayan).',
-  excelTasks: `Natapos na task = ilang task ang nagawa mo bago maubos ang oras. ${JOB_READY_EXCEL.taskAccuracy}% pataas ang target.`,
-  excelShortcut:
-    'Gamit ang shortcut = ilang task ang nagawa mo gamit ang tamang shortcut, walang mouse at walang paikot-ikot na pindot. ' +
-    `Ito ang nagpapabilis sa totoong trabaho. ${JOB_READY_EXCEL.shortcutRate}% pataas ang target (tantiya ng EncoDojo).`,
   streak:'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
   numpad:
     'Ang numpad ay ang mga number key sa KANAN ng keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +

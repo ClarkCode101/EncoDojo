@@ -50,6 +50,8 @@ function summary(session: Session): string {
     return `${display(m.fieldAccuracy)}% tamang field, ${display(m.kph).toLocaleString()} KPH, ${m.documents} dokumento`;
   }
   if (session.type === 'excel') {
+    // The Pagsusulit (with `passed`); the first timed rounds had no `passed`.
+    if (typeof m.passed === 'number') return `Pagsusulit: ${m.tasksDone} sa ${m.tasksTotal}${m.passed ? ', pasado' : ''}`;
     return `${m.tasksDone} sa ${m.tasksTotal} na task, ${m.tasksShortcut} gamit ang shortcut`;
   }
   if (session.type === 'qc') {

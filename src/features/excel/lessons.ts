@@ -19,10 +19,14 @@ export const LESSONS: Lesson[] = [
   { level: 4, title: 'Formulas (SUM, IF, VLOOKUP)', ready: false },
 ];
 
-/** True when a saved round reached both targets (rounded, like the screen). */
+/**
+ * True when a saved Pagsusulit was passed (`metrics.passed`). The first,
+ * timed version saved no `passed`; those count when both old targets were met.
+ */
 export function isPassingRound(s: Session): boolean {
+  if (s.type !== 'excel') return false;
+  if (typeof s.metrics.passed === 'number') return s.metrics.passed === 1;
   return (
-    s.type === 'excel' &&
     display(s.metrics.taskAccuracy) >= JOB_READY_EXCEL.taskAccuracy &&
     display(s.metrics.shortcutRate) >= JOB_READY_EXCEL.shortcutRate
   );

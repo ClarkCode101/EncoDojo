@@ -252,7 +252,8 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   if (key === 'End' && ctrl) return moveTo(s, lastUsed(s), shift);
   if (key === 'Enter') return moveTo(s, { r: s.active.r + (shift ? -1 : 1), c: s.active.c });
   if (key === 'Tab') return moveTo(s, { r: s.active.r, c: s.active.c + (shift ? -1 : 1) });
-  if (key === 'F2') return { ...s, anchor: s.active, editing: { value: s.cells[s.active.r][s.active.c], mode: 'edit' } };
+  if (key === 'F2')
+    return { ...s, anchor: s.active, editing: { value: s.cells[s.active.r][s.active.c], mode: 'edit' } };
   if (key === 'Delete') return clearSelection(s);
   if (key === 'Backspace') {
     // Like Excel: empties the cell and starts typing in it.

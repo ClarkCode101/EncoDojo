@@ -1,26 +1,23 @@
-import { ResultSummary, SaveBanner, TargetRow } from '../../components/ResultPieces';
+import { ResultSummary } from '../../components/ResultPieces';
 import { ExcelIcon } from '../../components/icons';
 import { Button, PageHeader, Section, StatBadge } from '../../components/ui';
-import { HELP } from '../../lib/glossary';
-import { display } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
-import { JOB_READY_EXCEL } from '../../lib/targets';
 import { formatClock } from '../../lib/useCountdown';
-import { TipKeys } from './ExcelRunner';
-import { TASK_LABEL } from './tasks';
+import { QUIZ_PASS, TASK_LABEL } from './tasks';
+import TipKeys from './TipKeys';
 
-/** The tasks that were not done, or not done with the shortcut. */
+/** The tasks that were not done, or done the long way (with the shortcut to use next time). */
 export function ExcelMistakesCard({ mistakes, nested = false }: { mistakes: SessionMistake[]; nested?: boolean }) {
   return (
     <Section title={`Mga dapat pang sanayin (${mistakes.length})`} small={nested}>
       {mistakes.length === 0 ? (
-        <p className="text-lg text-stone-700">Lahat ng task ay nagawa mo gamit ang shortcut. Ang galing!</p>
+        <p className="text-lg text-stone-700">Lahat ay nagawa mo gamit ang shortcut. Ang galing!</p>
       ) : (
         <table className="w-full text-left text-base">
           <thead className="text-sm text-stone-600">
             <tr>
-              <th className="py-2 pr-4 font-semibold">Task</th>
-              <th className="py-2 pr-4 font-semibold">Ang ginawa mo</th>
+              <th className="py-2 pr-4 font-semibold">Tanong</th>
+              <th className="py-2 pr-4 font-semibold">Ang nangyari</th>
               <th className="py-2 font-semibold">Shortcut na gagamitin</th>
             </tr>
           </thead>
@@ -35,7 +32,7 @@ export function ExcelMistakesCard({ mistakes, nested = false }: { mistakes: Sess
                     'py-2 pr-4 font-semibold ' + (m.typed === 'Hindi natapos' ? 'text-red-700' : 'text-amber-800')
                   }
                 >
-                  {m.typed}
+                  {m.typed === 'Hindi natapos' ? 'Nilaktawan' : `Tama, pero ${m.typed.toLowerCase()}`}
                 </td>
                 <td className="py-2 text-stone-900">
                   <TipKeys tip={m.expected} />
@@ -51,77 +48,73 @@ export function ExcelMistakesCard({ mistakes, nested = false }: { mistakes: Sess
 
 export default function ExcelResults({
   session,
-  saved,
-  finishedEarly,
-  onToggleSaved,
-  onRetry,
+  lessonTitle,
+  onRetryQuiz,
+  onLesson,
+  onList,
 }: {
   session: Session;
-  saved: boolean;
-  finishedEarly: boolean;
-  onToggleSaved: () => void;
-  onRetry: () => void;
+  lessonTitle: string;
+  onRetryQuiz: () => void;
+  onLesson: () => void;
+  onList: () => void;
 }) {
   const m = session.metrics;
-  const t = JOB_READY_EXCEL;
-  const tasksPct = display(m.taskAccuracy);
-  const shortcutPct = display(m.shortcutRate);
-  const ready = tasksPct >= t.taskAccuracy && shortcutPct >= t.shortcutRate;
-
-  let message = `Ang target ay ${t.taskAccuracy}% na natapos at ${t.shortcutRate}% gamit ang shortcut. Ulitin ang round hanggang masanay ang mga daliri.`;
-  if (ready) message = 'Pasado ka sa araling ito. Kabisado mo na ang mga pangunahing shortcut.';
-  else if (m.tasksDone === m.tasksTotal)
-    message = `Natapos mo lahat. Ngayon, sanayin ang shortcut: ${t.shortcutRate}% ang target.`;
+  const passed = m.passed === 1;
 
   return (
     <div>
       <PageHeader
         icon={<ExcelIcon className="h-8 w-8" />}
-        title="Resulta ng Excel"
-        description="Aralin 1: Navigation at shortcuts"
+        title="Resulta ng Pagsusulit"
+        description={`Excel, Aralin ${m.level ?? 1}: ${lessonTitle}`}
       />
 
       <ResultSummary
-        ready={ready}
+        ready={passed}
         headline={
           <>
-            Natapos mo ang <strong>{m.tasksDone}</strong> sa <strong>{m.tasksTotal}</strong> na task, at{' '}
-            <strong>{m.tasksShortcut}</strong> dito ay gamit ang shortcut.
+            <strong>{m.tasksDone}</strong> sa <strong>{m.tasksTotal}</strong> ang nagawa mo
+            {passed ? '. Pasado ka sa araling ito!' : '.'}
           </>
         }
-        message={message}
+        message={
+          passed
+            ? 'Puwede mo itong ulitin kahit kailan para lalong masanay ang mga daliri.'
+            : `Kailangan ng ${QUIZ_PASS} sa ${m.tasksTotal} para pumasa. Balikan ang aralin (may hint doon), tapos subukan ulit.`
+        }
       >
-        <Button size="lg" onClick={onRetry} autoFocus>
-          Ulitin (bagong round)
-        </Button>
+        {passed ? (
+          <>
+            <Button size="lg" onClick={onList} autoFocus>
+              Bumalik sa mga aralin
+            </Button>
+            <Button size="lg" variant="secondary" onClick={onRetryQuiz}>
+              Ulitin ang pagsusulit
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button size="lg" onClick={onLesson} autoFocus>
+              Balikan ang aralin
+            </Button>
+            <Button size="lg" variant="secondary" onClick={onRetryQuiz}>
+              Ulitin ang pagsusulit
+            </Button>
+          </>
+        )}
       </ResultSummary>
 
-      <SaveBanner saved={saved} finishedEarly={finishedEarly} onToggle={onToggleSaved} />
-
       <Section title="Mga detalye" className="mb-10">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-          <StatBadge
-            label="Natapos na task"
-            value={`${tasksPct}%`}
-            hint={`${m.tasksDone} sa ${m.tasksTotal}`}
-            help={HELP.excelTasks}
-          />
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-3">
+          <StatBadge label="Nagawa" value={`${m.tasksDone} sa ${m.tasksTotal}`} hint={`${QUIZ_PASS} ang kailangan`} />
           <StatBadge
             label="Gamit ang shortcut"
-            value={`${shortcutPct}%`}
-            hint={`${m.tasksShortcut} sa ${m.tasksTotal}`}
-            help={HELP.excelShortcut}
+            value={`${m.tasksShortcut} sa ${m.tasksTotal}`}
+            hint="hindi kailangan, pero mas mabilis"
           />
-          <StatBadge label="Karaniwang bilis" value={`${display(m.avgSeconds)} seg`} hint="bawat natapos na task" />
-          <StatBadge label="Tagal" value={formatClock(session.durationSec)} />
+          <StatBadge label="Tagal" value={formatClock(session.durationSec)} hint="walang oras na limit" />
         </div>
-      </Section>
-
-      <Section title="Target" className="mb-10">
-        <ul>
-          <TargetRow label="Natapos na task" value={m.taskAccuracy} target={t.taskAccuracy} unit="%" />
-          <TargetRow label="Gamit ang shortcut" value={m.shortcutRate} target={t.shortcutRate} unit="%" />
-        </ul>
       </Section>
 
       <ExcelMistakesCard mistakes={session.mistakes} />

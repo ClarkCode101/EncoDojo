@@ -54,12 +54,10 @@ export const JOB_READY_QC = {
 } as const;
 
 /**
- * Excel Practice (round 1: navigation and shortcuts) targets: EncoDojo
- * ESTIMATES. With 8 tasks per round:
- * - 85% of the tasks done (7 of 8),
- * - 75% done WITH the shortcut (6 of 8): Excel tests often watch how you work,
- *   and the shortcuts are what make an encoder fast.
- * Not part of the Assessment yet (owner: add it once formulas are in).
+ * Only for the FIRST, timed Excel rounds (saved before the lessons had a
+ * Pagsusulit): such a round counts as "pasado" when 85% of the tasks were done
+ * and 75% with the shortcut. New lessons pass by their Pagsusulit instead
+ * (features/excel: QUIZ_PASS of QUIZ_TASKS, no timer).
  */
 export const JOB_READY_EXCEL = {
   taskAccuracy: 85,
