@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Session } from '../../lib/storage';
 import { MIXED_DIFFICULTY, NUMPAD_MODES } from '../numpad/entries';
-import { nextFocus, practicedToday } from './coach';
+import { nextFocus } from './coach';
 
 let id = 0;
 function s(type: Session['type'], metrics: Record<string, number>, startedAt = '2026-09-27T02:00:00.000Z'): Session {
@@ -54,20 +54,5 @@ describe('nextFocus', () => {
 
   it('everything at target: the Assessment', () => {
     expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding()])).toMatchObject({ skill: 'assessment', to: '/assessment' });
-  });
-});
-
-describe('practicedToday', () => {
-  it('only today (local day) and only practice, not the Assessment', () => {
-    const today = new Date(2026, 8, 27, 15, 0);
-    const done = practicedToday(
-      [
-        s('typing', {}, new Date(2026, 8, 27, 9, 0).toISOString()),
-        s('copy', {}, new Date(2026, 8, 26, 23, 30).toISOString()), // yesterday
-        s('assessment', {}, new Date(2026, 8, 27, 10, 0).toISOString()),
-      ],
-      today,
-    );
-    expect([...done]).toEqual(['typing']);
   });
 });

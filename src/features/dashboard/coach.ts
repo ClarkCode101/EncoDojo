@@ -3,15 +3,15 @@
  * that change as the user practices, so the app feels alive and gives a
  * reason to come back. No AI — just the saved results.
  *
- * - practicedToday: which practice features were done today (the ✓ marks).
  * - nextFocus: what to practice next ("Susunod na gagawin").
+ * (A ✓ for "done today" was tried and removed: it looked like the practice
+ * was finished and could not be done again.)
  */
 import { display } from '../../lib/scoring';
-import type { Session, SessionType } from '../../lib/storage';
+import type { Session } from '../../lib/storage';
 import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
 import { copyKphOf } from '../copy/scoreCopy';
 import { MIXED_DIFFICULTY } from '../numpad/entries';
-import { localDayKey } from './stats';
 
 export type PracticeSkill = 'typing' | 'numpad' | 'copy' | 'encoding';
 
@@ -24,16 +24,6 @@ export const SKILL_INFO: Record<PracticeSkill, { label: string; to: string }> = 
   copy: { label: 'Copy Test', to: '/copy' },
   encoding: { label: 'Document Encoding', to: '/encoding' },
 };
-
-/** Practice features with at least one saved session today (local day). */
-export function practicedToday(sessions: Session[], today: Date = new Date()): Set<SessionType> {
-  const key = localDayKey(today);
-  return new Set(
-    sessions
-      .filter((s) => s.type !== 'assessment' && localDayKey(new Date(s.startedAt)) === key)
-      .map((s) => s.type),
-  );
-}
 
 export type NextFocus = {
   skill: PracticeSkill | 'assessment';

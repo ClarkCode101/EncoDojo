@@ -12,13 +12,10 @@ import {
   SettingsIcon,
   SidebarToggleIcon,
 } from '../components/icons';
-import type { SessionType } from '../lib/storage';
 import { updateSettings, useAppData } from '../lib/useAppData';
-import { practicedToday } from '../features/dashboard/coach';
 import NextFocusCard from '../features/dashboard/NextFocusCard';
 
-/** `practice`: the session type of a practice page, for the "done today" check. */
-type NavItem = { to: string; label: string; icon: ReactNode; practice?: SessionType };
+type NavItem = { to: string; label: string; icon: ReactNode };
 type NavGroup = { heading?: string; items: NavItem[] };
 
 const groups: NavGroup[] = [
@@ -31,10 +28,10 @@ const groups: NavGroup[] = [
   {
     heading: 'Practice',
     items: [
-      { to: '/typing', label: 'Typing Practice', icon: <KeyboardIcon />, practice: 'typing' },
-      { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon />, practice: 'numpad' },
-      { to: '/copy', label: 'Copy Test', icon: <CopyIcon />, practice: 'copy' },
-      { to: '/encoding', label: 'Document Encoding', icon: <DocumentIcon />, practice: 'encoding' },
+      { to: '/typing', label: 'Typing Practice', icon: <KeyboardIcon /> },
+      { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon /> },
+      { to: '/copy', label: 'Copy Test', icon: <CopyIcon /> },
+      { to: '/encoding', label: 'Document Encoding', icon: <DocumentIcon /> },
     ],
   },
   { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },
@@ -55,12 +52,7 @@ const navClass = (collapsed: boolean) => ({ isActive }: { isActive: boolean }) =
 };
 
 export default function Layout() {
-  const { settings, sessions } = useAppData();
-  const { largeText, sidebarCollapsed } = settings;
-  // "Ensayo ngayong araw": which practice pages were done today (✓ marks).
-  const doneToday = practicedToday(sessions);
-  const practiceCount = groups.flatMap((g) => g.items).filter((i) => i.practice).length;
-  const practiceDone = groups.flatMap((g) => g.items).filter((i) => i.practice && doneToday.has(i.practice)).length;
+  const { largeText, sidebarCollapsed } = useAppData().settings;
   // The sidebar can be collapsed to icons only (desktop), for more room. Remembered in the settings.
   const collapsed = sidebarCollapsed === true;
 
@@ -114,49 +106,23 @@ export default function Layout() {
                     // Collapsed: a thin line instead of the heading.
                     <div aria-hidden="true" className="mx-2 mb-2 hidden border-t border-brand-700 md:block" />
                   ) : (
-                    <div className="hidden items-baseline justify-between px-3 pb-1 text-sm font-semibold text-brand-300 md:flex">
-                      {group.heading}
-                      {/* Today's routine: how many of the practice pages were done today. */}
-                      {group.items.some((i) => i.practice) && (
-                        <span className={'font-normal ' + (practiceDone === practiceCount ? 'text-green-300' : 'text-brand-200')}>
-                          {practiceDone === practiceCount ? 'Tapos lahat ngayon! 🎉' : `${practiceDone} sa ${practiceCount} ngayon`}
-                        </span>
-                      )}
-                    </div>
+                    <div className="hidden px-3 pb-1 text-sm font-semibold text-brand-300 md:block">{group.heading}</div>
                   ))}
                 <ul className="flex flex-wrap gap-1 md:block md:space-y-1">
-                  {group.items.map((item) => {
-                    const done = item.practice !== undefined && doneToday.has(item.practice);
-                    return (
-                      <li key={item.to}>
-                        <NavLink
-                          to={item.to}
-                          end={item.to === '/'}
-                          className={navClass(collapsed)}
-                          // Collapsed: the name shows when the mouse is on the icon (and is read by screen readers).
-                          title={collapsed ? item.label + (done ? ' — nagawa na ngayon ✓' : '') : undefined}
-                        >
-                          {item.icon}
-                          <span className={collapsed ? 'md:sr-only' : ''}>{item.label}</span>
-                          {done && (
-                            <>
-                              {/* Green ✓ = practiced today. Collapsed: a small dot on the icon's corner. */}
-                              <span
-                                aria-hidden="true"
-                                className={
-                                  'ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white ' +
-                                  (collapsed ? 'md:absolute md:right-3 md:top-1 md:ml-0 md:h-3.5 md:w-3.5 md:text-[0px] md:ring-2 md:ring-brand-900' : '')
-                                }
-                              >
-                                ✓
-                              </span>
-                              <span className="sr-only">(nagawa na ngayon)</span>
-                            </>
-                          )}
-                        </NavLink>
-                      </li>
-                    );
-                  })}
+                  {group.items.map((item) => (
+                    <li key={item.to}>
+                      <NavLink
+                        to={item.to}
+                        end={item.to === '/'}
+                        className={navClass(collapsed)}
+                        // Collapsed: the name shows when the mouse is on the icon (and is read by screen readers).
+                        title={collapsed ? item.label : undefined}
+                      >
+                        {item.icon}
+                        <span className={collapsed ? 'md:sr-only' : ''}>{item.label}</span>
+                      </NavLink>
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}
