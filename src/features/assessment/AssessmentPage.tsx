@@ -23,6 +23,7 @@ import { buildEncodingSession } from '../encoding/scoreEncoding';
 import NumpadRunner from '../numpad/NumpadRunner';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from '../typing/buildPassage';
 import TypingRunner from '../typing/TypingRunner';
+import { useSenseiQuiet } from '../sensei/quiet';
 import AssessmentReport from './AssessmentReport';
 import { DEV_TOOLS, DevJumpPanel, DevTimeUpButton, blankPart, samplePreset, type JumpTarget, type SamplePreset } from './DevJump'; // TEMPORARY (DevJump)
 import {
@@ -239,6 +240,8 @@ export default function AssessmentPage() {
 
   // Warn before closing or reloading the tab in the middle of a part.
   const inProgress = step.name !== 'intro' && step.name !== 'report';
+  // Sensei stays hidden during the whole Assessment (parts and breaks).
+  useSenseiQuiet(inProgress);
   useEffect(() => {
     if (!inProgress) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();

@@ -14,6 +14,7 @@
  * or sheet scrolls inside its own box instead (owner's request).
  */
 import type { ReactNode } from 'react';
+import { useSenseiQuiet } from '../features/sensei/quiet';
 import { ArrowRightIcon } from './icons';
 import { Button, Card, PageHeader, Step } from './ui';
 
@@ -80,6 +81,8 @@ export function PracticeSetup({
  * scrollable parts to fit. On phones it is a normal page.
  */
 export function PracticeFrame({ children }: { children: ReactNode }) {
+  // Sensei stays hidden while practicing (he talks again on the results).
+  useSenseiQuiet(true);
   return <div className="md:flex md:h-[calc(100dvh-3rem)] md:min-h-[30rem] md:flex-col">{children}</div>;
 }
 

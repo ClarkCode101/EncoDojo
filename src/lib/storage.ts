@@ -67,6 +67,11 @@ export type Settings = {
    * collapsed to icons only (more room for the page). Missing = open.
    */
   sidebarCollapsed?: boolean;
+  /**
+   * Optional (added without a schema version bump): the Sensei guide in the
+   * lower-right corner. 'on' (default when missing), 'small', or 'off'.
+   */
+  sensei?: 'on' | 'small' | 'off';
 };
 
 export type AppData = {
@@ -147,7 +152,8 @@ export function isAppData(value: unknown): value is AppData {
     isNumpadMode(settings.numpadMode) &&
     typeof settings.largeText === 'boolean' &&
     isCopyModeOrMissing(settings.copyMode) &&
-    isBooleanOrMissing(settings.sidebarCollapsed)
+    isBooleanOrMissing(settings.sidebarCollapsed) &&
+    (settings.sensei === undefined || settings.sensei === 'on' || settings.sensei === 'small' || settings.sensei === 'off')
   );
 }
 

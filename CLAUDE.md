@@ -16,7 +16,8 @@ The owner is learning while building. When you finish a task, **explain what you
   - No "done today" ✓ marks on the practice links (owner's decision, 2026-09-27): a ✓ made a practice look finished and not repeatable. Don't add completion marks to practice links.
   - "Susunod na gagawin" card above the belt card (`NextFocusCard`): first a practice never tried yet (Home order), else the practice whose LATEST result is furthest below its target (speed or accuracy, whichever is weaker, with the number), else the Assessment. Links to it.
   - On short screens (<760px tall) the sidebar spacing tightens and the card/belt hint lines hide (hover title keeps them), so the sidebar doesn't scroll.
-- Planned: optional "Sensei" tips character; optional on-screen keyboard/numpad guide.
+- **Sensei guide — LIVE** (owner's idea, 2026-09-27): `features/sensei/`. An original pixel-art Sensei (`SenseiArt`, one SVG rect per pixel: white beard, gold headband, indigo gi, black belt) fixed at the lower-right. A speech bubble pops up ~1s after a page opens and hides after ~9s; clicking him gives a new line. Lines are rule-based (`lines.ts`, tested): page tips, lines about the user's own results (next focus, near next belt, streak), encouragement; right after a practice he talks about the results (or cheers). He is **hidden while practicing and during the whole Assessment** (`useSenseiQuiet`, called by `PracticeFrame` and the Assessment) so he never covers the work. "Itago si Sensei" makes him small; Settings: Ipakita / Maliit lang / Wala (`settings.sensei`). Scrolling pages get bottom padding so he never covers the last buttons. The TEMPORARY "🧪 Test" dev button sits at the top-right so they don't overlap.
+- Planned: optional on-screen keyboard/numpad guide.
 
 ## UI & Language Rules (decided 2026-09-26)
 The app must be easy for **older and non-techy users**:
@@ -118,6 +119,7 @@ type AppData = {
     largeText: boolean;                      // v3: "Mas malaking text" in Settings
     copyMode?: 'form' | 'sheet';             // optional, missing = 'sheet'; shared by Copy Test + Document Encoding practice (no schema bump)
     sidebarCollapsed?: boolean;              // optional, missing = open; desktop sidebar collapsed to icons (no schema bump)
+    sensei?: 'on' | 'small' | 'off';          // optional, missing = 'on'; the Sensei guide (no schema bump)
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
   // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).

@@ -185,8 +185,8 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /**
- * A small floating "🧪 Test" button at the bottom-right corner; the options open
- * in a popup above it, so the Assessment page itself looks exactly like the real one.
+ * A small floating "🧪 Test" button at the top-right corner (Sensei has the bottom-right); the options open
+ * in a popup below it, so the Assessment page itself looks exactly like the real one.
  */
 export function DevJumpPanel({
   onJump,
@@ -198,7 +198,15 @@ export function DevJumpPanel({
   const belt = useBeltPreview();
   const [open, setOpen] = useState(false);
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+    <div className="fixed right-4 top-4 z-50 flex flex-col items-end gap-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="rounded-full border-2 border-amber-500 bg-amber-300 px-4 py-2 text-sm font-bold text-amber-950 shadow-lg hover:bg-amber-400 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-amber-600"
+      >
+        {open ? '✕ Isara' : '🧪 Test'}
+      </button>
       {open && (
         <section
           aria-label="Test lang"
@@ -242,14 +250,6 @@ export function DevJumpPanel({
           </div>
         </section>
       )}
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="rounded-full border-2 border-amber-500 bg-amber-300 px-4 py-2 text-sm font-bold text-amber-950 shadow-lg hover:bg-amber-400 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-amber-600"
-      >
-        {open ? '✕ Isara' : '🧪 Test'}
-      </button>
     </div>
   );
 }

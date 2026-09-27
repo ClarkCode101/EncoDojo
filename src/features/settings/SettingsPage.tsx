@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { SettingsIcon } from '../../components/icons';
-import { Button, Card, Checkbox, HelpTip, Notice, PageHeader } from '../../components/ui';
+import { Button, Card, Checkbox, HelpTip, Notice, PageHeader, SegmentedPicker } from '../../components/ui';
 import { defaultData, exportFileName, exportJson, parseImport, type AppData } from '../../lib/storage';
 import { replaceAppData, updateAppData, updateSettings, useAppData } from '../../lib/useAppData';
 
@@ -102,6 +102,18 @@ export default function SettingsPage() {
             checked={data.settings.sound}
             onChange={(v) => updateSettings({ sound: v })}
           />
+          <div>
+            <SegmentedPicker
+              label="Si Sensei (mga tip sa kanang-ibaba)"
+              options={['on', 'small', 'off'] as const}
+              value={data.settings.sensei ?? 'on'}
+              format={(m) => (m === 'on' ? 'Ipakita' : m === 'small' ? 'Maliit lang' : 'Wala')}
+              onChange={(m) => updateSettings({ sensei: m })}
+            />
+            <p className="mt-1 text-sm text-stone-600">
+              Nagbibigay siya ng tip at pampalakas-loob. Tahimik siya habang nagpa-practice o nag-a-assessment.
+            </p>
+          </div>
         </div>
       </Card>
 

@@ -65,6 +65,14 @@ describe('optional settings', () => {
     expect(isAppData({ ...base, settings: { ...base.settings, sidebarCollapsed: true } })).toBe(true);
     expect(isAppData({ ...base, settings: { ...base.settings, sidebarCollapsed: 'yes' } })).toBe(false);
   });
+
+  it('sensei may be missing, on, small or off', () => {
+    const base = defaultData();
+    for (const sensei of ['on', 'small', 'off']) {
+      expect(isAppData({ ...base, settings: { ...base.settings, sensei } })).toBe(true);
+    }
+    expect(isAppData({ ...base, settings: { ...base.settings, sensei: 'loud' } })).toBe(false);
+  });
 });
 
 describe('saveData', () => {

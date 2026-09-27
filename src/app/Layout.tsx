@@ -14,6 +14,8 @@ import {
 } from '../components/icons';
 import { updateSettings, useAppData } from '../lib/useAppData';
 import NextFocusCard from '../features/dashboard/NextFocusCard';
+import { useIsSenseiQuiet } from '../features/sensei/quiet';
+import Sensei from '../features/sensei/Sensei';
 
 type NavItem = { to: string; label: string; icon: ReactNode };
 type NavGroup = { heading?: string; items: NavItem[] };
@@ -52,7 +54,9 @@ const navClass = (collapsed: boolean) => ({ isActive }: { isActive: boolean }) =
 };
 
 export default function Layout() {
-  const { largeText, sidebarCollapsed } = useAppData().settings;
+  const { largeText, sidebarCollapsed, sensei } = useAppData().settings;
+  // Room at the bottom of scrolling pages so Sensei never covers the last buttons.
+  const senseiRoom = !useIsSenseiQuiet() && sensei !== 'off' ? (sensei === 'small' ? 'pb-20' : 'pb-32') : '';
   // The sidebar can be collapsed to icons only (desktop), for more room. Remembered in the settings.
   const collapsed = sidebarCollapsed === true;
 
@@ -136,7 +140,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main id="main" className="min-w-0 flex-1 px-4 py-6 md:px-10">
+      <main id="main" className={`min-w-0 flex-1 px-4 py-6 md:px-10 ${senseiRoom}`}>
         {/* Wider page when the sidebar is collapsed: that is the point of collapsing it. */}
         <div className={'mx-auto max-w-5xl ' + (collapsed ? 'md:max-w-7xl' : '')}>
           <Suspense fallback={<p className="text-lg text-stone-700">Naglo-load…</p>}>
@@ -144,6 +148,8 @@ export default function Layout() {
           </Suspense>
         </div>
       </main>
+
+      <Sensei />
     </div>
   );
 }

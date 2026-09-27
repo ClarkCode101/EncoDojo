@@ -50,9 +50,15 @@ export default {
           '0%': { opacity: '0', transform: 'rotate(-8deg) scale(1.6)' },
           '100%': { opacity: '1', transform: 'rotate(-8deg) scale(1)' },
         },
+        /** Sensei's speech bubble popping up. */
+        'sensei-pop': {
+          '0%': { opacity: '0', transform: 'translateY(8px) scale(0.95)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
       },
       animation: {
         stamp: 'stamp 0.35s ease-out both',
+        'sensei-pop': 'sensei-pop 0.2s ease-out both',
       },
     },
   },
