@@ -11,16 +11,19 @@
 import type { ReactNode } from 'react';
 import { KphLevels, Stamp } from '../../components/ResultPieces';
 import FieldMistakesCard from '../../components/entry/FieldMistakesCard';
-import { AssessmentIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import { AssessmentIcon, CopyIcon, DocumentIcon, DownloadIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
 import { Button, ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
+import { useAppData } from '../../lib/useAppData';
+import { localDayKey } from '../dashboard/stats';
 import { CopyMistakesCard } from '../copy/CopyResults';
 import { ENCODING_FIELD_LABEL } from '../encoding/documents';
 import { NumpadMistakesCard } from '../numpad/NumpadResults';
 import { TypingMistakesCard } from '../typing/TypingResults';
 import { assessmentCommentsBySection } from './comments';
+import { downloadResultCard, resultCardData } from './resultCard';
 import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart, type Check } from './evaluate';
 
 type Section = Check['section'];
@@ -162,6 +165,7 @@ export default function AssessmentReport({
   backLabel: string;
   onRetake: () => void;
 }) {
+  const { sessions } = useAppData();
   const m = assessment.metrics;
   const p = previous?.metrics;
   const checks = assessmentChecks(m);
@@ -206,6 +210,16 @@ export default function AssessmentReport({
               </Button>
               <Button size="lg" variant="secondary" onClick={onRetake}>
                 Subukan ulit
+              </Button>
+              {/* A PNG "result card" to keep or share (a practice result, not a certificate). */}
+              <Button
+                size="lg"
+                variant="secondary"
+                onClick={() =>
+                  downloadResultCard(resultCardData(assessment, sessions), localDayKey(new Date(assessment.startedAt)))
+                }
+              >
+                <DownloadIcon className="h-5 w-5" /> I-download (larawan)
               </Button>
             </div>
           </div>

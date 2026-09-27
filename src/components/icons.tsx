@@ -113,6 +113,15 @@ export const SidebarToggleIcon = ({ className = 'h-6 w-6', open }: IconProps & {
   </Icon>
 );
 
+/** Arrow down into a tray: "download / save a file". */
+export const DownloadIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 4v11" />
+    <path d="M7 10l5 5 5-5" />
+    <path d="M5 19h14" />
+  </Icon>
+);
+
 export const SettingsIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
