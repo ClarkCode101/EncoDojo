@@ -87,8 +87,9 @@ export default function Layout() {
       {!focus && (
         <aside
           className={
+            // No width animation on purpose (owner's request): the labels and cards switch at once anyway,
+            // so an animated width only showed squeezed, half-drawn states. An instant switch looks cleaner.
             'bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden ' +
-            'md:transition-[width] md:duration-200 motion-reduce:transition-none ' +
             (collapsed ? 'md:w-20' : 'md:w-64')
           }
         >
