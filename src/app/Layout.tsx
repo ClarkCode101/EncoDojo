@@ -94,7 +94,7 @@ export default function Layout() {
             }
           >
             <Logo className="h-12 w-12 shrink-0" />
-            <div className={'text-2xl font-bold leading-tight ' + (collapsed ? 'md:sr-only' : '')}>EncoDojo</div>
+            <div className={'font-display text-2xl font-bold leading-tight ' + (collapsed ? 'md:sr-only' : '')}>EncoDojo</div>
             <button
               type="button"
               onClick={() => updateSettings({ sidebarCollapsed: !collapsed })}

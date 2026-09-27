@@ -20,7 +20,7 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const preview = import.meta.env.DEV ? useBeltPreview() : null;
   const s = beltStatus(preview ? previewSessions(preview) : sessions);
-  const summary = s.next ? `${s.belt.label}. Susunod: ${s.next.label} — ${s.nextHint}` : `${s.belt.label}. ${s.nextHint}`;
+  const summary = s.next ? `${s.belt.label}. Susunod: ${s.next.label}. ${s.nextHint}` : `${s.belt.label}. ${s.nextHint}`;
 
   if (collapsed) {
     return (
@@ -57,7 +57,7 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
       <p className="mt-2 text-sm leading-snug text-brand-100 [@media(max-height:760px)]:hidden">
         {s.next ? (
           <>
-            Susunod: <strong className="text-white">{s.next.label}</strong> — {s.nextHint}
+            Susunod: <strong className="text-white">{s.next.label}</strong>. {s.nextHint}
           </>
         ) : (
           s.nextHint

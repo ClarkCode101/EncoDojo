@@ -4,6 +4,7 @@ import {
   bestMetric,
   currentStreak,
   forNumpadBest,
+  greeting,
   isBeginnerNumpad,
   latestMetric,
   recentSessions,
@@ -94,5 +95,14 @@ describe('recentSessions', () => {
       day(4).toISOString(),
       day(3).toISOString(),
     ]);
+  });
+});
+
+describe('greeting', () => {
+  it('follows the time of day', () => {
+    expect(greeting(new Date(2026, 8, 27, 8))).toBe('Magandang umaga');
+    expect(greeting(new Date(2026, 8, 27, 12, 30))).toBe('Magandang tanghali');
+    expect(greeting(new Date(2026, 8, 27, 15))).toBe('Magandang hapon');
+    expect(greeting(new Date(2026, 8, 27, 20))).toBe('Magandang gabi');
   });
 });

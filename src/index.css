@@ -19,3 +19,10 @@ html.large-text {
 body {
   @apply bg-paper text-stone-900 antialiased;
 }
+
+/* "Dojo notebook": headings use the slab font, like printed forms and documents. */
+h1,
+h2,
+h3 {
+  @apply font-display;
+}

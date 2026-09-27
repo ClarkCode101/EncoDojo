@@ -64,6 +64,15 @@ export function currentStreak(sessions: Session[], today: Date = new Date()): nu
   return streak;
 }
 
+/** A time-of-day greeting in Filipino, e.g. "Magandang hapon". */
+export function greeting(date: Date = new Date()): string {
+  const h = date.getHours();
+  if (h < 12) return 'Magandang umaga';
+  if (h < 13) return 'Magandang tanghali';
+  if (h < 18) return 'Magandang hapon';
+  return 'Magandang gabi';
+}
+
 /** Newest first. */
 export function recentSessions(sessions: Session[], count = 10): Session[] {
   return [...sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, count);

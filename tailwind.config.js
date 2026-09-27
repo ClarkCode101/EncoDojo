@@ -4,6 +4,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        // "Dojo notebook" look (owner's choice, 2026-09-27): readable body + document-like headings.
+        sans: ['"Atkinson Hyperlegible"', 'system-ui', '"Segoe UI"', 'Roboto', 'Arial', 'sans-serif'],
+        display: ['"Zilla Slab"', 'Georgia', '"Times New Roman"', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
       /*
