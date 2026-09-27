@@ -21,7 +21,7 @@ export type Difficulty = 1 | 2 | 3 | 4 | 5 | 6;
 export type NumpadMode = 'mixed' | 'beginner';
 /** Copy Test layout: "form" = like a hiring test / company software, "sheet" = like Excel. */
 export type CopyMode = 'form' | 'sheet';
-export const SESSION_TYPES = ['typing', 'numpad', 'copy', 'encoding', 'assessment'] as const;
+export const SESSION_TYPES = ['typing', 'numpad', 'copy', 'encoding', 'qc', 'assessment'] as const;
 export type SessionType = (typeof SESSION_TYPES)[number];
 /** Every practice (training) type — everything except the Assessment. New features are included automatically. */
 export const PRACTICE_TYPES: SessionType[] = SESSION_TYPES.filter((t) => t !== 'assessment');

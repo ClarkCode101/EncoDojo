@@ -40,6 +40,10 @@ function summary(session: Session): string {
     if (m.documents === 0) return 'Walang natapos na dokumento';
     return `${display(m.fieldAccuracy)}% tamang field, ${display(m.kph).toLocaleString()} KPH, ${m.documents} dokumento`;
   }
+  if (session.type === 'qc') {
+    if (m.records === 0) return 'Walang na-check na record';
+    return `${display(m.decisionAccuracy)}% tamang check, ${m.records} record`;
+  }
   return `${display(m.kph).toLocaleString()} KPH, ${display(m.entryAccuracy)}% tama`;
 }
 
@@ -60,6 +64,7 @@ const typeLabel: Record<Session['type'], string> = {
   numpad: 'Numpad Practice',
   copy: 'Copy Test',
   encoding: 'Document Encoding',
+  qc: 'QC Check',
   assessment: 'Assessment',
 };
 

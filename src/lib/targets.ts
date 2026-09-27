@@ -41,6 +41,18 @@ export const JOB_READY_ENCODING = {
   fieldAccuracy: 95,
 } as const;
 
+/**
+ * QC / Spot the Difference targets: EncoDojo ESTIMATES (no public standard):
+ * - 95% correct decisions (every field of every checked record is one
+ *   "may mali / tama" decision; ~1 field in 5 has a mistake, so flagging
+ *   nothing scores only ~80%). 95% allows about 1 slip in a 2-minute test.
+ * - 3 records per minute (about 20 seconds to compare 5 fields carefully).
+ */
+export const JOB_READY_QC = {
+  decisionAccuracy: 95,
+  perMinute: 3,
+} as const;
+
 export type KphLevel = { min: number; label: string; description: string };
 
 /**
