@@ -10,15 +10,16 @@ export default function EncodingRules({ className = '' }: { className?: string }
   return (
     <section
       aria-label="Mga patakaran sa pag-encode"
-      className={`rounded-xl border-2 border-belt-400 bg-belt-50 px-4 py-3 ${className}`}
+      className={`rounded-r-lg border-l-4 border-belt-400 bg-belt-50 px-4 py-3 ${className}`}
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
-        <h2 className="text-lg font-bold text-stone-900">📏 Mga patakaran sa pag-encode</h2>
+        <h2 className="text-lg font-bold text-stone-900">Mga patakaran sa pag-encode</h2>
         <HelpTip label="Bakit may patakaran?">{HELP.encodingRules}</HelpTip>
       </div>
-      <ul className="grid gap-2 md:grid-cols-3">
+      {/* Three columns split by thin lines, like a ruled page (no box per rule). */}
+      <ul className="grid gap-y-2 md:grid-cols-3 md:divide-x md:divide-belt-300">
         {ENCODING_RULES.map((r) => (
-          <li key={r.what} className="rounded-lg bg-white px-3 py-1.5">
+          <li key={r.what} className="md:px-4 md:first:pl-0">
             <div className="text-stone-900">
               <strong>{r.what}:</strong> {r.rule}
             </div>

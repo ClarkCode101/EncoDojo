@@ -138,7 +138,7 @@ export default function EncodingPage() {
           </div>
         }
         howTo={[
-          `Hanapin sa dokumento ang 5 detalyeng hinihingi ng ${mode === 'form' ? 'form' : 'sheet'} — hindi lahat ng nasa papel ay ie-encode.`,
+          `Hanapin sa dokumento ang 5 detalyeng hinihingi ng ${mode === 'form' ? 'form' : 'sheet'}. Hindi lahat ng nasa papel ay ie-encode.`,
           mode === 'sheet'
             ? 'Tab = susunod na cell. Enter sa dulo ng row = susunod na dokumento.'
             : 'Tab = susunod na field. Enter sa huling field = ipasa ang dokumento.',
@@ -154,7 +154,7 @@ export default function EncodingPage() {
       <PracticeHeader
         icon={<DocumentIcon className="h-6 w-6" />}
         title="Document Encoding"
-        summary={`${DOC_INFO[docType].label} · ${MODE_LABEL[mode]} · ${durationLabel(seconds)}`}
+        summary={`${DOC_INFO[docType].label}, ${MODE_LABEL[mode]}, ${durationLabel(seconds)}`}
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />
