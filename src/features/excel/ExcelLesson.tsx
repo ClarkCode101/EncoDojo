@@ -16,21 +16,22 @@ import { correctTick } from '../../lib/sound';
 import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
-import type { LessonTopic } from './lesson1';
-import { isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
-import { COLUMN_WIDTHS } from './sheetLayout';
-import { makeTaskSet, solutionFrames, startTask, type TaskId } from './tasks';
+import type { LessonContent } from './lessons';
+import { clickCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
+import { solutionFrames, startTask } from './tasks';
+import TaskRecord from './TaskRecord';
 import TipKeys from './TipKeys';
 
-type Step = { topic: number; task: TaskId | null };
+type Step = { topic: number; task: string | null };
 
 /** How long each step of "Ipakita kung paano" stays on screen (faster when there are many, e.g. arrows). */
 const DEMO_STEP_MS = 700;
 const DEMO_FAST_STEP_MS = 300;
 const DEMO_END_MS = 1600;
 
-export default function ExcelLesson({ topics, onDone }: { topics: LessonTopic[]; onDone: () => void }) {
-  const [set] = useState(() => makeTaskSet(makeRng(randomSeed())));
+export default function ExcelLesson({ content, onDone }: { content: LessonContent; onDone: () => void }) {
+  const { topics } = content;
+  const [set] = useState(() => content.makeSet(makeRng(randomSeed())));
   // Every topic: first "Alamin" (task null), then one step per task to try.
   const steps = useMemo<Step[]>(
     () => topics.flatMap((t, i) => [{ topic: i, task: null }, ...t.tasks.map((task) => ({ topic: i, task }))]),
@@ -96,8 +97,7 @@ export default function ExcelLesson({ topics, onDone }: { topics: LessonTopic[];
   function onCellClick(p: Pos, shift: boolean) {
     if (demo === 'playing') return;
     mouseRef.current = true;
-    const base = sheet.editing ? pressKey(sheet, { key: 'Enter' }) : sheet;
-    update({ ...base, active: p, anchor: shift ? base.anchor : p, editing: null });
+    update(clickCell(sheet, p, shift));
   }
 
   function onCellDoubleClick(p: Pos) {
@@ -176,6 +176,7 @@ export default function ExcelLesson({ topics, onDone }: { topics: LessonTopic[];
             <div className="min-w-0 max-w-3xl">
               <div className="text-sm font-bold text-brand-700">Subukan</div>
               <p className="text-lg font-bold text-stone-900">{task.text}</p>
+              {task.record && <TaskRecord record={task.record} />}
               <div role="status" className="mt-1 min-h-[1.75rem] text-stone-800">
                 {done ? (
                   <span className="font-semibold text-green-800">
@@ -237,7 +238,7 @@ export default function ExcelLesson({ topics, onDone }: { topics: LessonTopic[];
 
       <ExcelSheetView
         sheet={sheet}
-        columnWidths={COLUMN_WIDTHS}
+        columnWidths={content.columnWidths}
         onKey={onKey}
         onEditChange={(v) => setSheet(typeInCell(sheet, v))}
         onCellClick={onCellClick}

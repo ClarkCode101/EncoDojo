@@ -23,7 +23,7 @@ import { formatClock } from '../../lib/useCountdown';
 import { copyKphOf } from '../copy/scoreCopy';
 import { DOC_INFO } from '../encoding/documents';
 import { docTypeFromCode } from '../encoding/scoreEncoding';
-import { LESSONS, passedLessons } from '../excel/lessons';
+import { passedLessons, readyLessons } from '../excel/lessons';
 import {
   bestMetric,
   currentStreak,
@@ -160,7 +160,7 @@ export default function DashboardPage() {
   const encodingLatest = num(latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy'));
   const qcLatest = num(latestMetric(withFinishedItems, 'qc', 'decisionAccuracy'));
   const excelRounds = sessions.filter((s) => s.type === 'excel').length;
-  const excelLessons = LESSONS.filter((l) => l.ready).length;
+  const excelLessons = readyLessons().length;
   const excelPassed = passedLessons(sessions).size;
 
   const today = now.toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' });

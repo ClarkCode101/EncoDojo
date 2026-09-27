@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { makeRng } from '../../lib/random';
 import type { Session } from '../../lib/storage';
 import { LESSON_1 } from './lesson1';
-import { passedLessons } from './lessons';
+import { LESSON_2 } from './lesson2';
+import { LESSONS, passedLessons } from './lessons';
 import { buildExcelSession, scoreExcel, type TaskResult } from './scoreExcel';
 import { isTypingKey, type Sheet } from './sheet';
 import {
@@ -15,6 +16,7 @@ import {
   startTask,
   type ExcelTask,
 } from './tasks';
+import { HEADERS_2, TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
 function solve(s: Sheet, task: ExcelTask): { sheet: Sheet; keys: number } {
@@ -68,6 +70,37 @@ describe('Excel tasks', () => {
       expect(new Set(quiz.tasks.map((t) => t.id)).size).toBe(QUIZ_TASKS);
       expect(quiz.tasks.some((t) => t.id === 'goto')).toBe(false);
       runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+});
+
+describe('Excel Aralin 2 tasks', () => {
+  it('the sheet has a Status column with blank stretches; every task kind has a label', () => {
+    const set = makeTaskSet2(makeRng(1));
+    expect(set.sheet.cells[0].slice(0, 6)).toEqual(HEADERS_2);
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_2).sort());
+    expect(LESSON_2.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_2).sort());
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const set = makeTaskSet2(makeRng(seed));
+      runAll(set.sheet, LESSON_2.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const quiz = makeQuiz2(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('every ready lesson has content for all its topics', () => {
+    for (const l of LESSONS.filter((x) => x.content)) {
+      const set = l.content!.makeSet(makeRng(3));
+      for (const id of l.content!.topics.flatMap((t) => t.tasks)) expect(set.tasks[id], `${l.level}: ${id}`).toBeDefined();
     }
   });
 });

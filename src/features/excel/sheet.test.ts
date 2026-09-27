@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   cellName,
+  clickCell,
   colLetter,
   ctrlJump,
   lastUsed,
   makeSheet,
   pressKey,
   selectionName,
+  todayText,
   typeInCell,
   type KeyPress,
   type Sheet,
@@ -166,5 +168,86 @@ describe('editing', () => {
     const s = fresh();
     expect(pressKey(s, { key: 'Shift' })).toBe(s);
     expect(pressKey(s, { key: 'q', ctrl: true })).toBe(s);
+  });
+});
+
+describe('data entry (Aralin 2)', () => {
+  const blank = () =>
+    makeSheet(
+      [
+        ['Name', 'Branch', 'Status'],
+        ['Juan', 'Lipa', 'Paid'],
+      ],
+      8,
+      4,
+    );
+
+  it('Tab, Tab, Enter: saves each cell and goes back to where the Tabs started (next row)', () => {
+    let s = press(blank(), 'ArrowDown', 'ArrowDown'); // A3 (empty row)
+    s = press(typeInCell(press(s, 'M'), 'Maria'), 'Tab');
+    s = press(typeInCell(press(s, 'C'), 'Cebu'), 'Tab');
+    s = press(typeInCell(press(s, 'U'), 'Unpaid'), 'Enter');
+    expect(s.cells[2].slice(0, 3)).toEqual(['Maria', 'Cebu', 'Unpaid']);
+    expect(at(s)).toBe('A4');
+    // An arrow in between forgets the start column.
+    s = press(s, 'Tab', 'ArrowRight', 'Enter');
+    expect(at(s)).toBe('C5');
+  });
+
+  it('Ctrl+D on one cell copies the cell above', () => {
+    const s = press(blank(), 'ArrowDown', 'ArrowDown', 'ArrowRight', ctrl('d'));
+    expect(s.cells[2][1]).toBe('Lipa');
+    expect(press(blank(), ctrl('d')).cells[0][0]).toBe('Name'); // row 1 has nothing above: no change
+  });
+
+  it('Ctrl+D on a selection copies its top row down', () => {
+    const s = press(
+      blank(),
+      'ArrowDown',
+      'ArrowRight',
+      shift('ArrowDown'),
+      shift('ArrowDown'),
+      shift('ArrowRight'),
+      ctrl('d'),
+    );
+    expect(s.cells.slice(1, 4).map((r) => r.slice(1, 3))).toEqual([
+      ['Lipa', 'Paid'],
+      ['Lipa', 'Paid'],
+      ['Lipa', 'Paid'],
+    ]);
+    expect(press(s, ctrl('z')).cells[2][1]).toBe(''); // one undo step
+  });
+
+  it('typing keeps the selection; Ctrl+Enter puts the value in every selected cell', () => {
+    let s = press(
+      blank(),
+      'ArrowDown',
+      'ArrowDown',
+      'ArrowRight',
+      'ArrowRight',
+      shift('ArrowDown'),
+      shift('ArrowDown'),
+    );
+    s = typeInCell(press(s, 'P'), 'Paid');
+    expect(selectionName(s)).toBe('C3:C5');
+    s = press(s, ctrl('Enter'));
+    expect(s.cells.slice(2, 5).map((r) => r[2])).toEqual(['Paid', 'Paid', 'Paid']);
+    expect(s.editing).toBeNull();
+    expect(selectionName(s)).toBe('C3:C5');
+  });
+
+  it("Ctrl+; types today's date (mm/dd/yyyy); Enter saves it", () => {
+    let s = press(blank(), 'ArrowDown', 'ArrowDown', ctrl(';'));
+    expect(s.editing?.value).toBe(todayText());
+    s = press(s, 'Enter');
+    expect(s.cells[2][0]).toBe(todayText());
+    expect(todayText(new Date(2026, 8, 7))).toBe('09/07/2026');
+  });
+
+  it('clicking a cell ends the edit and forgets the Tab start', () => {
+    let s = press(typeInCell(press(blank(), 'X'), 'Xyz'), 'Tab');
+    s = clickCell(press(s, 'Q'), { r: 5, c: 3 });
+    expect(s.cells[0].slice(0, 2)).toEqual(['Xyz', 'Q']);
+    expect(at(press(s, 'Enter'))).toBe('D7');
   });
 });

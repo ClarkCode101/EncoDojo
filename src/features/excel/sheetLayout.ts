@@ -6,3 +6,6 @@ export const COLUMN_WIDTHS = [
   'w-32 min-w-[8rem]',
   'w-28 min-w-[7rem]',
 ];
+
+/** Aralin 2 adds a Status column (F). */
+export const COLUMN_WIDTHS_2 = [...COLUMN_WIDTHS, 'w-36 min-w-[9rem]'];

@@ -6,18 +6,56 @@
  * A lesson is "pasado" when any saved round of it reached the targets. It can
  * always be done again (no lesson is ever locked or "finished for good").
  */
-import type { Session } from '../../lib/storage';
+import type { Rng } from '../../lib/random';
 import { display } from '../../lib/scoring';
+import type { Session } from '../../lib/storage';
 import { JOB_READY_EXCEL } from '../../lib/targets';
+import { LESSON_1, type LessonTopic } from './lesson1';
+import { LESSON_2 } from './lesson2';
+import type { Sheet } from './sheet';
+import { COLUMN_WIDTHS, COLUMN_WIDTHS_2 } from './sheetLayout';
+import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
+import { TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
 
-export type Lesson = { level: number; title: string; ready: boolean };
+/** What a ready lesson needs: its topics, its sheet + tasks, its quiz, and how to show it. */
+export type LessonContent = {
+  topics: LessonTopic[];
+  /** A sheet with one task of every kind the topics use. */
+  makeSet: (rng: Rng) => { sheet: Sheet; tasks: Record<string, ExcelTask> };
+  /** The Pagsusulit: a new sheet and its tasks. */
+  makeQuiz: (rng: Rng) => { sheet: Sheet; tasks: ExcelTask[] };
+  columnWidths: string[];
+  /** Short names of the task kinds (results table). */
+  labels: Record<string, string>;
+};
 
+export type Lesson = { level: number; title: string; content: LessonContent | null };
+
+/** The lessons, in the suggested order (never locked). `content: null` = parating pa. */
 export const LESSONS: Lesson[] = [
-  { level: 1, title: 'Navigation at shortcuts', ready: true },
-  { level: 2, title: 'Formatting', ready: false },
-  { level: 3, title: 'Sort, filter, find & replace', ready: false },
-  { level: 4, title: 'Formulas (SUM, IF, VLOOKUP)', ready: false },
+  {
+    level: 1,
+    title: 'Navigation at shortcuts',
+    content: { topics: LESSON_1, makeSet: makeTaskSet, makeQuiz, columnWidths: COLUMN_WIDTHS, labels: TASK_LABEL },
+  },
+  {
+    level: 2,
+    title: 'Pag-encode ng data',
+    content: {
+      topics: LESSON_2,
+      makeSet: makeTaskSet2,
+      makeQuiz: makeQuiz2,
+      columnWidths: COLUMN_WIDTHS_2,
+      labels: TASK_LABEL_2,
+    },
+  },
+  { level: 3, title: 'Formatting', content: null },
+  { level: 4, title: 'Sort, filter, find & replace', content: null },
+  { level: 5, title: 'Formulas (SUM, IF, VLOOKUP)', content: null },
 ];
+
+export const readyLessons = () => LESSONS.filter((l) => l.content !== null);
+export const lessonByLevel = (level: number): Lesson => LESSONS.find((l) => l.level === level) ?? LESSONS[0];
 
 /**
  * True when a saved Pagsusulit was passed (`metrics.passed`). The first,

@@ -6,16 +6,14 @@
  * 2. SUBUKAN: one task per listed task kind, with hints and "Ipakita kung paano".
  * Then the Pagsusulit (tasks.ts `makeQuiz`). No timer (learning track).
  */
-import type { TaskId } from './tasks';
-
 export type LessonTopic = {
   title: string;
   /** Short sentences, plain Taglish. */
   body: string[];
   /** The keys taught here, e.g. { keys: 'Ctrl + ↓', what: 'tumalon sa dulo ng data pababa' }. */
   keys: { keys: string; what: string }[];
-  /** The tasks to try, in order. */
-  tasks: TaskId[];
+  /** The task kinds to try, in order (ids from that lesson's tasks file). */
+  tasks: string[];
 };
 
 export const LESSON_1: LessonTopic[] = [

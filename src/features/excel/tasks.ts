@@ -52,7 +52,8 @@ export type TaskId = keyof typeof TASK_LABEL;
 export type SolutionStep = { press: KeyPress } | { type: string };
 
 export type ExcelTask = {
-  id: TaskId;
+  /** The task kind (Aralin 1: a TaskId; other lessons have their own). */
+  id: string;
   /** What to do, in Taglish (cell names in English, like Excel). */
   text: string;
   /** The shortcut, e.g. "Ctrl + ↓". */
@@ -68,6 +69,8 @@ export type ExcelTask = {
   check: (s: Sheet) => boolean;
   /** At most this many command keys = "gamit ang shortcut". */
   maxKeys: number;
+  /** A record to type, shown as a small table under the task (e.g. a new row: Ref No., Customer, ...). */
+  record?: { label: string; value: string }[];
 };
 
 /** A sheet and one task of every kind, all on that sheet. */

@@ -19,6 +19,7 @@ import {
 /** Keys the edit box passes to the sheet (the rest type text). */
 function editKeyForSheet(e: KeyboardEvent, mode: 'enter' | 'edit'): boolean {
   if (['Enter', 'Tab', 'Escape', 'F2'].includes(e.key)) return true;
+  if ((e.ctrlKey || e.metaKey) && e.key === ';') return true; // today's date
   return mode === 'enter' && e.key.startsWith('Arrow');
 }
 
@@ -148,6 +149,8 @@ export default function ExcelSheetView({
                             if (editKeyForSheet(e, sheet.editing!.mode)) {
                               e.preventDefault();
                               onKey(toKeyPress(e));
+                            } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+                              e.preventDefault(); // not the browser's "bookmark this page"
                             }
                           }}
                           onFocus={(e) => {

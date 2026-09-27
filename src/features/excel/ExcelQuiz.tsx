@@ -15,15 +15,24 @@ import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
 import { buildExcelSession, type TaskResult } from './scoreExcel';
-import { isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
-import { COLUMN_WIDTHS } from './sheetLayout';
-import { QUIZ_TASKS, makeQuiz, startTask } from './tasks';
+import { clickCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
+import type { LessonContent } from './lessons';
+import { QUIZ_TASKS, startTask } from './tasks';
+import TaskRecord from './TaskRecord';
 import TipKeys from './TipKeys';
 
 type Feedback = { n: number; text: ReactNode; good: boolean } | null;
 
-export default function ExcelQuiz({ level, onFinish }: { level: number; onFinish: (session: Session) => void }) {
-  const [quiz] = useState(() => makeQuiz(makeRng(randomSeed())));
+export default function ExcelQuiz({
+  level,
+  content,
+  onFinish,
+}: {
+  level: number;
+  content: LessonContent;
+  onFinish: (session: Session) => void;
+}) {
+  const [quiz] = useState(() => content.makeQuiz(makeRng(randomSeed())));
   const [sheet, setSheet] = useState<Sheet>(() => startTask(quiz.sheet, quiz.tasks[0]));
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -101,8 +110,7 @@ export default function ExcelQuiz({ level, onFinish }: { level: number; onFinish
 
   function onCellClick(p: Pos, shift: boolean) {
     mouseRef.current = true;
-    const base = sheet.editing ? pressKey(sheet, { key: 'Enter' }) : sheet;
-    update({ ...base, active: p, anchor: shift ? base.anchor : p, editing: null });
+    update(clickCell(sheet, p, shift));
   }
 
   function onCellDoubleClick(p: Pos) {
@@ -119,6 +127,7 @@ export default function ExcelQuiz({ level, onFinish }: { level: number; onFinish
               Tanong {index + 1} sa {QUIZ_TASKS}
             </div>
             <p className="text-lg font-bold text-stone-900">{task.text}</p>
+            {task.record && <TaskRecord record={task.record} />}
           </div>
           <Button variant="secondary" onClick={() => endTask(sheet, false)}>
             Laktawan
@@ -135,7 +144,7 @@ export default function ExcelQuiz({ level, onFinish }: { level: number; onFinish
 
       <ExcelSheetView
         sheet={sheet}
-        columnWidths={COLUMN_WIDTHS}
+        columnWidths={content.columnWidths}
         onKey={onKey}
         onEditChange={(v) => setSheet(typeInCell(sheet, v))}
         onCellClick={onCellClick}

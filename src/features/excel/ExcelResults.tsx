@@ -3,11 +3,20 @@ import { ExcelIcon } from '../../components/icons';
 import { Button, PageHeader, Section, StatBadge } from '../../components/ui';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { formatClock } from '../../lib/useCountdown';
-import { QUIZ_PASS, TASK_LABEL } from './tasks';
+import { lessonByLevel } from './lessons';
+import { QUIZ_PASS } from './tasks';
 import TipKeys from './TipKeys';
 
 /** The tasks that were not done, or done the long way (with the shortcut to use next time). */
-export function ExcelMistakesCard({ mistakes, nested = false }: { mistakes: SessionMistake[]; nested?: boolean }) {
+export function ExcelMistakesCard({
+  mistakes,
+  labels,
+  nested = false,
+}: {
+  mistakes: SessionMistake[];
+  labels: Record<string, string>;
+  nested?: boolean;
+}) {
   return (
     <Section title={`Mga dapat pang sanayin (${mistakes.length})`} small={nested}>
       {mistakes.length === 0 ? (
@@ -25,7 +34,7 @@ export function ExcelMistakesCard({ mistakes, nested = false }: { mistakes: Sess
             {mistakes.map((m, i) => (
               <tr key={i} className="border-t border-stone-200 align-top">
                 <td className="py-2 pr-4 text-stone-800">
-                  <span className="text-stone-500">#{m.index}</span> {TASK_LABEL[m.field ?? ''] ?? m.field}
+                  <span className="text-stone-500">#{m.index}</span> {labels[m.field ?? ''] ?? m.field}
                 </td>
                 <td
                   className={
@@ -48,26 +57,25 @@ export function ExcelMistakesCard({ mistakes, nested = false }: { mistakes: Sess
 
 export default function ExcelResults({
   session,
-  lessonTitle,
   onRetryQuiz,
   onLesson,
   onList,
 }: {
   session: Session;
-  lessonTitle: string;
   onRetryQuiz: () => void;
   onLesson: () => void;
   onList: () => void;
 }) {
   const m = session.metrics;
   const passed = m.passed === 1;
+  const lesson = lessonByLevel(m.level ?? 1);
 
   return (
     <div>
       <PageHeader
         icon={<ExcelIcon className="h-8 w-8" />}
         title="Resulta ng Pagsusulit"
-        description={`Excel, Aralin ${m.level ?? 1}: ${lessonTitle}`}
+        description={`Excel, Aralin ${lesson.level}: ${lesson.title}`}
       />
 
       <ResultSummary
@@ -117,7 +125,7 @@ export default function ExcelResults({
         </div>
       </Section>
 
-      <ExcelMistakesCard mistakes={session.mistakes} />
+      <ExcelMistakesCard mistakes={session.mistakes} labels={lesson.content?.labels ?? {}} />
     </div>
   );
 }

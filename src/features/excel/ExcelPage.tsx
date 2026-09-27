@@ -19,20 +19,16 @@ import { saveSession, useAppData } from '../../lib/useAppData';
 import ExcelLesson from './ExcelLesson';
 import ExcelQuiz from './ExcelQuiz';
 import ExcelResults from './ExcelResults';
-import { LESSON_1 } from './lesson1';
-import { LESSONS, passedLessons } from './lessons';
+import { LESSONS, lessonByLevel, passedLessons } from './lessons';
 import { QUIZ_PASS, QUIZ_TASKS } from './tasks';
 
+/** Every screen except the list belongs to one lesson (`level`). */
 type Screen =
   | { name: 'list' }
-  | { name: 'lesson' }
-  | { name: 'lessonDone' }
-  | { name: 'quiz' }
+  | { name: 'lesson'; level: number }
+  | { name: 'lessonDone'; level: number }
+  | { name: 'quiz'; level: number }
   | { name: 'result'; session: Session };
-
-/** Only lesson 1 is ready for now. */
-const LEVEL = 1;
-const TITLE = LESSONS[0].title;
 
 /** The small header of the lesson and quiz screens. */
 function Header({ title, onBack }: { title: string; onBack: () => void }) {
@@ -61,18 +57,25 @@ export default function ExcelPage() {
   };
 
   if (screen.name === 'lesson' || screen.name === 'quiz') {
+    const lesson = lessonByLevel(screen.level);
+    if (!lesson.content) return null;
     return (
       <PracticeFrame>
         <Header
-          title={screen.name === 'lesson' ? `Aralin ${LEVEL}: ${TITLE}` : `Pagsusulit: ${TITLE}`}
+          title={screen.name === 'lesson' ? `Aralin ${lesson.level}: ${lesson.title}` : `Pagsusulit: ${lesson.title}`}
           onBack={() => go({ name: 'list' })}
         />
         {screen.name === 'lesson' ? (
-          <ExcelLesson key={attempt} topics={LESSON_1} onDone={() => go({ name: 'lessonDone' })} />
+          <ExcelLesson
+            key={attempt}
+            content={lesson.content}
+            onDone={() => go({ name: 'lessonDone', level: lesson.level })}
+          />
         ) : (
           <ExcelQuiz
             key={attempt}
-            level={LEVEL}
+            level={lesson.level}
+            content={lesson.content}
             onFinish={(session) => {
               // A learning result is always saved (it can be deleted from the list on Home).
               saveSession(session);
@@ -85,34 +88,35 @@ export default function ExcelPage() {
   }
 
   if (screen.name === 'result') {
+    const level = screen.session.metrics.level ?? 1;
     return (
       <ExcelResults
         session={screen.session}
-        lessonTitle={TITLE}
-        onRetryQuiz={() => go({ name: 'quiz' })}
-        onLesson={() => go({ name: 'lesson' })}
+        onRetryQuiz={() => go({ name: 'quiz', level })}
+        onLesson={() => go({ name: 'lesson', level })}
         onList={() => go({ name: 'list' })}
       />
     );
   }
 
   if (screen.name === 'lessonDone') {
+    const lesson = lessonByLevel(screen.level);
     return (
       <div>
         <PageHeader
           icon={<ExcelIcon className="h-8 w-8" />}
           title="Tapos na ang aralin!"
-          description={`Aralin ${LEVEL}: ${TITLE}`}
+          description={`Aralin ${lesson.level}: ${lesson.title}`}
         />
         <ResultSummary
           ready
           headline="Nasubukan mo na ang lahat ng shortcut sa araling ito."
           message={`Handa ka na ba sa pagsusulit? ${QUIZ_TASKS} tanong, walang hint at walang oras. Pasado kapag ${QUIZ_PASS} ang tama.`}
         >
-          <Button size="lg" autoFocus onClick={() => go({ name: 'quiz' })}>
+          <Button size="lg" autoFocus onClick={() => go({ name: 'quiz', level: lesson.level })}>
             Simulan ang pagsusulit <ArrowRightIcon className="h-5 w-5" />
           </Button>
-          <Button size="lg" variant="secondary" onClick={() => go({ name: 'lesson' })}>
+          <Button size="lg" variant="secondary" onClick={() => go({ name: 'lesson', level: lesson.level })}>
             Ulitin ang aralin
           </Button>
         </ResultSummary>
@@ -131,20 +135,29 @@ export default function ExcelPage() {
 
       <Section title="Mga aralin" className="mb-10">
         <ol className="-mt-4">
-          {LESSONS.map((l) => (
-            <LessonRow key={l.level} n={l.level} title={l.title} ready={l.ready} passed={passed.has(l.level)}>
-              {l.ready && (
-                <>
-                  <Button autoFocus={l.level === LEVEL} onClick={() => go({ name: 'lesson' })}>
-                    {passed.has(l.level) ? 'Ulitin ang aralin' : 'Simulan ang aralin'}
-                  </Button>
-                  <Button variant="secondary" onClick={() => go({ name: 'quiz' })}>
-                    Pagsusulit
-                  </Button>
-                </>
-              )}
-            </LessonRow>
-          ))}
+          {LESSONS.map((l) => {
+            const ready = l.content !== null;
+            // The first lesson not passed yet gets the focus (Enter starts it).
+            const suggested = l.level === (LESSONS.find((x) => x.content && !passed.has(x.level)) ?? LESSONS[0]).level;
+            return (
+              <LessonRow key={l.level} n={l.level} title={l.title} ready={ready} passed={passed.has(l.level)}>
+                {ready && (
+                  <>
+                    <Button
+                      autoFocus={suggested}
+                      variant={suggested ? 'primary' : 'secondary'}
+                      onClick={() => go({ name: 'lesson', level: l.level })}
+                    >
+                      {passed.has(l.level) ? 'Ulitin ang aralin' : 'Simulan ang aralin'}
+                    </Button>
+                    <Button variant="secondary" onClick={() => go({ name: 'quiz', level: l.level })}>
+                      Pagsusulit
+                    </Button>
+                  </>
+                )}
+              </LessonRow>
+            );
+          })}
         </ol>
       </Section>
 

@@ -10,6 +10,10 @@
  *   F2 edits the current one, Esc cancels, Delete clears the selection.
  * - Ctrl+C / Ctrl+V copy and paste (inside the sheet), Ctrl+Z undoes,
  *   Ctrl+A selects the data.
+ * - Data entry (Aralin 2): after Tab, Enter goes back to the column where the
+ *   Tabs started (next row); Ctrl+D fills down; Ctrl+Enter puts what you typed
+ *   in every selected cell; Ctrl+; types today's date. Typing keeps the
+ *   selection (so Ctrl+Enter can fill it).
  * No formulas yet: those come later with HyperFormula (owner approval needed).
  */
 
@@ -30,6 +34,8 @@ export type Sheet = {
   clipboard: string[][] | null;
   /** Earlier versions of `cells` for Ctrl+Z (newest last). */
   undo: string[][][];
+  /** The column where a row of Tabs started (Enter goes back to it), or null. */
+  tabStartCol: number | null;
 };
 
 /** A key press as the sheet sees it. */
@@ -44,7 +50,15 @@ const MAX_UNDO = 50;
 
 export function makeSheet(data: string[][], rows: number, cols: number): Sheet {
   const cells = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => data[r]?.[c] ?? ''));
-  return { cells, active: { r: 0, c: 0 }, anchor: { r: 0, c: 0 }, editing: null, clipboard: null, undo: [] };
+  return {
+    cells,
+    active: { r: 0, c: 0 },
+    anchor: { r: 0, c: 0 },
+    editing: null,
+    clipboard: null,
+    undo: [],
+    tabStartCol: null,
+  };
 }
 
 // ---------- names ----------
@@ -145,7 +159,31 @@ const ARROWS: Record<string, [number, number]> = {
 /** Move the active cell; with `extend` the anchor stays (the selection grows). */
 function moveTo(s: Sheet, p: Pos, extend = false): Sheet {
   const active = clampPos(s, p);
-  return { ...s, active, anchor: extend ? s.anchor : active };
+  return { ...s, active, anchor: extend ? s.anchor : active, tabStartCol: null };
+}
+
+/** A click on a cell (Shift+click extends the selection). Ends an edit first, like Excel. */
+export function clickCell(s: Sheet, p: Pos, extend = false): Sheet {
+  const base = s.editing ? commit(s) : s;
+  return moveTo(base, p, extend);
+}
+
+/** Tab / Shift+Tab: move sideways and remember where the row of Tabs started. */
+function tab(s: Sheet, back: boolean): Sheet {
+  const start = s.tabStartCol ?? s.active.c;
+  return { ...moveTo(s, { r: s.active.r, c: s.active.c + (back ? -1 : 1) }), tabStartCol: start };
+}
+
+/** Enter / Shift+Enter: down (or up); after Tabs, back to the column where they started. */
+function enter(s: Sheet, up: boolean): Sheet {
+  return moveTo(s, { r: s.active.r + (up ? -1 : 1), c: s.tabStartCol ?? s.active.c });
+}
+
+/** Today as mm/dd/yyyy (Ctrl+;), the date format used everywhere in EncoDojo. */
+export function todayText(now: Date = new Date()): string {
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${mm}/${dd}/${now.getFullYear()}`;
 }
 
 // ---------- editing ----------
@@ -208,6 +246,33 @@ function paste(s: Sheet): Sheet {
   return { ...withCells(s, cells), active: { r: r0, c: c0 }, anchor: end };
 }
 
+/**
+ * Ctrl+D (fill down): one cell = copy the cell above it; a selection = copy
+ * the top row of the selection into the rows below it.
+ */
+function fillDown(s: Sheet): Sheet {
+  const { top, left, bottom, right } = selectionRange(s);
+  const source = top === bottom ? top - 1 : top;
+  if (source < 0) return s;
+  const from = top === bottom ? top : top + 1;
+  const cells = s.cells.map((row, r) =>
+    r >= from && r <= bottom ? row.map((v, c) => (c >= left && c <= right ? s.cells[source][c] : v)) : row,
+  );
+  const changed = cells.some((row, r) => row.some((v, c) => v !== s.cells[r][c]));
+  return changed ? withCells(s, cells) : s;
+}
+
+/** Ctrl+Enter while typing: the value goes into EVERY selected cell; the selection stays. */
+function fillSelection(s: Sheet): Sheet {
+  if (!s.editing) return s;
+  const value = s.editing.value;
+  const { top, left, bottom, right } = selectionRange(s);
+  const cells = s.cells.map((row, r) =>
+    r >= top && r <= bottom ? row.map((v, c) => (c >= left && c <= right ? value : v)) : row,
+  );
+  return { ...withCells(s, cells), editing: null };
+}
+
 function undo(s: Sheet): Sheet {
   if (s.undo.length === 0) return s;
   return { ...s, cells: s.undo[s.undo.length - 1], undo: s.undo.slice(0, -1), editing: null };
@@ -232,8 +297,10 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   // ----- while editing a cell -----
   if (s.editing) {
     if (key === 'Escape') return { ...s, editing: null };
-    if (key === 'Enter') return moveTo(commit(s), { r: s.active.r + (shift ? -1 : 1), c: s.active.c });
-    if (key === 'Tab') return moveTo(commit(s), { r: s.active.r, c: s.active.c + (shift ? -1 : 1) });
+    if (key === 'Enter' && ctrl) return fillSelection(s);
+    if (key === ';' && ctrl) return { ...s, editing: { ...s.editing, value: s.editing.value + todayText() } };
+    if (key === 'Enter') return enter(commit(s), shift);
+    if (key === 'Tab') return tab(commit(s), shift);
     if (s.editing.mode === 'enter' && ARROWS[key]) {
       const [dr, dc] = ARROWS[key];
       return moveTo(commit(s), { r: s.active.r + dr, c: s.active.c + dc });
@@ -250,8 +317,8 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   }
   if (key === 'Home') return moveTo(s, ctrl ? { r: 0, c: 0 } : { r: s.active.r, c: 0 }, shift);
   if (key === 'End' && ctrl) return moveTo(s, lastUsed(s), shift);
-  if (key === 'Enter') return moveTo(s, { r: s.active.r + (shift ? -1 : 1), c: s.active.c });
-  if (key === 'Tab') return moveTo(s, { r: s.active.r, c: s.active.c + (shift ? -1 : 1) });
+  if (key === 'Enter' && !ctrl) return enter(s, shift);
+  if (key === 'Tab') return tab(s, shift);
   if (key === 'F2')
     return { ...s, anchor: s.active, editing: { value: s.cells[s.active.r][s.active.c], mode: 'edit' } };
   if (key === 'Delete') return clearSelection(s);
@@ -265,11 +332,14 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
     if (lower === 'v') return paste(s);
     if (lower === 'z') return undo(s);
     if (lower === 'a') return { ...s, anchor: { r: 0, c: 0 }, active: lastUsed(s) };
+    if (lower === 'd') return fillDown(s);
+    // Ctrl+; = today's date, ready to be saved with Enter (Excel's Enter mode).
+    if (key === ';') return { ...s, editing: { value: todayText(), mode: 'enter' } };
     return s;
   }
   if (isTypingKey(k)) {
-    // Typing replaces the cell's value (Excel's Enter mode).
-    return { ...s, anchor: s.active, editing: { value: key, mode: 'enter' } };
+    // Typing replaces the cell's value (Excel's Enter mode). The selection stays, for Ctrl+Enter.
+    return { ...s, editing: { value: key, mode: 'enter' } };
   }
   return s;
 }
