@@ -13,7 +13,6 @@ import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/P
 import { Button, SegmentedPicker } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
-import { startingDuration } from '../../lib/practiceDefaults';
 import { removeSession, saveSession, useAppData } from '../../lib/useAppData';
 import { PLAIN_TEXT_LEVEL, buildPassage, charsNeeded } from './buildPassage';
 import { compareWithHistory, type TypingComparison } from './compare';
@@ -35,9 +34,7 @@ export default function TypingPage() {
   const data = useAppData();
   const { sound } = data.settings;
 
-  const [seconds, setSeconds] = useState<Seconds>(() =>
-    startingDuration(DURATIONS, 60, data.settings.defaultLength),
-  );
+  const [seconds, setSeconds] = useState<Seconds>(60);
   const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [seed, setSeed] = useState(randomSeed);
   const [attempt, setAttempt] = useState(0); // changes to start a fresh run

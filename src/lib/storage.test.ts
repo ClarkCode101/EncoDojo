@@ -86,14 +86,12 @@ describe('optional settings', () => {
           bigSource: true,
           reduceMotion: false,
           soundCorrect: true,
-          defaultLength: 'short',
         }),
       ),
     ).toBe(true);
     expect(isAppData(withSettings({ lastBackupAt: 'kahapon' }))).toBe(false);
     expect(isAppData(withSettings({ dailyGoal: 7 }))).toBe(false);
     expect(isAppData(withSettings({ englishOnly: 'yes' }))).toBe(false);
-    expect(isAppData(withSettings({ defaultLength: 'medium' }))).toBe(false);
   });
 });
 

@@ -7,20 +7,10 @@ import { useRef, useState, type ReactNode } from 'react';
 import { SettingsIcon } from '../../components/icons';
 import { Button, HelpTip, Notice, PageHeader, Section, SegmentedPicker, Toggle } from '../../components/ui';
 import { backupStatusText, needsBackup } from '../../lib/reminders';
-import {
-  DAILY_GOALS,
-  defaultData,
-  exportFileName,
-  exportJson,
-  parseImport,
-  type AppData,
-  type DefaultLength,
-} from '../../lib/storage';
+import { DAILY_GOALS, defaultData, exportFileName, exportJson, parseImport, type AppData } from '../../lib/storage';
 import { replaceAppData, updateAppData, updateSettings, useAppData } from '../../lib/useAppData';
 
 type DailyGoal = (typeof DAILY_GOALS)[number];
-/** "usual" = no preference saved (each page's own choice). */
-const LENGTHS: readonly (DefaultLength | 'usual')[] = ['usual', 'short', 'long'];
 
 /** One ruled Settings row: the name and one short line on the left, the control on the right. */
 function SettingRow({
@@ -209,19 +199,6 @@ export default function SettingsPage() {
 
       <Section title="Practice at tunog" className="mb-12">
         <div className="-mt-4">
-          <SettingRow
-            label="Unang pipiliing tagal"
-            description="Ang naka-pili na pagbukas ng practice. Puwede pa ring palitan doon."
-          >
-            <SegmentedPicker
-              label="Unang pipiliing tagal"
-              hideLabel
-              options={LENGTHS}
-              value={s.defaultLength ?? 'usual'}
-              format={(l) => (l === 'usual' ? 'Karaniwan' : l === 'short' ? 'Maikli' : 'Mahaba')}
-              onChange={(l) => updateSettings({ defaultLength: l === 'usual' ? undefined : l })}
-            />
-          </SettingRow>
           <SettingRow
             label="English lang"
             description='Walang Tagalog sa tabi ng mga label sa loob ng test (hal. "Name" lang), gaya sa totoong hiring test.'

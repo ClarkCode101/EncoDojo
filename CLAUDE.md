@@ -129,7 +129,6 @@ type AppData = {
     bigSource?: boolean;                     // "Mas malaking babasahin": html.big-source (passage, numpad number, records/documents)
     reduceMotion?: boolean;                  // "Bawasan ang galaw": html.reduce-motion; Sensei doesn't pop up by himself
     soundCorrect?: boolean;                  // "Tunog kapag tama": correctTick() in lib/sound.ts
-    defaultLength?: 'short' | 'long';        // "Unang pipiliing tagal" (lib/practiceDefaults.ts)
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
   // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).
@@ -189,7 +188,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Recent sessions list (last 10).
 
 ### 5. Settings (`features/settings`)
-- Layout (owner's request 2026-09-27, "hindi nakaka-overwhelm"): ruled `SettingRow`s (name + one line left, control right: `Toggle` On/Off or `SegmentedPicker hideLabel`) in groups: Ikaw (name, daily goal) · Pagbasa at itsura (larger text, bigger reading text, less motion, Sensei) · Practice at tunog (starting duration, English lang, mistake sound, correct sound) · Backup (status "Huling backup: ...", amber reminder at 5+ sessions and 7+ days) · "Burahin ang lahat ng data" folded in a `<details>`.
+- Layout (owner's request 2026-09-27, "hindi nakaka-overwhelm"): ruled `SettingRow`s (name + one line left, control right: `Toggle` On/Off or `SegmentedPicker hideLabel`) in groups: Ikaw (name, daily goal) · Pagbasa at itsura (larger text, bigger reading text, less motion, Sensei) · Practice at tunog (English lang, mistake sound, correct sound; a "starting duration" option was built and removed on purpose, owner's decision) · Backup (status "Huling backup: ...", amber reminder at 5+ sessions and 7+ days) · "Burahin ang lahat ng data" folded in a `<details>`.
 - Display name, larger text, sound. (No live-stats toggle: practice always shows live stats; the Assessment never does.) (Difficulty is not in Settings: Numpad Practice has a Halo-halo / Pang-baguhan picker; Typing has no level picker while it is plain text only.)
 - Export progress, Import progress, Reset all data (with typed confirmation).
 

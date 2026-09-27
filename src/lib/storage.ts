@@ -88,11 +88,7 @@ export type Settings = {
   reduceMotion?: boolean;
   /** true = a soft sound when an entry or record is correct. */
   soundCorrect?: boolean;
-  /** The duration chosen first on every practice page. Missing = each page's usual choice. */
-  defaultLength?: DefaultLength;
 };
-
-export type DefaultLength = 'short' | 'long';
 
 /** The daily goals the user can pick in Settings (0 = none). */
 export const DAILY_GOALS = [0, 3, 5, 10] as const;
@@ -144,8 +140,7 @@ function hasValidExtraSettings(settings: Record<string, unknown>): boolean {
     (settings.dailyGoal === undefined || (DAILY_GOALS as readonly unknown[]).includes(settings.dailyGoal)) &&
     isBooleanOrMissing(settings.bigSource) &&
     isBooleanOrMissing(settings.reduceMotion) &&
-    isBooleanOrMissing(settings.soundCorrect) &&
-    (settings.defaultLength === undefined || settings.defaultLength === 'short' || settings.defaultLength === 'long')
+    isBooleanOrMissing(settings.soundCorrect)
   );
 }
 
