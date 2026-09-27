@@ -29,13 +29,7 @@ const COLUMN_WIDTHS = [
 /** "Ctrl + Shift + ↓" -> keys drawn as keyboard keys, the words in between as text. */
 export function TipKeys({ tip }: { tip: string }) {
   const parts = tip.split(/(Ctrl|Shift|Home|End|Delete|Enter|F2|Tab|↓|↑|→|←|(?<=\+ )[A-Z])/);
-  return (
-    <span>
-      {parts.map((p, i) =>
-        i % 2 === 1 ? <Kbd key={i}>{p}</Kbd> : <Fragment key={i}>{p}</Fragment>,
-      )}
-    </span>
-  );
+  return <span>{parts.map((p, i) => (i % 2 === 1 ? <Kbd key={i}>{p}</Kbd> : <Fragment key={i}>{p}</Fragment>))}</span>;
 }
 
 type Feedback = { n: number; text: ReactNode; good: boolean } | null;

@@ -38,8 +38,13 @@ const groups: NavGroup[] = [
       { to: '/copy', label: 'Copy Test', icon: <CopyIcon /> },
       { to: '/encoding', label: 'Document Encoding', icon: <DocumentIcon /> },
       { to: '/qc', label: 'QC Check', icon: <QcIcon /> },
-      { to: '/excel', label: 'Excel Practice', icon: <ExcelIcon /> },
     ],
+  },
+  {
+    // Learning tracks (owner's decision, 2026-09-27): Microsoft Office skills, one lesson at a time.
+    // Not part of the Assessment or the belt. Word and others will be added here later.
+    heading: 'Matuto',
+    items: [{ to: '/excel', label: 'Excel', icon: <ExcelIcon /> }],
   },
   { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },
 ];
@@ -50,7 +55,7 @@ const navClass =
   ({ isActive }: { isActive: boolean }) => {
     return (
       // Short screens (<900px tall): a little less space, so the sidebar never needs its own scrollbar.
-      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(min-height:721px)_and_(max-height:900px)]:py-1.5 [@media(max-height:720px)]:py-1 ' +
+      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(min-height:721px)_and_(max-height:900px)]:py-1.5 [@media(min-height:681px)_and_(max-height:720px)]:py-1 [@media(max-height:680px)]:py-0.5 ' +
       (collapsed ? 'md:justify-center md:px-0 ' : '') +
       'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
       (isActive

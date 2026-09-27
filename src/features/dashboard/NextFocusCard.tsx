@@ -10,7 +10,6 @@ import {
   AssessmentIcon,
   CopyIcon,
   DocumentIcon,
-  ExcelIcon,
   KeyboardIcon,
   NumpadIcon,
   QcIcon,
@@ -25,7 +24,6 @@ const ICONS: Record<NextFocus['skill'], (className: string) => ReactNode> = {
   copy: (c) => <CopyIcon className={c} />,
   encoding: (c) => <DocumentIcon className={c} />,
   qc: (c) => <QcIcon className={c} />,
-  excel: (c) => <ExcelIcon className={c} />,
   assessment: (c) => <AssessmentIcon className={c} />,
 };
 
@@ -67,13 +65,13 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
       </div>
       {/*
         Hidden on short screens so the sidebar never needs to scroll (the hover title has it).
-        With a daily goal there is one more line, so the reason already hides below 900px
+        With a daily goal there is one more line, so the reason already hides below 1000px
         (the goal line is the one kept there).
       */}
       <p
         className={
           'mt-1 text-sm leading-snug text-brand-100 [@media(max-height:900px)]:hidden ' +
-          (goal ? '[@media(max-height:900px)]:hidden' : '')
+          (goal ? '[@media(max-height:1000px)]:hidden' : '')
         }
       >
         {f.reason}

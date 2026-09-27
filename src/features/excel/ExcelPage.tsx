@@ -1,30 +1,25 @@
 /**
- * Excel Practice, TRAINING mode (Phase 3). Round 1: "Navigation at shortcuts":
- * 8 short tasks on an Excel-like sheet in 3 minutes. Two screens
+ * Excel, a LEARNING TRACK ("Matuto", owner's decision 2026-09-27): lessons one
+ * at a time, not part of the Assessment or the belt. Lesson 1 "Navigation at
+ * shortcuts": 8 short tasks on an Excel-like sheet in 3 minutes. Two screens
  * (components/Practice.tsx): setup, then the round. Results after.
- * Later rounds (formatting, sort/filter, formulas...) will be added here.
+ * Later lessons (formatting, sort/filter, formulas...) are listed in lessons.ts.
  */
 import { useState } from 'react';
 import { ExcelIcon } from '../../components/icons';
 import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import type { Session } from '../../lib/storage';
-import { removeSession, saveSession } from '../../lib/useAppData';
+import { removeSession, saveSession, useAppData } from '../../lib/useAppData';
 import ExcelResults from './ExcelResults';
 import ExcelRunner from './ExcelRunner';
+import { LESSONS, passedLessons } from './lessons';
 
 const SECONDS = 180;
-
-/** Shown on the setup screen: what is here now and what comes next. */
-const TOPICS = [
-  { title: 'Navigation at shortcuts', ready: true },
-  { title: 'Formatting', ready: false },
-  { title: 'Sort, filter, find & replace', ready: false },
-  { title: 'Formulas (SUM, IF, VLOOKUP)', ready: false },
-];
 
 type Result = { session: Session; finishedEarly: boolean };
 
 export default function ExcelPage() {
+  const passed = passedLessons(useAppData().sessions);
   const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
   const [attempt, setAttempt] = useState(0); // changes to start a fresh round
   const [running, setRunning] = useState(false);
@@ -70,16 +65,22 @@ export default function ExcelPage() {
     return (
       <PracticeSetup
         icon={<ExcelIcon className="h-8 w-8" />}
-        title="Excel Practice"
-        description="Sanayin ang mga shortcut na ginagamit araw-araw sa Excel at Google Sheets."
-        chooseTitle="Ang aaralin"
+        title="Excel"
+        description="Matuto ng Excel, isang aralin sa isang pagkakataon. Para matuto lang ito, hindi kasama sa Assessment."
+        chooseTitle="Mga aralin"
         choices={
           <ol className="space-y-1 text-lg">
-            {TOPICS.map((t) => (
-              <li key={t.title} className={t.ready ? 'font-semibold text-stone-900' : 'text-stone-500'}>
-                {t.title}
-                {t.ready ? (
-                  <span className="ml-2 text-base font-normal text-stone-600">8 task, 3 minuto</span>
+            {LESSONS.map((l) => (
+              <li key={l.level} className={l.ready ? 'text-stone-900' : 'text-stone-500'}>
+                <span className="mr-2 text-stone-500">Aralin {l.level}:</span>
+                <span className={l.ready ? 'font-semibold' : ''}>{l.title}</span>
+                {l.ready ? (
+                  <span className="ml-2 text-base text-stone-600">
+                    8 task, 3 minuto
+                    {passed.has(l.level) && (
+                      <span className="ml-2 font-semibold text-green-800">Pasado na, puwedeng ulitin</span>
+                    )}
+                  </span>
                 ) : (
                   <span className="ml-2 text-sm">parating pa</span>
                 )}
@@ -101,8 +102,8 @@ export default function ExcelPage() {
     <PracticeFrame>
       <PracticeHeader
         icon={<ExcelIcon className="h-6 w-6" />}
-        title="Excel Practice"
-        summary="Navigation at shortcuts, 3 minuto"
+        title="Excel"
+        summary="Aralin 1: Navigation at shortcuts, 3 minuto"
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />

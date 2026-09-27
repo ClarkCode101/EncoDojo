@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeRng } from '../../lib/random';
+import type { Session } from '../../lib/storage';
+import { passedLessons } from './lessons';
 import { buildExcelSession, scoreExcel, type TaskResult } from './scoreExcel';
 import { pressKey, typeInCell, type KeyPress, type Sheet } from './sheet';
 import { HEADERS, TASKS_PER_ROUND, makeRound, startTask, type ExcelTask } from './tasks';
@@ -121,5 +123,22 @@ describe('scoreExcel', () => {
     const s = buildExcelSession([r({})], 8, 30, 180);
     expect(s.type).toBe('excel');
     expect(s.metrics).toMatchObject({ seconds: 180, level: 1, tasksDone: 1 });
+  });
+});
+
+describe('lessons', () => {
+  const round = (taskAccuracy: number, shortcutRate: number, level?: number): Session => ({
+    id: `x${taskAccuracy}${shortcutRate}`,
+    type: 'excel',
+    startedAt: '2026-09-27T01:00:00.000Z',
+    durationSec: 60,
+    metrics: { taskAccuracy, shortcutRate, ...(level ? { level } : {}) },
+    mistakes: [],
+  });
+
+  it('a lesson is passed once any round reached both targets', () => {
+    expect(passedLessons([round(100, 50)]).has(1)).toBe(false);
+    expect(passedLessons([round(100, 50), round(87.5, 75)]).has(1)).toBe(true);
+    expect(passedLessons([round(100, 100, 2)]).has(2)).toBe(true);
   });
 });

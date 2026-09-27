@@ -63,13 +63,10 @@ describe('nextFocus', () => {
     });
   });
 
-  it('Excel comes after QC; its weak part is the shortcut or the tasks done', () => {
-    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc()]).skill).toBe('excel');
+  it('Excel is a learning track: never suggested, and a weak Excel round does not change the advice', () => {
     const noShortcuts = s('excel', { taskAccuracy: 100, shortcutRate: 50, tasksDone: 8 });
-    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc(), noShortcuts])).toMatchObject({
-      skill: 'excel',
-      reason: '50% pa lang ang gamit ang shortcut (target: 75%).',
-    });
+    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc()]).skill).toBe('assessment');
+    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc(), noShortcuts]).skill).toBe('assessment');
   });
 
   it('everything at target: the Assessment', () => {

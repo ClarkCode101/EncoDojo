@@ -6,7 +6,15 @@
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, CopyIcon, DocumentIcon, ExcelIcon, KeyboardIcon, NumpadIcon, QcIcon } from '../../components/icons';
+import {
+  ArrowRightIcon,
+  CopyIcon,
+  DocumentIcon,
+  ExcelIcon,
+  KeyboardIcon,
+  NumpadIcon,
+  QcIcon,
+} from '../../components/icons';
 import { ConfirmButton, HelpTip, Section } from '../../components/ui';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
@@ -15,6 +23,7 @@ import { formatClock } from '../../lib/useCountdown';
 import { copyKphOf } from '../copy/scoreCopy';
 import { DOC_INFO } from '../encoding/documents';
 import { docTypeFromCode } from '../encoding/scoreEncoding';
+import { LESSONS, passedLessons } from '../excel/lessons';
 import {
   bestMetric,
   currentStreak,
@@ -68,7 +77,7 @@ const typeLabel: Record<Session['type'], string> = {
   copy: 'Copy Test',
   encoding: 'Document Encoding',
   qc: 'QC Check',
-  excel: 'Excel Practice',
+  excel: 'Excel (aralin)',
   assessment: 'Assessment',
 };
 
@@ -121,7 +130,7 @@ function EnsayoRow({
   );
 }
 
-const comingSoon = ['Excel formulas (SUM, IF, VLOOKUP)', 'Progress Reports'];
+const comingSoon = ['Excel formulas (SUM, IF, VLOOKUP)', 'Word', 'Progress Reports'];
 
 export default function DashboardPage() {
   const { profile, sessions } = useAppData();
@@ -148,7 +157,9 @@ export default function DashboardPage() {
   const copyLatest = num(latestMetric(withFinishedItems, 'copy', 'fieldAccuracy'));
   const encodingLatest = num(latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy'));
   const qcLatest = num(latestMetric(withFinishedItems, 'qc', 'decisionAccuracy'));
-  const excelLatest = num(latestMetric(sessions, 'excel', 'shortcutRate'));
+  const excelRounds = sessions.filter((s) => s.type === 'excel').length;
+  const excelLessons = LESSONS.filter((l) => l.ready).length;
+  const excelPassed = passedLessons(sessions).size;
 
   const today = now.toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' });
   const hello = `${greeting(now)}${profile.displayName ? `, ${profile.displayName}` : ''}.`;
@@ -168,7 +179,7 @@ export default function DashboardPage() {
         <p className="mt-2 text-lg text-stone-700">{subline}</p>
       </header>
 
-      {/* Ensayo: the six practices, then the Assessment */}
+      {/* Ensayo: the five practices, then the Assessment */}
       <Section
         title="Ensayo"
         aside={
@@ -187,10 +198,6 @@ export default function DashboardPage() {
               </li>
               <li>
                 <strong>QC Check:</strong> ilang porsyento ng check mo ang tama sa huli mong practice.
-              </li>
-              <li>
-                <strong>Excel Practice:</strong> ilang porsyento ng task ang nagawa mo gamit ang shortcut sa huli mong
-                round.
               </li>
             </ul>
           </HelpTip>
@@ -242,20 +249,11 @@ export default function DashboardPage() {
             value={qcLatest}
             unit="% tama"
           />
-          <EnsayoRow
-            n="06"
-            to="/excel"
-            icon={<ExcelIcon className="h-5 w-5" />}
-            title="Excel Practice"
-            text="Mga shortcut sa spreadsheet"
-            value={excelLatest}
-            unit="% shortcut"
-          />
         </ol>
 
-        {/* 07: the Assessment, set apart like a seal on the page */}
+        {/* 06: the Assessment, set apart like a seal on the page */}
         <div className="mt-6 grid grid-cols-[2.5rem_1fr] items-center gap-x-4 gap-y-3 border-l-4 border-belt-400 bg-belt-50 py-5 pl-3 pr-5 sm:grid-cols-[2.5rem_1fr_auto]">
-          <span className="font-display text-2xl font-semibold tabular-nums text-belt-600">07</span>
+          <span className="font-display text-2xl font-semibold tabular-nums text-belt-600">06</span>
           <div>
             <div className="text-lg font-bold text-stone-900">Assessment</div>
             <p className="text-stone-700">
@@ -273,6 +271,38 @@ export default function DashboardPage() {
             {latestAssessment ? 'Subukan ulit' : 'Simulan'} <ArrowRightIcon className="h-5 w-5" />
           </Link>
         </div>
+      </Section>
+
+      {/* Learning tracks: Microsoft Office skills (not part of the Assessment or the belt). */}
+      <Section title="Matuto">
+        <ul className="-mt-4">
+          <li className="border-b border-stone-300">
+            <Link
+              to="/excel"
+              className="group grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 py-4 pl-1 pr-2 transition-colors hover:bg-white/70 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:grid-cols-[2.5rem_1fr_auto_1.5rem]"
+            >
+              <span className="text-brand-700">
+                <ExcelIcon className="h-7 w-7" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-lg font-bold text-stone-900">Excel</span>
+                <span className="block text-stone-600">Mga shortcut, formatting at formulas, paisa-isang aralin</span>
+              </span>
+              <span className="text-right text-sm text-stone-600">
+                {excelRounds === 0 ? (
+                  'hindi pa nasisimulan'
+                ) : (
+                  <>
+                    <span className="font-display text-2xl font-bold tabular-nums text-stone-900">{excelPassed}</span>{' '}
+                    sa {excelLessons} aralin ang pasado
+                  </>
+                )}
+              </span>
+              <ArrowRightIcon className="hidden h-5 w-5 text-stone-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-700 motion-reduce:transition-none sm:block" />
+            </Link>
+          </li>
+        </ul>
+        <p className="mt-2 text-sm text-stone-600">Para matuto lang ito. Hindi kasama sa Assessment at sa belt.</p>
       </Section>
 
       {/* The log */}

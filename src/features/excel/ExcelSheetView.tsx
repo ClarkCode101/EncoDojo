@@ -5,7 +5,16 @@
  * they do); while a cell is being edited a real text box sits in it.
  */
 import { useEffect, useRef, type KeyboardEvent } from 'react';
-import { cellName, colLetter, isSelected, selectionRange, toKeyPress, type KeyPress, type Pos, type Sheet } from './sheet';
+import {
+  cellName,
+  colLetter,
+  isSelected,
+  selectionRange,
+  toKeyPress,
+  type KeyPress,
+  type Pos,
+  type Sheet,
+} from './sheet';
 
 /** Keys the edit box passes to the sheet (the rest type text). */
 function editKeyForSheet(e: KeyboardEvent, mode: 'enter' | 'edit'): boolean {
@@ -122,7 +131,9 @@ export default function ExcelSheetView({
                       onDoubleClick={() => onCellDoubleClick({ r, c })}
                       className={
                         'relative h-8 max-w-0 cursor-cell truncate whitespace-nowrap border-b border-r border-stone-200 px-2 scroll-ml-12 scroll-mt-[3.75rem] ' +
-                        (r === 0 ? 'sticky top-7 z-[15] border-b-stone-400 font-sans font-bold text-stone-900 ' : 'text-stone-900 ') +
+                        (r === 0
+                          ? 'sticky top-7 z-[15] border-b-stone-400 font-sans font-bold text-stone-900 '
+                          : 'text-stone-900 ') +
                         (selected && !active ? 'bg-green-50 ' : r === 0 ? 'bg-stone-50 ' : '') +
                         (active ? 'outline outline-2 -outline-offset-2 outline-green-700' : '')
                       }

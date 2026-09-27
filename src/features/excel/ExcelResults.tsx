@@ -30,7 +30,11 @@ export function ExcelMistakesCard({ mistakes, nested = false }: { mistakes: Sess
                 <td className="py-2 pr-4 text-stone-800">
                   <span className="text-stone-500">#{m.index}</span> {TASK_LABEL[m.field ?? ''] ?? m.field}
                 </td>
-                <td className={'py-2 pr-4 font-semibold ' + (m.typed === 'Hindi natapos' ? 'text-red-700' : 'text-amber-800')}>
+                <td
+                  className={
+                    'py-2 pr-4 font-semibold ' + (m.typed === 'Hindi natapos' ? 'text-red-700' : 'text-amber-800')
+                  }
+                >
                   {m.typed}
                 </td>
                 <td className="py-2 text-stone-900">
@@ -65,12 +69,17 @@ export default function ExcelResults({
   const ready = tasksPct >= t.taskAccuracy && shortcutPct >= t.shortcutRate;
 
   let message = `Ang target ay ${t.taskAccuracy}% na natapos at ${t.shortcutRate}% gamit ang shortcut. Ulitin ang round hanggang masanay ang mga daliri.`;
-  if (ready) message = 'Pasado ka sa target. Kabisado mo na ang mga pangunahing shortcut.';
-  else if (m.tasksDone === m.tasksTotal) message = `Natapos mo lahat. Ngayon, sanayin ang shortcut: ${t.shortcutRate}% ang target.`;
+  if (ready) message = 'Pasado ka sa araling ito. Kabisado mo na ang mga pangunahing shortcut.';
+  else if (m.tasksDone === m.tasksTotal)
+    message = `Natapos mo lahat. Ngayon, sanayin ang shortcut: ${t.shortcutRate}% ang target.`;
 
   return (
     <div>
-      <PageHeader icon={<ExcelIcon className="h-8 w-8" />} title="Resulta ng Excel Practice" description="Navigation at shortcuts" />
+      <PageHeader
+        icon={<ExcelIcon className="h-8 w-8" />}
+        title="Resulta ng Excel"
+        description="Aralin 1: Navigation at shortcuts"
+      />
 
       <ResultSummary
         ready={ready}
@@ -91,8 +100,18 @@ export default function ExcelResults({
 
       <Section title="Mga detalye" className="mb-10">
         <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-          <StatBadge label="Natapos na task" value={`${tasksPct}%`} hint={`${m.tasksDone} sa ${m.tasksTotal}`} help={HELP.excelTasks} />
-          <StatBadge label="Gamit ang shortcut" value={`${shortcutPct}%`} hint={`${m.tasksShortcut} sa ${m.tasksTotal}`} help={HELP.excelShortcut} />
+          <StatBadge
+            label="Natapos na task"
+            value={`${tasksPct}%`}
+            hint={`${m.tasksDone} sa ${m.tasksTotal}`}
+            help={HELP.excelTasks}
+          />
+          <StatBadge
+            label="Gamit ang shortcut"
+            value={`${shortcutPct}%`}
+            hint={`${m.tasksShortcut} sa ${m.tasksTotal}`}
+            help={HELP.excelShortcut}
+          />
           <StatBadge label="Karaniwang bilis" value={`${display(m.avgSeconds)} seg`} hint="bawat natapos na task" />
           <StatBadge label="Tagal" value={formatClock(session.durationSec)} />
         </div>
