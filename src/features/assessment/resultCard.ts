@@ -9,7 +9,7 @@
 import { beltStatus } from '../../lib/belts';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
-import { assessmentChecks, hasCopyPart, hasEncodingPart, type Check } from './evaluate';
+import { assessmentChecks, hasCopyPart, hasEncodingPart, hasQcPart, type Check } from './evaluate';
 
 export const CARD_WIDTH = 1080;
 export const CARD_HEIGHT = 1350;
@@ -19,7 +19,11 @@ export type ResultCardData = {
   ready: boolean;
   met: number;
   total: number;
-  parts: { title: string; passed: boolean; checks: { label: string; value: string; target: string; pass: boolean }[] }[];
+  parts: {
+    title: string;
+    passed: boolean;
+    checks: { label: string; value: string; target: string; pass: boolean }[];
+  }[];
   belt: { label: string; color: string };
 };
 
@@ -28,6 +32,7 @@ const TITLES: Record<Check['section'], string> = {
   numpad: 'Numpad',
   copy: 'Copy Test',
   encoding: 'Document Encoding',
+  qc: 'QC Check',
 };
 
 /**
@@ -37,8 +42,8 @@ const TITLES: Record<Check['section'], string> = {
 export function resultCardData(assessment: Session, sessions: Session[]): ResultCardData {
   const m = assessment.metrics;
   const checks = assessmentChecks(m);
-  const sections = (['typing', 'numpad', 'copy', 'encoding'] as Check['section'][]).filter(
-    (s) => (s !== 'copy' || hasCopyPart(m)) && (s !== 'encoding' || hasEncodingPart(m)),
+  const sections = (['typing', 'numpad', 'copy', 'encoding', 'qc'] as Check['section'][]).filter(
+    (s) => (s !== 'copy' || hasCopyPart(m)) && (s !== 'encoding' || hasEncodingPart(m)) && (s !== 'qc' || hasQcPart(m)),
   );
   const upToThen = sessions.filter((s) => s.startedAt <= assessment.startedAt && s.id !== assessment.id);
   const belt = beltStatus([...upToThen, assessment]).belt;
@@ -216,7 +221,9 @@ export function drawResultCard(ctx: CanvasRenderingContext2D, d: ResultCardData)
   ctx.font = `700 28px ${FONT}`;
   ctx.fillText('Scorecard', left, y + 20);
   y += 42;
-  const boxH = 128;
+  // Five parts (with QC) need a little less height per box to stay above the footer.
+  const boxH = d.parts.length > 4 ? 112 : 128;
+  const gap = d.parts.length > 4 ? 12 : 14;
   for (const part of d.parts) {
     ctx.fillStyle = C.white;
     roundRect(ctx, left, y, right - left, boxH, 20);
@@ -227,17 +234,17 @@ export function drawResultCard(ctx: CanvasRenderingContext2D, d: ResultCardData)
 
     ctx.fillStyle = C.ink;
     ctx.font = `800 34px ${FONT}`;
-    ctx.fillText(part.title, left + 32, y + 48);
+    ctx.fillText(part.title, left + 32, y + (boxH > 120 ? 48 : 42));
     ctx.textAlign = 'right';
     ctx.fillStyle = part.passed ? C.green : C.red;
     ctx.font = `700 28px ${FONT}`;
-    ctx.fillText(part.passed ? 'Pasado' : 'Hindi pa', right - 32, y + 48);
+    ctx.fillText(part.passed ? 'Pasado' : 'Hindi pa', right - 32, y + (boxH > 120 ? 48 : 42));
     ctx.textAlign = 'left';
 
     const colW = (right - left - 64) / 2;
     part.checks.forEach((c, i) => {
       const cx = left + 32 + i * colW;
-      const cy = y + 100;
+      const cy = y + boxH - 28;
       ctx.fillStyle = c.pass ? C.green : C.red;
       ctx.font = `800 32px ${FONT}`;
       ctx.fillText(c.pass ? '✓' : '✗', cx, cy);
@@ -250,7 +257,7 @@ export function drawResultCard(ctx: CanvasRenderingContext2D, d: ResultCardData)
       ctx.font = `500 24px ${FONT}`;
       ctx.fillText(` / ${c.target}  ${c.label}`, vx + vw, cy);
     });
-    y += boxH + 14;
+    y += boxH + gap;
   }
 
   // Footer: this is a practice result, not an official certificate

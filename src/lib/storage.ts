@@ -31,7 +31,7 @@ export type SessionMistake = {
   typed: string;
   index: number;
   /** Only in assessments: which part the mistake came from. */
-  section?: 'typing' | 'numpad' | 'copy' | 'encoding';
+  section?: 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc';
   /** Only in the Copy Test: which form field (e.g. "address"). */
   field?: string;
 };

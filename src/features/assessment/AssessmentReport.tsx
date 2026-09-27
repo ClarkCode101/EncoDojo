@@ -19,6 +19,7 @@ import {
   DownloadIcon,
   KeyboardIcon,
   NumpadIcon,
+  QcIcon,
   XIcon,
 } from '../../components/icons';
 import { Button, ButtonLink, PageHeader, Section, StatBadge } from '../../components/ui';
@@ -31,10 +32,11 @@ import { localDayKey } from '../dashboard/stats';
 import { CopyMistakesCard } from '../copy/CopyResults';
 import { ENCODING_FIELD_LABEL } from '../encoding/documents';
 import { NumpadMistakesCard } from '../numpad/NumpadResults';
+import { QcMistakesCard } from '../qc/QcResults';
 import { TypingMistakesCard } from '../typing/TypingResults';
 import { assessmentCommentsBySection } from './comments';
 import { downloadResultCard, resultCardData } from './resultCard';
-import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart, type Check } from './evaluate';
+import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart, hasQcPart, type Check } from './evaluate';
 
 /** Which part of the Assessment (typing, numpad, copy, encoding). */
 type PartKey = Check['section'];
@@ -74,6 +76,14 @@ const PARTS: Record<
     practice: 'Document Encoding',
     to: '/encoding',
     icon: (c) => <DocumentIcon className={c} />,
+  },
+  qc: {
+    number: 5,
+    title: 'QC Check',
+    short: 'QC Check',
+    practice: 'QC Check',
+    to: '/qc',
+    icon: (c) => <QcIcon className={c} />,
   },
 };
 
@@ -186,8 +196,8 @@ export default function AssessmentReport({
   const date = new Date(assessment.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
   // The parts this assessment has (older ones lack Copy Test / Document Encoding).
-  const sections = (['typing', 'numpad', 'copy', 'encoding'] as PartKey[]).filter(
-    (s) => (s !== 'copy' || hasCopyPart(m)) && (s !== 'encoding' || hasEncodingPart(m)),
+  const sections = (['typing', 'numpad', 'copy', 'encoding', 'qc'] as PartKey[]).filter(
+    (s) => (s !== 'copy' || hasCopyPart(m)) && (s !== 'encoding' || hasEncodingPart(m)) && (s !== 'qc' || hasQcPart(m)),
   );
   const checksOf = (s: PartKey) => checks.filter((c) => c.section === s);
   const passedPart = (s: PartKey) => checksOf(s).every((c) => c.pass);
@@ -398,6 +408,33 @@ export default function AssessmentReport({
                 title="Mga maling field"
                 nested
               />
+            </PartDetails>
+          )}
+
+          {/* Assessments from before QC Check don't have this part. */}
+          {hasQcPart(m) && (
+            <PartDetails section="qc" passed={passedPart('qc')} mistakeCount={mistakesOf('qc').length}>
+              <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+                <StatBadge
+                  label="Tamang check"
+                  value={`${display(m.qcDecisionAccuracy)}%`}
+                  hint={p && hasQcPart(p) ? change(m.qcDecisionAccuracy, p.qcDecisionAccuracy, '%') : undefined}
+                  help={HELP.qcAccuracy}
+                />
+                <StatBadge
+                  label="Bilis (bawat minuto)"
+                  value={display(m.qcPerMinute)}
+                  hint={p && hasQcPart(p) ? change(m.qcPerMinute, p.qcPerMinute) : 'record'}
+                  help={HELP.qcSpeed}
+                />
+                <StatBadge label="Hindi napansin" value={m.qcMissed} hint={`sa ${m.qcErrorsTotal} na mali`} />
+                <StatBadge
+                  label="Tama pero minarkahan"
+                  value={m.qcFalseAlarms}
+                  hint={`${m.qcRecords} record ang na-check`}
+                />
+              </div>
+              <QcMistakesCard mistakes={mistakesOf('qc')} nested />
             </PartDetails>
           )}
         </div>

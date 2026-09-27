@@ -1,5 +1,5 @@
 /**
- * Turns the parts of an Assessment (typing + numpad + copy + encoding) into one saved
+ * Turns the parts of an Assessment (typing + numpad + copy + encoding + QC) into one saved
  * result, and checks it against the job-ready targets.
  *
  * Everything the report needs is computed from the saved Session, so old
@@ -7,7 +7,7 @@
  */
 import { display } from '../../lib/scoring';
 import { makeId, type Session } from '../../lib/storage';
-import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_QC, JOB_READY_TYPING } from '../../lib/targets';
 import { copyKphOf } from '../copy/scoreCopy';
 import { MIXED_DIFFICULTY } from '../numpad/entries';
 
@@ -19,6 +19,8 @@ export const ASSESSMENT = {
   copySeconds: 120,
   /** A document takes 30-60 seconds; 3 minutes = about one of each document type. Always the Form layout. */
   encodingSeconds: 180,
+  /** A record takes 15-30 seconds to check, so the QC part gets 2 minutes (about 5-8 records). */
+  qcSeconds: 120,
   /** Same mix as the "Halo-halo" mode in Numpad Practice (long numbers, amounts, reference numbers). */
   numpadDifficulty: MIXED_DIFFICULTY,
 } as const;
@@ -27,7 +29,7 @@ export const ASSESSMENT = {
 const MAX_MISTAKES_PER_PART = 100;
 
 export type Check = {
-  section: 'typing' | 'numpad' | 'copy' | 'encoding';
+  section: 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc';
   label: string;
   value: number;
   target: number;
@@ -35,8 +37,14 @@ export type Check = {
   pass: boolean;
 };
 
-/** Combine the typing, numpad, copy, and encoding sessions into one 'assessment' session. */
-export function buildAssessmentSession(typing: Session, numpad: Session, copy: Session, encoding: Session): Session {
+/** Combine the typing, numpad, copy, encoding, and QC sessions into one 'assessment' session. */
+export function buildAssessmentSession(
+  typing: Session,
+  numpad: Session,
+  copy: Session,
+  encoding: Session,
+  qc: Session,
+): Session {
   const metrics: Record<string, number> = {
     typingNetWpm: typing.metrics.netWpm,
     typingGrossWpm: typing.metrics.grossWpm,
@@ -61,6 +69,15 @@ export function buildAssessmentSession(typing: Session, numpad: Session, copy: S
     encodingDocuments: encoding.metrics.documents,
     encodingCorrectFields: encoding.metrics.correctFields,
     encodingTotalFields: encoding.metrics.totalFields,
+    // QC: no records checked = 0% (scoreQc already says so).
+    qcDecisionAccuracy: qc.metrics.decisionAccuracy,
+    qcPerMinute: qc.metrics.perMinute,
+    qcRecords: qc.metrics.records,
+    qcCorrectRecords: qc.metrics.correctRecords,
+    qcErrorsTotal: qc.metrics.errorsTotal,
+    qcCaught: qc.metrics.caught,
+    qcMissed: qc.metrics.missed,
+    qcFalseAlarms: qc.metrics.falseAlarms,
   };
   const checks = assessmentChecks(metrics);
   metrics.targetsMet = checks.filter((c) => c.pass).length;
@@ -71,13 +88,14 @@ export function buildAssessmentSession(typing: Session, numpad: Session, copy: S
     id: makeId(),
     type: 'assessment',
     startedAt: typing.startedAt,
-    durationSec: typing.durationSec + numpad.durationSec + copy.durationSec + encoding.durationSec,
+    durationSec: typing.durationSec + numpad.durationSec + copy.durationSec + encoding.durationSec + qc.durationSec,
     metrics,
     mistakes: [
       ...typing.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'typing' as const })),
       ...numpad.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'numpad' as const })),
       ...copy.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'copy' as const })),
       ...encoding.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'encoding' as const })),
+      ...qc.mistakes.slice(0, MAX_MISTAKES_PER_PART).map((m) => ({ ...m, section: 'qc' as const })),
     ],
   };
 }
@@ -95,6 +113,11 @@ export function hasCopyPart(m: Record<string, number>): boolean {
 /** True when the assessment includes Document Encoding (older ones stopped at the Copy Test). */
 export function hasEncodingPart(m: Record<string, number>): boolean {
   return typeof m.encodingFieldAccuracy === 'number';
+}
+
+/** True when the assessment includes the QC part (older ones stopped at Document Encoding). */
+export function hasQcPart(m: Record<string, number>): boolean {
+  return typeof m.qcDecisionAccuracy === 'number';
 }
 
 /** Each job-ready target and whether it was met (using rounded values, like the screen). */
@@ -123,6 +146,12 @@ export function assessmentChecks(m: Record<string, number>): Check[] {
     checks.push(
       check('encoding', 'Tamang field', m.encodingFieldAccuracy, JOB_READY_ENCODING.fieldAccuracy, '%'),
       check('encoding', 'Bilis (KPH)', m.encodingKph, JOB_READY_ENCODING.kph),
+    );
+  }
+  if (hasQcPart(m)) {
+    checks.push(
+      check('qc', 'Tamang check', m.qcDecisionAccuracy, JOB_READY_QC.decisionAccuracy, '%'),
+      check('qc', 'Bilis (bawat minuto)', m.qcPerMinute, JOB_READY_QC.perMinute),
     );
   }
   return checks;

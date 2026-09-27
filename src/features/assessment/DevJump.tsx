@@ -21,9 +21,9 @@ import type { Session, SessionMistake } from '../../lib/storage';
 /** True only in the dev server (`npm run dev`); false in the built site. */
 export const DEV_TOOLS = import.meta.env.DEV;
 
-export type JumpTarget = 'typing' | 'break1' | 'numpad' | 'break2' | 'copy' | 'break3' | 'encoding';
+export type JumpTarget = 'typing' | 'break1' | 'numpad' | 'break2' | 'copy' | 'break3' | 'encoding' | 'break4' | 'qc';
 export type SamplePreset = 'low' | 'near' | 'ready';
-type PartType = 'typing' | 'numpad' | 'copy' | 'encoding';
+type PartType = 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc';
 
 // ---------- made-up parts ----------
 
@@ -38,6 +38,7 @@ export function blankPart(type: PartType): Session {
     numpad: { kph: 0, entryAccuracy: 0, entries: 0, correctEntries: 0 },
     copy: { kph: 0, netWpm: 0, fieldAccuracy: 0, records: 0, correctFields: 0, totalFields: 0 },
     encoding: { kph: 0, fieldAccuracy: 0, documents: 0, correctFields: 0, totalFields: 0 },
+    qc: { decisionAccuracy: 0, perMinute: 0, records: 0, correctRecords: 0, errorsTotal: 0, caught: 0, missed: 0, falseAlarms: 0 },
   };
   return part(type, zero[type]);
 }
@@ -63,7 +64,13 @@ const ENCODING_SLIPS: SessionMistake[] = [
   { expected: '03/02/2025', typed: '02/03/2025', index: 2, field: 'date' },
 ];
 
-/** Sample parts for a report preview: about 2/8, 6/8, or 8/8 targets. */
+const QC_SLIPS: SessionMistake[] = [
+  { expected: '(043) 000-4098', typed: '(043) 000-4089', index: 2, field: 'contactNo' },
+  { expected: 'Purok 8, Brgy. Centro, Paniqui, Tarlac', typed: 'Purok 8, Brgy Centro, Paniqui, Tarlac', index: 4, field: 'address' },
+  { expected: '06/09/1983', typed: '06/09/1983', index: 5, field: 'birthDate' },
+];
+
+/** Sample parts for a report preview: about 3/10, 7/10, or 10/10 targets. */
 export function samplePreset(preset: SamplePreset): Record<PartType, Session> {
   if (preset === 'low') {
     return {
@@ -71,6 +78,7 @@ export function samplePreset(preset: SamplePreset): Record<PartType, Session> {
       numpad: part('numpad', { kph: 5200, entryAccuracy: 95, entries: 20, correctEntries: 19 }, NUMPAD_SLIPS.slice(0, 1)),
       copy: part('copy', { kph: 4200, netWpm: 14, fieldAccuracy: 70, records: 2, correctFields: 7, totalFields: 10 }, COPY_SLIPS),
       encoding: part('encoding', { kph: 3100, fieldAccuracy: 60, documents: 1, correctFields: 3, totalFields: 5 }, ENCODING_SLIPS),
+      qc: part('qc', { decisionAccuracy: 84, perMinute: 2, records: 4, correctRecords: 1, errorsTotal: 5, caught: 3, missed: 2, falseAlarms: 1 }, QC_SLIPS),
     };
   }
   if (preset === 'near') {
@@ -79,6 +87,7 @@ export function samplePreset(preset: SamplePreset): Record<PartType, Session> {
       numpad: part('numpad', { kph: 8600, entryAccuracy: 97, entries: 30, correctEntries: 29 }, NUMPAD_SLIPS.slice(0, 1)),
       copy: part('copy', { kph: 8400, netWpm: 28, fieldAccuracy: 90, records: 4, correctFields: 18, totalFields: 20 }, COPY_SLIPS.slice(1)),
       encoding: part('encoding', { kph: 6500, fieldAccuracy: 87, documents: 3, correctFields: 13, totalFields: 15 }, ENCODING_SLIPS.slice(0, 2)),
+      qc: part('qc', { decisionAccuracy: 96, perMinute: 3.5, records: 7, correctRecords: 6, errorsTotal: 7, caught: 6, missed: 1, falseAlarms: 0 }, QC_SLIPS.slice(0, 1)),
     };
   }
   return {
@@ -86,6 +95,7 @@ export function samplePreset(preset: SamplePreset): Record<PartType, Session> {
     numpad: part('numpad', { kph: 10200, entryAccuracy: 100, entries: 36, correctEntries: 36 }),
     copy: part('copy', { kph: 9000, netWpm: 30, fieldAccuracy: 100, records: 5, correctFields: 25, totalFields: 25 }),
     encoding: part('encoding', { kph: 7000, fieldAccuracy: 100, documents: 4, correctFields: 20, totalFields: 20 }),
+    qc: part('qc', { decisionAccuracy: 100, perMinute: 4, records: 8, correctRecords: 8, errorsTotal: 8, caught: 8, missed: 0, falseAlarms: 0 }),
   };
 }
 
@@ -134,7 +144,7 @@ export function previewSessions(rank: BeltRank): Session[] {
     type: 'assessment',
     startedAt: `2026-09-${String(day).padStart(2, '0')}T08:00:00.000Z`,
     durationSec: 420,
-    metrics: { targetsMet: met, targetsTotal: 8, jobReady: met === 8 ? 1 : 0 },
+    metrics: { targetsMet: met, targetsTotal: 10, jobReady: met === 10 ? 1 : 0 },
     mistakes: [],
   });
   switch (rank) {
@@ -145,11 +155,11 @@ export function previewSessions(rank: BeltRank): Session[] {
     case 'orange':
       return [a(5, 10)];
     case 'green':
-      return [a(7, 10)];
-    case 'blue':
       return [a(8, 10)];
+    case 'blue':
+      return [a(10, 10)];
     case 'black':
-      return [a(8, 10), a(8, 12), a(8, 14)];
+      return [a(10, 10), a(10, 12), a(10, 14)];
   }
 }
 
@@ -167,12 +177,14 @@ const JUMPS: { to: JumpTarget; label: string }[] = [
   { to: 'copy', label: 'Bahagi 3' },
   { to: 'break3', label: 'Pahinga 3' },
   { to: 'encoding', label: 'Bahagi 4' },
+  { to: 'break4', label: 'Pahinga 4' },
+  { to: 'qc', label: 'Bahagi 5' },
 ];
 
 const REPORTS: { preset: SamplePreset; label: string }[] = [
-  { preset: 'low', label: 'Hindi pa (2/8)' },
-  { preset: 'near', label: 'Halos pasado (6/8)' },
-  { preset: 'ready', label: 'Job-ready (8/8)' },
+  { preset: 'low', label: 'Hindi pa (3/10)' },
+  { preset: 'near', label: 'Halos pasado (7/10)' },
+  { preset: 'ready', label: 'Job-ready (10/10)' },
 ];
 
 function Row({ label, children }: { label: string; children: ReactNode }) {

@@ -244,8 +244,8 @@ export default function DashboardPage() {
               {latestAssessment
                 ? latestAssessment.metrics.jobReady === 1
                   ? 'Job-ready ka na sa huli mong subok. Ulitin sa ibang araw para sa susunod na belt.'
-                  : `Huling subok: ${latestAssessment.metrics.targetsMet} sa ${latestAssessment.metrics.targetsTotal} na target. Mga 8 hanggang 10 minuto.`
-                : 'Ang apat na skill sa iisang exam. Mga 8 hanggang 10 minuto.'}
+                  : `Huling subok: ${latestAssessment.metrics.targetsMet} sa ${latestAssessment.metrics.targetsTotal} na target. Mga 10 hanggang 12 minuto.`
+                : 'Lahat ng skill sa iisang exam. Mga 10 hanggang 12 minuto.'}
             </p>
           </div>
           <Link

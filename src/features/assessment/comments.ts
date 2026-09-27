@@ -5,9 +5,10 @@
  */
 import { display, normalizeEntry } from '../../lib/scoring';
 import type { Session, SessionMistake } from '../../lib/storage';
-import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_QC, JOB_READY_TYPING } from '../../lib/targets';
 import { mistakeKind } from '../../lib/alignTyping';
-import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart } from './evaluate';
+import { isFalseAlarm } from '../qc/scoreQc';
+import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart, hasQcPart } from './evaluate';
 
 /** A tip only counts as a "pattern" when it happens at least this often... */
 const MIN_PATTERN_COUNT = 3;
@@ -245,6 +246,54 @@ function encodingComments(m: Record<string, number>, mistakes: SessionMistake[])
   return out;
 }
 
+/** Where QC mistakes hide most, in plain words (the field of the missed mistake). */
+const QC_FIELD_TIPS: Record<string, string> = {
+  name: 'Madalas mong hindi napapansin ang mali sa Name. Tingnan ang bawat letra, pati tuldok ng "Ma." at "Jr."',
+  birthDate: 'Madalas mong hindi napapansin ang mali sa petsa. Ihambing ang bawat digit, lalo na ang baligtad (06 at 60).',
+  address: 'Madalas mong hindi napapansin ang mali sa Address. Mahaba ito, kaya basahin nang dahan-dahan, pati "Brgy." at "St."',
+  contactNo: 'Madalas mong hindi napapansin ang mali sa Contact No. Ihambing ang huling 4 na digit, doon madalas ang baligtad.',
+  idNo: 'Madalas mong hindi napapansin ang mali sa ID No. Ihambing ang taon at ang 5 digit nang paisa-isa.',
+};
+
+function qcComments(m: Record<string, number>, mistakes: SessionMistake[]): string[] {
+  const t = JOB_READY_QC;
+  if (m.qcRecords === 0) {
+    return ['QC Check: walang na-check na record. Tandaan: pindutin ang Enter o "Submit" pagkatapos mag-check.'];
+  }
+  const acc = display(m.qcDecisionAccuracy);
+  const speed = display(m.qcPerMinute);
+  const accOk = acc >= t.decisionAccuracy;
+  const speedOk = speed >= t.perMinute;
+  const out: string[] = [];
+
+  if (accOk && speedOk) {
+    out.push(`QC Check: pasado ka sa tamang check at bilis (${acc}%, ${speed} record bawat minuto). Ang galing!`);
+  } else if (!accOk && m.qcMissed >= m.qcFalseAlarms) {
+    out.push(
+      `QC Check: ${acc}% ang tamang check mo (target: ${t.decisionAccuracy}%). May ${m.qcMissed} mali na hindi mo napansin. ` +
+        'Ihambing ang bawat field letra por letra bago pindutin ang Enter.',
+    );
+  } else if (!accOk) {
+    out.push(
+      `QC Check: ${acc}% ang tamang check mo (target: ${t.decisionAccuracy}%). May ${m.qcFalseAlarms} field na tama pero minarkahan mong mali. ` +
+        'Markahan lang kapag sigurado kang magkaiba talaga.',
+    );
+  } else {
+    out.push(
+      `QC Check: tama ang check mo (${acc}%). Bilisan pa nang kaunti: ${speed} record bawat minuto, target ${t.perMinute}.`,
+    );
+  }
+
+  const missed = mistakes.filter((x) => !isFalseAlarm(x));
+  const counts = new Map<string, number>();
+  for (const x of missed) if (x.field) counts.set(x.field, (counts.get(x.field) ?? 0) + 1);
+  const [topField, topCount] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] ?? ['', 0];
+  if (topCount >= 2 && topCount / missed.length >= MIN_PATTERN_SHARE && QC_FIELD_TIPS[topField]) {
+    out.push(QC_FIELD_TIPS[topField]);
+  }
+  return out;
+}
+
 export type CommentsBySection = {
   overall: string;
   typing: string[];
@@ -252,6 +301,7 @@ export type CommentsBySection = {
   /** Empty for older assessments without that part. */
   copy: string[];
   encoding: string[];
+  qc: string[];
 };
 
 /** The feedback grouped by part (the report shows only the parts that need work). */
@@ -264,11 +314,12 @@ export function assessmentCommentsBySection(assessment: Session): CommentsBySect
     numpad: numpadComments(m, of('numpad')),
     copy: hasCopyPart(m) ? copyComments(m, of('copy')) : [],
     encoding: hasEncodingPart(m) ? encodingComments(m, of('encoding')) : [],
+    qc: hasQcPart(m) ? qcComments(m, of('qc')) : [],
   };
 }
 
 /** All feedback for one saved assessment, most important first. */
 export function assessmentComments(assessment: Session): string[] {
   const c = assessmentCommentsBySection(assessment);
-  return [c.overall, ...c.typing, ...c.numpad, ...c.copy, ...c.encoding];
+  return [c.overall, ...c.typing, ...c.numpad, ...c.copy, ...c.encoding, ...c.qc];
 }

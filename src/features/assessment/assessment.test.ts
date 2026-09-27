@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Session, SessionMistake } from '../../lib/storage';
 import { assessmentComments } from './comments';
-import { assessmentChecks, buildAssessmentSession, hasCopyPart, hasEncodingPart, previousAssessment } from './evaluate';
+import {
+  assessmentChecks,
+  buildAssessmentSession,
+  hasCopyPart,
+  hasEncodingPart,
+  hasQcPart,
+  previousAssessment,
+} from './evaluate';
 
 function typingSession(metrics: Partial<Record<string, number>>, mistakes: SessionMistake[] = []): Session {
   return {
@@ -47,21 +54,43 @@ function encodingSession(metrics: Partial<Record<string, number>>, mistakes: Ses
   };
 }
 
-/** All four parts; the copy and encoding parts default to passing ones. */
+function qcSession(metrics: Partial<Record<string, number>>, mistakes: SessionMistake[] = []): Session {
+  return {
+    id: 'q1',
+    type: 'qc',
+    startedAt: '2026-09-26T08:11:00.000Z',
+    durationSec: 120,
+    metrics: {
+      decisionAccuracy: 100,
+      perMinute: 4,
+      records: 8,
+      correctRecords: 8,
+      errorsTotal: 8,
+      caught: 8,
+      missed: 0,
+      falseAlarms: 0,
+      ...metrics,
+    } as Record<string, number>,
+    mistakes,
+  };
+}
+
+/** All five parts; the copy, encoding and QC parts default to passing ones. */
 function build(
   typing: Session,
   numpad: Session,
   copy: Session = copySession({}),
   encoding: Session = encodingSession({}),
+  qc: Session = qcSession({}),
 ) {
-  return buildAssessmentSession(typing, numpad, copy, encoding);
+  return buildAssessmentSession(typing, numpad, copy, encoding, qc);
 }
 
 describe('buildAssessmentSession', () => {
-  it('combines all four parts and marks job-ready when all targets pass', () => {
+  it('combines all five parts and marks job-ready when all targets pass', () => {
     const a = build(typingSession({}), numpadSession({}));
     expect(a.type).toBe('assessment');
-    expect(a.durationSec).toBe(420);
+    expect(a.durationSec).toBe(540);
     expect(a.metrics).toMatchObject({
       typingNetWpm: 45,
       numpadKph: 9000,
@@ -71,8 +100,11 @@ describe('buildAssessmentSession', () => {
       encodingFieldAccuracy: 100,
       encodingKph: 7000,
       encodingDocuments: 3,
-      targetsMet: 8,
-      targetsTotal: 8,
+      qcDecisionAccuracy: 100,
+      qcPerMinute: 4,
+      qcRecords: 8,
+      targetsMet: 10,
+      targetsTotal: 10,
       jobReady: 1,
     });
   });
@@ -85,7 +117,7 @@ describe('buildAssessmentSession', () => {
 
   it('encoding below 6,000 KPH fails only that target', () => {
     const a = build(typingSession({}), numpadSession({}), copySession({}), encodingSession({ kph: 5400 }));
-    expect(a.metrics).toMatchObject({ targetsMet: 7, targetsTotal: 8, jobReady: 0 });
+    expect(a.metrics).toMatchObject({ targetsMet: 9, targetsTotal: 10, jobReady: 0 });
   });
 
   it('a copy part with no records counts as 0% (not "100% of nothing")', () => {
@@ -96,7 +128,7 @@ describe('buildAssessmentSession', () => {
 
   it('is not job-ready when any target fails', () => {
     const a = build(typingSession({ accuracy: 90 }), numpadSession({}));
-    expect(a.metrics).toMatchObject({ targetsMet: 7, jobReady: 0 });
+    expect(a.metrics).toMatchObject({ targetsMet: 9, jobReady: 0 });
   });
 
   it('tags each mistake with its part', () => {
@@ -105,8 +137,29 @@ describe('buildAssessmentSession', () => {
       numpadSession({}, [{ expected: '123', typed: '124', index: 1 }]),
       copySession({}, [{ expected: 'Dela Cruz', typed: 'De la Cruz', index: 1, field: 'name' }]),
       encodingSession({}, [{ expected: '09/14/2026', typed: 'Sept. 14, 2026', index: 1, field: 'date' }]),
+      qcSession({}, [{ expected: '(043) 000-4098', typed: '(043) 000-4089', index: 2, field: 'contactNo' }]),
     );
-    expect(a.mistakes.map((m) => m.section)).toEqual(['typing', 'numpad', 'copy', 'encoding']);
+    expect(a.mistakes.map((m) => m.section)).toEqual(['typing', 'numpad', 'copy', 'encoding', 'qc']);
+  });
+
+  it('QC below 3 records per minute fails only that target, with a speed tip', () => {
+    const a = build(typingSession({}), numpadSession({}), copySession({}), encodingSession({}), qcSession({ perMinute: 2 }));
+    expect(a.metrics).toMatchObject({ targetsMet: 9, targetsTotal: 10, jobReady: 0 });
+    expect(assessmentComments(a).some((c) => c.startsWith('QC Check: tama ang check mo'))).toBe(true);
+  });
+
+  it('QC: many missed mistakes in one field gives that field tip', () => {
+    const missed = (i: number) => ({ expected: `(043) 000-40${i}8`, typed: `(043) 000-4${i}08`, index: i, field: 'contactNo' });
+    const a = build(
+      typingSession({}),
+      numpadSession({}),
+      copySession({}),
+      encodingSession({}),
+      qcSession({ decisionAccuracy: 85, missed: 3, caught: 5 }, [missed(1), missed(2), missed(3)]),
+    );
+    const comments = assessmentComments(a);
+    expect(comments.some((c) => c.includes('3 mali na hindi mo napansin'))).toBe(true);
+    expect(comments.some((c) => c.startsWith('Madalas mong hindi napapansin ang mali sa Contact No.'))).toBe(true);
   });
 });
 
@@ -122,6 +175,12 @@ describe('assessmentChecks', () => {
     expect(hasCopyPart(three)).toBe(true);
     expect(hasEncodingPart(three)).toBe(false);
     expect(assessmentChecks(three)).toHaveLength(6);
+  });
+
+  it('assessments from before QC keep their 8 checks', () => {
+    const four = { ...{ typingNetWpm: 45, typingAccuracy: 97, numpadKph: 9000, numpadEntryAccuracy: 100 }, copyFieldAccuracy: 100, copyKph: 9000, encodingFieldAccuracy: 100, encodingKph: 7000 };
+    expect(hasQcPart(four)).toBe(false);
+    expect(assessmentChecks(four)).toHaveLength(8);
   });
 
   it('compares the rounded value (39.6 WPM counts as 40)', () => {
@@ -147,7 +206,8 @@ describe('previousAssessment', () => {
 describe('assessmentComments', () => {
   it('congratulates when everything passes', () => {
     const c = assessmentComments(build(typingSession({}), numpadSession({})));
-    expect(c[0]).toMatch(/pasado ka sa lahat ng 8/);
+    expect(c[0]).toMatch(/pasado ka sa lahat ng 10/);
+    expect(c.join(' ')).toMatch(/QC Check: pasado ka/);
     expect(c.join(' ')).toMatch(/Document Encoding: pasado ka/);
     expect(c.join(' ')).toMatch(/Copy Test: pasado ka/);
     expect(c.join(' ')).toMatch(/Typing: pasado ka sa bilis at accuracy/);
