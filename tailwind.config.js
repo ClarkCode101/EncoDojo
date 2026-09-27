@@ -6,7 +6,8 @@ export default {
       fontFamily: {
         // "Dojo notebook" look (owner's choice, 2026-09-27): readable body + document-like headings.
         sans: ['"Atkinson Hyperlegible"', 'system-ui', '"Segoe UI"', 'Roboto', 'Arial', 'sans-serif'],
-        display: ['"Zilla Slab"', 'Georgia', '"Times New Roman"', 'serif'],
+        // "lnum" = lining numbers: Zilla Slab's default numbers are "old-style" (0 looks like a letter o).
+        display: [['"Zilla Slab"', 'Georgia', '"Times New Roman"', 'serif'], { fontFeatureSettings: '"lnum"' }],
         mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
       /*

@@ -3,7 +3,41 @@
  */
 import { display } from '../lib/scoring';
 import { KPH_LEVELS, kphLevel } from '../lib/targets';
+import type { ReactNode } from 'react';
+import { CheckIcon, XIcon } from './icons';
 import { Button } from './ui';
+
+/**
+ * The top of every results screen: one plain sentence with the main numbers,
+ * one line of advice, then the main buttons. A thick left edge (green when the
+ * target is reached) instead of a box, like a note on the page.
+ */
+export function ResultSummary({
+  ready,
+  headline,
+  message,
+  children,
+}: {
+  ready: boolean;
+  headline: ReactNode;
+  message: ReactNode;
+  /** The main buttons (e.g. "Ulitin"). */
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-label="Buod ng resulta"
+      className={
+        'mb-6 rounded-r-lg border-l-4 py-5 pl-6 pr-5 ' +
+        (ready ? 'border-green-600 bg-green-50' : 'border-brand-700 bg-white')
+      }
+    >
+      <p className="text-2xl leading-relaxed text-stone-900">{headline}</p>
+      <p className="mt-2 text-lg text-stone-700">{message}</p>
+      <div className="mt-5 flex flex-wrap gap-3">{children}</div>
+    </section>
+  );
+}
 
 /**
  * Tells the user whether a practice result is saved, with a button to change it.
@@ -34,8 +68,8 @@ export function SaveBanner({
     <div
       role="status"
       className={
-        'mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 px-5 py-3 text-base ' +
-        (saved ? 'border-green-400 bg-green-50 text-green-950' : 'border-amber-400 bg-amber-50 text-amber-950')
+        'mb-6 flex flex-wrap items-center justify-between gap-3 rounded-r-lg border-l-4 px-5 py-3 text-base ' +
+        (saved ? 'border-green-600 bg-green-50 text-green-950' : 'border-amber-500 bg-amber-50 text-amber-950')
       }
     >
       <span className="font-medium">{message}</span>
@@ -64,10 +98,10 @@ export function KphLevels({ kph }: { kph: number }) {
         {next && (
           <span className="text-stone-700">
             {' '}
-            · {(next.min - score).toLocaleString()} KPH pa para sa &quot;{next.label}&quot;
+            ({(next.min - score).toLocaleString()} KPH pa para sa &quot;{next.label}&quot;)
           </span>
         )}
-        {!next && <span className="text-stone-700"> · Pinakamataas na antas! 🥋</span>}
+        {!next && <span className="text-stone-700">, ang pinakamataas na antas.</span>}
       </p>
 
       {/* The bar is only a picture of the sentence above, so screen readers skip it. */}
@@ -103,10 +137,16 @@ export function KphLevels({ kph }: { kph: number }) {
           const done = score >= level.min;
           return (
             <li key={level.min} className="flex flex-wrap items-baseline gap-x-2 text-base">
-              <span aria-hidden="true">{done ? '✅' : '⬜'}</span>
+              <span aria-hidden="true" className="self-center">
+                {done ? (
+                  <CheckIcon className="h-5 w-5 text-green-700" />
+                ) : (
+                  <span className="block h-4 w-4 rounded-full border-2 border-stone-400" />
+                )}
+              </span>
               <span className="w-20 font-bold tabular-nums">{level.min.toLocaleString()}</span>
               <span className="font-semibold text-stone-900">{level.label}</span>
-              <span className="text-sm text-stone-600">— {level.description}</span>
+              <span className="text-sm text-stone-600">{level.description}</span>
               <span className="sr-only">{done ? 'naabot mo na' : 'hindi pa naaabot'}</span>
             </li>
           );
@@ -135,7 +175,7 @@ export function Stamp({ passed }: { passed: boolean }) {
   );
 }
 
-/** One "✅ Net WPM  43  / 40 ang kailangan" line. Compares the ROUNDED value, like the screen shows. */
+/** One "✓ Net WPM  43  / 40 ang kailangan" line. Compares the ROUNDED value, like the screen shows. */
 export function TargetRow({
   label,
   value,
@@ -149,13 +189,9 @@ export function TargetRow({
 }) {
   const pass = display(value) >= target;
   return (
-    <li
-      className={
-        'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-3 py-2 ' + (pass ? 'bg-green-50' : 'bg-red-50')
-      }
-    >
-      <span aria-hidden="true" className="text-xl">
-        {pass ? '✅' : '❌'}
+    <li className={'flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-stone-200 px-1 py-2 last:border-b-0'}>
+      <span aria-hidden="true">
+        {pass ? <CheckIcon className="h-6 w-6 text-green-700" /> : <XIcon className="h-6 w-6 text-red-700" />}
       </span>
       <span className="w-44 font-medium text-stone-800">{label}</span>
       <span className="text-lg font-bold tabular-nums text-stone-900">
@@ -166,7 +202,9 @@ export function TargetRow({
         / {target.toLocaleString()}
         {unit} ang kailangan
       </span>
-      <span className="ml-auto text-sm font-semibold">{pass ? 'Pasado' : 'Hindi pa'}</span>
+      <span className={`ml-auto text-sm font-semibold ${pass ? 'text-green-800' : 'text-red-700'}`}>
+        {pass ? 'Pasado' : 'Hindi pa'}
+      </span>
     </li>
   );
 }

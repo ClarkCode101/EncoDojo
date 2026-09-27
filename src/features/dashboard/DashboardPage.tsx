@@ -7,7 +7,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
-import { ConfirmButton, HelpTip } from '../../components/ui';
+import { ConfirmButton, HelpTip, Section } from '../../components/ui';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
 import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
@@ -124,7 +124,11 @@ export default function DashboardPage() {
   );
   const recent = recentSessions(sessions, sessions.length);
   const streak = currentStreak(sessions);
-  const latestAssessment = recentSessions(sessions.filter((s) => s.type === 'assessment'), 1)[0] ?? null;
+  const latestAssessment =
+    recentSessions(
+      sessions.filter((s) => s.type === 'assessment'),
+      1,
+    )[0] ?? null;
 
   const num = (v: number | null) => (v === null ? null : display(v).toLocaleString());
   const typingBest = num(bestMetric(sessions, 'typing', 'netWpm'));
@@ -151,12 +155,10 @@ export default function DashboardPage() {
       </header>
 
       {/* Ensayo: the four practices, then the Assessment */}
-      <section aria-labelledby="ensayo-heading">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-b-2 border-stone-800 pb-2">
-          <h2 id="ensayo-heading" className="font-display text-2xl font-bold text-stone-900">
-            Ensayo
-          </h2>
-          {/* One explanation for all the numbers (not one per row). */}
+      <Section
+        title="Ensayo"
+        aside={
+          // One explanation for all the numbers (not one per row).
           <HelpTip label="Ano ang mga numerong ito?">
             <ul className="list-disc space-y-1 pl-5">
               <li>
@@ -166,12 +168,14 @@ export default function DashboardPage() {
                 <strong>Numpad:</strong> ang pinakamabilis mong KPH (Halo-halo lang ang binibilang).
               </li>
               <li>
-                <strong>Copy Test at Document Encoding:</strong> ilang porsyento ng field ang eksaktong tama sa huli mong practice.
+                <strong>Copy Test at Document Encoding:</strong> ilang porsyento ng field ang eksaktong tama sa huli
+                mong practice.
               </li>
             </ul>
           </HelpTip>
-        </div>
-        <ol>
+        }
+      >
+        <ol className="-mt-4">
           <EnsayoRow
             n="01"
             to="/typing"
@@ -230,20 +234,15 @@ export default function DashboardPage() {
             {latestAssessment ? 'Subukan ulit' : 'Simulan'} <ArrowRightIcon className="h-5 w-5" />
           </Link>
         </div>
-      </section>
+      </Section>
 
       {/* The log */}
-      <section aria-labelledby="log-heading">
-        <div className="border-b-2 border-stone-800 pb-2">
-          <h2 id="log-heading" className="font-display text-2xl font-bold text-stone-900">
-            Mga huling ginawa
-          </h2>
-        </div>
+      <Section title="Mga huling ginawa">
         {recent.length === 0 ? (
-          <p className="py-4 text-lg text-stone-700">Wala pa rito. Lalabas dito ang bawat practice at Assessment mo.</p>
+          <p className="text-lg text-stone-700">Wala pa rito. Lalabas dito ang bawat practice at Assessment mo.</p>
         ) : (
           // About 5 rows tall; more rows scroll inside the list (the header row stays put).
-          <div className="max-h-[25rem] overflow-auto">
+          <div className="-mt-4 max-h-[25rem] overflow-auto">
             <table className="w-full text-left text-base">
               <thead className="sticky top-0 z-[1] bg-paper text-sm text-stone-600">
                 <tr className="border-b border-stone-300">
@@ -274,7 +273,12 @@ export default function DashboardPage() {
                     <td className="py-3 pr-4 tabular-nums text-stone-700">{formatClock(s.durationSec)}</td>
                     <td className="py-3 pr-4 tabular-nums text-stone-800">{summary(s)}</td>
                     <td className="py-3 text-right">
-                      <ConfirmButton size="sm" label="Burahin" question="Burahin ito?" onConfirm={() => removeSession(s.id)} />
+                      <ConfirmButton
+                        size="sm"
+                        label="Burahin"
+                        question="Burahin ito?"
+                        onConfirm={() => removeSession(s.id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -293,7 +297,7 @@ export default function DashboardPage() {
             />
           </div>
         )}
-      </section>
+      </Section>
 
       <p className="border-t border-stone-300 pt-4 text-stone-600">
         <span className="font-semibold text-stone-700">Parating pa:</span> {comingSoon.join(', ')}.

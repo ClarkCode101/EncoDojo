@@ -16,7 +16,8 @@
 import type { ReactNode } from 'react';
 import { useSenseiQuiet } from '../features/sensei/quiet';
 import { ArrowRightIcon } from './icons';
-import { Button, Card, PageHeader, Step } from './ui';
+import { listNumber } from '../lib/listNumber';
+import { Button, PageHeader, Step } from './ui';
 
 export function PracticeSetup({
   icon,
@@ -45,11 +46,14 @@ export function PracticeSetup({
   return (
     <div>
       <PageHeader icon={icon} title={title} description={description} />
-      <Card>
-        <div className="space-y-5">
+      {/* Three ruled rows, like a list on notebook paper (no box around them). */}
+      <div className="border-t-2 border-stone-800">
+        <div className="border-b border-stone-300 py-5">
           <Step number={1} title={chooseTitle}>
             {choices}
           </Step>
+        </div>
+        <div className="border-b border-stone-300 py-5">
           <Step number={2} title="Tandaan">
             <ul className="list-disc space-y-0.5 pl-6 text-lg text-stone-800">
               {howTo.map((point, i) => (
@@ -59,18 +63,17 @@ export function PracticeSetup({
             {extra && <div className="mt-3">{extra}</div>}
           </Step>
         </div>
-        <div className="mt-5 flex items-center gap-4">
-          <div
-            aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-lg font-bold text-white"
-          >
-            3
+        <div className="grid grid-cols-[2.5rem_1fr] items-center gap-x-4 py-5">
+          <div aria-hidden="true" className="font-display text-2xl font-semibold tabular-nums text-stone-400">
+            {listNumber(3)}
           </div>
-          <Button size="lg" autoFocus onClick={onStart}>
-            Simulan <ArrowRightIcon className="h-5 w-5" />
-          </Button>
+          <div>
+            <Button size="lg" autoFocus onClick={onStart}>
+              Simulan <ArrowRightIcon className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -96,7 +99,7 @@ export function PracticeHeader({
 }: {
   icon: ReactNode;
   title: string;
-  /** The chosen settings, e.g. "1 minuto · Spreadsheet". */
+  /** The chosen settings, e.g. "1 minuto, Spreadsheet". */
   summary: string;
   /** Extra buttons shown before the run starts (e.g. "Ibang text"). */
   actions?: ReactNode;
@@ -107,9 +110,7 @@ export function PracticeHeader({
   return (
     <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-800 sm:flex">
-          {icon}
-        </div>
+        <span className="hidden text-brand-700 sm:inline-flex">{icon}</span>
         <h1 className="text-2xl font-bold text-stone-900">
           {title} <span className="ml-1 text-base font-normal text-stone-600">{summary}</span>
         </h1>

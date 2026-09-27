@@ -3,11 +3,16 @@
  *
  * Design rules (for people who are not "techy" or have weaker eyesight):
  * - Big, clear buttons (at least 44px tall) and readable text sizes.
- * - Normal-case labels (no ALL CAPS) — easier to read.
+ * - Normal-case labels (no ALL CAPS): easier to read.
  * - Explanations are shown by clicking "Ano ito?" (no hover-only tooltips).
+ *
+ * "Dojo notebook" look (owner's choice, 2026-09-27): thin ruled lines like a
+ * notebook or ledger instead of a box around everything, slab-serif headings
+ * (`font-display`), and numbers written "01, 02" like a list on paper.
  */
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { listNumber } from '../lib/listNumber';
 import { formatClock } from '../lib/useCountdown';
 
 type Variant = 'primary' | 'secondary' | 'danger';
@@ -16,7 +21,7 @@ type Size = 'lg' | 'md' | 'sm';
 const variantClasses: Record<Variant, string> = {
   primary: 'bg-brand-700 text-white shadow-sm hover:bg-brand-800 disabled:bg-brand-300',
   secondary:
-    'bg-white text-stone-800 border-2 border-stone-300 hover:border-stone-400 hover:bg-stone-50 disabled:text-stone-400',
+    'bg-white text-stone-800 border-[1.5px] border-stone-400 hover:border-stone-600 hover:bg-stone-50 disabled:text-stone-400',
   danger: 'bg-red-700 text-white shadow-sm hover:bg-red-800 disabled:bg-red-300',
 };
 
@@ -127,9 +132,9 @@ export function Card({
   compact?: boolean;
 }) {
   return (
-    <section className={`rounded-xl border border-stone-200 bg-white shadow-sm ${compact ? 'p-4' : 'p-6'} ${className}`}>
+    <section className={`rounded-lg border border-stone-300 bg-white ${compact ? 'p-4' : 'p-6'} ${className}`}>
       {title && (
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-stone-900">
+        <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-stone-900">
           {icon && <span className="text-brand-700">{icon}</span>}
           {title}
         </h2>
@@ -140,7 +145,34 @@ export function Card({
 }
 
 /**
- * "Ano ito?" — click to show a short explanation. Uses <details>, so it works
+ * A part of a page with a ruled heading, like a section in a notebook:
+ * a slab heading over a dark line, then the content (no box around it).
+ * `aside` sits at the right of the heading (e.g. a HelpTip).
+ */
+export function Section({
+  title,
+  aside,
+  children,
+  className = '',
+}: {
+  title: string;
+  aside?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={className}>
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 border-b-2 border-stone-800 pb-2">
+        <h2 className="text-2xl font-bold text-stone-900">{title}</h2>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * "Ano ito?": click to show a short explanation. Uses <details>, so it works
  * with mouse, keyboard, touch, and screen readers without extra code.
  */
 export function HelpTip({ children, label = 'Ano ito?' }: { children: ReactNode; label?: string }) {
@@ -152,12 +184,12 @@ export function HelpTip({ children, label = 'Ano ito?' }: { children: ReactNode;
         </span>
         {label}
       </summary>
-      <div className="mt-1 rounded-md bg-brand-50 px-3 py-2 text-stone-800">{children}</div>
+      <div className="mt-1 border-l-2 border-brand-300 bg-brand-50/70 px-3 py-2 text-stone-800">{children}</div>
     </details>
   );
 }
 
-/** A label + big number, e.g. "Bilis (Net WPM)  42", with an optional explanation. */
+/** A label + big number, e.g. "Bilis (Net WPM)  42", under a thin rule, with an optional explanation. */
 export function StatBadge({
   label,
   value,
@@ -170,9 +202,9 @@ export function StatBadge({
   help?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
+    <div className="border-t-2 border-stone-800 pt-2">
       <div className="text-sm font-medium text-stone-600">{label}</div>
-      <div className="mt-1 text-3xl font-bold tabular-nums text-stone-900">{value}</div>
+      <div className="mt-0.5 font-display text-4xl font-bold tabular-nums text-stone-900">{value}</div>
       {hint && <div className="mt-0.5 text-sm text-stone-600">{hint}</div>}
       {help && <HelpTip>{help}</HelpTip>}
     </div>
@@ -198,13 +230,13 @@ export function LiveStatsBar({
   // Equal cells, label on top and the number below, split by thin lines.
   const cell = 'min-w-0 flex-1 px-5 py-2';
   const label = 'truncate text-sm font-medium text-stone-600';
-  const value = 'text-2xl font-bold leading-tight tabular-nums text-stone-900';
+  const value = 'font-display text-2xl font-bold leading-tight tabular-nums text-stone-900';
   return (
     <div
       className={
-        'sticky top-0 z-10 mb-3 grid shrink-0 grid-cols-2 overflow-hidden rounded-xl border-2 shadow-sm ' +
-        'sm:flex sm:divide-x sm:divide-stone-200 ' +
-        (almostDone ? 'border-amber-400 bg-white' : 'border-stone-200 bg-white')
+        'sticky top-0 z-10 mb-3 grid shrink-0 grid-cols-2 overflow-hidden rounded-lg border ' +
+        'sm:flex sm:divide-x sm:divide-stone-300 ' +
+        (almostDone ? 'border-amber-500 bg-white' : 'border-stone-300 bg-white')
       }
     >
       <div className={`${cell} ${almostDone ? 'bg-amber-100' : 'bg-brand-50'}`}>
@@ -226,7 +258,7 @@ export function LiveStatsBar({
 
 /**
  * A one-line keyboard reminder under the typing area, e.g.
- * [Tab] susunod na cell · [Enter] susunod na row.
+ * [Tab] susunod na cell, [Enter] susunod na row.
  */
 export function KeyTips({ tips }: { tips: { key?: string; text: string }[] }) {
   return (
@@ -250,21 +282,18 @@ export function PageHeader({
   icon?: ReactNode;
 }) {
   return (
-    <header className="mb-6 flex items-start gap-4">
-      {icon && (
-        <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-800 sm:flex">
-          {icon}
-        </div>
-      )}
-      <div>
-        <h1 className="text-3xl font-bold text-stone-900">{title}</h1>
-        {description && <p className="mt-1 text-lg text-stone-700">{description}</p>}
-      </div>
+    <header className="mb-8">
+      <h1 className="flex items-center gap-3 text-4xl font-bold text-stone-900">
+        {/* The same icon as in the sidebar, small, so the page is easy to recognize. */}
+        {icon && <span className="hidden text-brand-700 sm:inline-flex [&>svg]:h-8 [&>svg]:w-8">{icon}</span>}
+        {title}
+      </h1>
+      {description && <p className="mt-2 text-lg text-stone-700">{description}</p>}
     </header>
   );
 }
 
-/** A numbered step, e.g. "① Pumili ng oras", so the order is obvious. */
+/** A numbered step, e.g. "01  Pumili ng oras", so the order is obvious. */
 export function Step({
   number,
   title,
@@ -275,15 +304,12 @@ export function Step({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex gap-4">
-      <div
-        aria-hidden="true"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-lg font-bold text-white"
-      >
-        {number}
+    <div className="grid grid-cols-[2.5rem_1fr] gap-x-4">
+      <div aria-hidden="true" className="font-display text-2xl font-semibold leading-8 tabular-nums text-stone-400">
+        {listNumber(number)}
       </div>
-      <div className="min-w-0 flex-1">
-        <h2 className="pt-1 text-lg font-bold text-stone-900">
+      <div className="min-w-0">
+        <h2 className="font-sans text-lg font-bold leading-8 text-stone-900">
           <span className="sr-only">Hakbang {number}: </span>
           {title}
         </h2>
@@ -346,12 +372,12 @@ export function Checkbox({
 type NoticeKind = 'info' | 'success' | 'warning';
 
 const noticeClasses: Record<NoticeKind, string> = {
-  info: 'border-brand-300 bg-brand-50 text-brand-950',
-  success: 'border-green-400 bg-green-50 text-green-950',
-  warning: 'border-amber-400 bg-amber-50 text-amber-950',
+  info: 'border-brand-500 bg-brand-50 text-brand-950',
+  success: 'border-green-600 bg-green-50 text-green-950',
+  warning: 'border-amber-500 bg-amber-50 text-amber-950',
 };
 
-/** A colored message box. */
+/** A colored message with a thick left edge (the color keeps its meaning: info, correct, warning). */
 export function Notice({
   kind = 'info',
   children,
@@ -362,7 +388,7 @@ export function Notice({
   className?: string;
 }) {
   return (
-    <div role="status" className={`rounded-xl border-2 px-5 py-4 text-base ${noticeClasses[kind]} ${className}`}>
+    <div role="status" className={`rounded-r-lg border-l-4 px-5 py-3 text-base ${noticeClasses[kind]} ${className}`}>
       {children}
     </div>
   );
@@ -397,12 +423,12 @@ export function SegmentedPicker<T extends string | number>({
               aria-pressed={selected}
               onClick={() => onChange(option)}
               className={
-                'min-h-[2.75rem] min-w-[3rem] rounded-lg border-2 px-4 py-2 text-base font-semibold transition-colors ' +
+                'min-h-[2.75rem] min-w-[3rem] rounded-lg border-[1.5px] px-4 py-2 text-base font-semibold transition-colors ' +
                 'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 ' +
                 'disabled:cursor-not-allowed disabled:opacity-60 ' +
                 (selected
                   ? 'border-brand-700 bg-brand-700 text-white'
-                  : 'border-stone-300 bg-white text-stone-800 hover:border-stone-400 hover:bg-stone-50')
+                  : 'border-stone-400 bg-white text-stone-800 hover:border-stone-600 hover:bg-stone-50')
               }
             >
               {selected && <span aria-hidden="true">✓ </span>}
