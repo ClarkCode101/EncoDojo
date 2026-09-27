@@ -5,7 +5,15 @@
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, AssessmentIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import {
+  ArrowRightIcon,
+  AssessmentIcon,
+  CopyIcon,
+  DocumentIcon,
+  KeyboardIcon,
+  NumpadIcon,
+  QcIcon,
+} from '../../components/icons';
 import { dailyGoalText, doneToday } from '../../lib/reminders';
 import { useAppData } from '../../lib/useAppData';
 import { nextFocus, type NextFocus } from './coach';
@@ -15,6 +23,7 @@ const ICONS: Record<NextFocus['skill'], (className: string) => ReactNode> = {
   numpad: (c) => <NumpadIcon className={c} />,
   copy: (c) => <CopyIcon className={c} />,
   encoding: (c) => <DocumentIcon className={c} />,
+  qc: (c) => <QcIcon className={c} />,
   assessment: (c) => <AssessmentIcon className={c} />,
 };
 

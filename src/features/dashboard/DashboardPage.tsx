@@ -6,7 +6,7 @@
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import { ArrowRightIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon, QcIcon } from '../../components/icons';
 import { ConfirmButton, HelpTip, Section } from '../../components/ui';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
@@ -117,15 +117,18 @@ function EnsayoRow({
   );
 }
 
-const comingSoon = ['QC / Spot the Difference', 'Excel Practice', 'Progress Reports'];
+const comingSoon = ['Excel Practice', 'Progress Reports'];
 
 export default function DashboardPage() {
   const { profile, sessions } = useAppData();
   const now = new Date();
   const training = sessions.filter((s) => s.type !== 'assessment');
-  // Copy Test / Encoding runs with nothing finished say "100%" (nothing wrong yet): skip them.
+  // Copy Test / Encoding / QC runs with nothing finished say "100%" or "0%": skip them.
   const withFinishedItems = sessions.filter(
-    (s) => !(s.type === 'copy' && s.metrics.records === 0) && !(s.type === 'encoding' && s.metrics.documents === 0),
+    (s) =>
+      !(s.type === 'copy' && s.metrics.records === 0) &&
+      !(s.type === 'encoding' && s.metrics.documents === 0) &&
+      !(s.type === 'qc' && s.metrics.records === 0),
   );
   const recent = recentSessions(sessions, sessions.length);
   const streak = currentStreak(sessions);
@@ -140,6 +143,7 @@ export default function DashboardPage() {
   const numpadBest = num(bestMetric(forNumpadBest(sessions), 'numpad', 'kph'));
   const copyLatest = num(latestMetric(withFinishedItems, 'copy', 'fieldAccuracy'));
   const encodingLatest = num(latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy'));
+  const qcLatest = num(latestMetric(withFinishedItems, 'qc', 'decisionAccuracy'));
 
   const today = now.toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' });
   const hello = `${greeting(now)}${profile.displayName ? `, ${profile.displayName}` : ''}.`;
@@ -159,7 +163,7 @@ export default function DashboardPage() {
         <p className="mt-2 text-lg text-stone-700">{subline}</p>
       </header>
 
-      {/* Ensayo: the four practices, then the Assessment */}
+      {/* Ensayo: the five practices, then the Assessment */}
       <Section
         title="Ensayo"
         aside={
@@ -175,6 +179,9 @@ export default function DashboardPage() {
               <li>
                 <strong>Copy Test at Document Encoding:</strong> ilang porsyento ng field ang eksaktong tama sa huli
                 mong practice.
+              </li>
+              <li>
+                <strong>QC Check:</strong> ilang porsyento ng check mo ang tama sa huli mong practice.
               </li>
             </ul>
           </HelpTip>
@@ -217,11 +224,20 @@ export default function DashboardPage() {
             value={encodingLatest}
             unit="% tama"
           />
+          <EnsayoRow
+            n="05"
+            to="/qc"
+            icon={<QcIcon className="h-5 w-5" />}
+            title="QC Check"
+            text="Hanapin ang mali ng iba"
+            value={qcLatest}
+            unit="% tama"
+          />
         </ol>
 
-        {/* 05: the Assessment, set apart like a seal on the page */}
+        {/* 06: the Assessment, set apart like a seal on the page */}
         <div className="mt-6 grid grid-cols-[2.5rem_1fr] items-center gap-x-4 gap-y-3 border-l-4 border-belt-400 bg-belt-50 py-5 pl-3 pr-5 sm:grid-cols-[2.5rem_1fr_auto]">
-          <span className="font-display text-2xl font-semibold tabular-nums text-belt-600">05</span>
+          <span className="font-display text-2xl font-semibold tabular-nums text-belt-600">06</span>
           <div>
             <div className="text-lg font-bold text-stone-900">Assessment</div>
             <p className="text-stone-700">

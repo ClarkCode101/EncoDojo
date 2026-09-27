@@ -13,6 +13,7 @@ const goodTyping = () => s('typing', { netWpm: 45, accuracy: 97 });
 const goodNumpad = () => s('numpad', { kph: 9000, entryAccuracy: 98, difficulty: MIXED_DIFFICULTY });
 const goodCopy = () => s('copy', { kph: 9000, fieldAccuracy: 100, records: 4 });
 const goodEncoding = () => s('encoding', { kph: 7000, fieldAccuracy: 100, documents: 3 });
+const goodQc = () => s('qc', { perMinute: 4, decisionAccuracy: 100, records: 8 });
 
 describe('nextFocus', () => {
   it('no sessions yet: start with Typing Practice', () => {
@@ -36,23 +37,32 @@ describe('nextFocus', () => {
 
   it('all tried: the one furthest below its target, with the weaker number', () => {
     const weakCopy = s('copy', { kph: 8500, fieldAccuracy: 70, records: 3 });
-    const f = nextFocus([goodTyping(), goodNumpad(), weakCopy, goodEncoding()]);
+    const f = nextFocus([goodTyping(), goodNumpad(), weakCopy, goodEncoding(), goodQc()]);
     expect(f).toMatchObject({ skill: 'copy', reason: '70% pa lang ang tamang field (target: 95%).' });
   });
 
   it('speed reason when speed is the weaker part', () => {
     const slowTyping = s('typing', { netWpm: 30, accuracy: 98 });
-    const f = nextFocus([slowTyping, goodNumpad(), goodCopy(), goodEncoding()]);
+    const f = nextFocus([slowTyping, goodNumpad(), goodCopy(), goodEncoding(), goodQc()]);
     expect(f).toMatchObject({ skill: 'typing', reason: '30 WPM pa lang (target: 40).' });
   });
 
   it('uses the LATEST result of each practice', () => {
     const oldBad = s('typing', { netWpm: 20, accuracy: 80 }, '2026-09-20T02:00:00.000Z');
-    const f = nextFocus([oldBad, goodTyping(), goodNumpad(), goodCopy(), goodEncoding()]);
+    const f = nextFocus([oldBad, goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc()]);
     expect(f.skill).toBe('assessment');
   });
 
+  it('QC comes last in the order, with its own reason', () => {
+    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding()]).skill).toBe('qc');
+    const slowQc = s('qc', { perMinute: 1.4, decisionAccuracy: 100, records: 3 });
+    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), slowQc])).toMatchObject({
+      skill: 'qc',
+      reason: '1 record bawat minuto pa lang (target: 3).',
+    });
+  });
+
   it('everything at target: the Assessment', () => {
-    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding()])).toMatchObject({ skill: 'assessment', to: '/assessment' });
+    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc()])).toMatchObject({ skill: 'assessment', to: '/assessment' });
   });
 });

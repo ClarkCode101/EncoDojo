@@ -10,7 +10,7 @@ import { Section } from '../ui';
  * The correct value, with the characters the user got wrong highlighted:
  * red = wrong character, crossed out = left out.
  */
-function ExpectedWithMarks({ expected, typed }: { expected: string; typed: string }) {
+export function ExpectedWithMarks({ expected, typed }: { expected: string; typed: string }) {
   const a = alignTyping(expected, typed);
   return (
     <span className="font-mono">

@@ -5,6 +5,7 @@ import {
   AssessmentIcon,
   CopyIcon,
   DocumentIcon,
+  QcIcon,
   HomeIcon,
   KeyboardIcon,
   Logo,
@@ -35,6 +36,7 @@ const groups: NavGroup[] = [
       { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon /> },
       { to: '/copy', label: 'Copy Test', icon: <CopyIcon /> },
       { to: '/encoding', label: 'Document Encoding', icon: <DocumentIcon /> },
+      { to: '/qc', label: 'QC Check', icon: <QcIcon /> },
     ],
   },
   { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },
@@ -46,7 +48,7 @@ const navClass =
   ({ isActive }: { isActive: boolean }) => {
     return (
       // Short screens (<800px tall): a little less space, so the sidebar never needs its own scrollbar.
-      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(max-height:800px)]:py-1.5 ' +
+      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(min-height:681px)_and_(max-height:800px)]:py-1.5 [@media(max-height:680px)]:py-1 ' +
       (collapsed ? 'md:justify-center md:px-0 ' : '') +
       'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
       (isActive
@@ -95,7 +97,7 @@ export default function Layout() {
         >
           <div
             className={
-              'flex items-center gap-3 px-5 py-5 [@media(max-height:800px)]:py-3 ' +
+              'flex items-center gap-3 px-5 py-5 [@media(min-height:681px)_and_(max-height:800px)]:py-3 [@media(max-height:680px)]:py-2 ' +
               (collapsed ? 'md:flex-col md:px-0' : '')
             }
           >
@@ -121,7 +123,7 @@ export default function Layout() {
           <nav id="main-nav" aria-label="Main" className="px-3 pb-4">
             <div className="flex flex-wrap gap-1 md:block">
               {groups.map((group, i) => (
-                <div key={i} className="md:mb-4 md:[@media(max-height:800px)]:mb-2">
+                <div key={i} className="md:mb-4 md:[@media(min-height:681px)_and_(max-height:800px)]:mb-2 md:[@media(max-height:680px)]:mb-1">
                   {group.heading &&
                     (collapsed ? (
                       // Collapsed: a thin line instead of the heading.

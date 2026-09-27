@@ -9,20 +9,21 @@
  */
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
-import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_TYPING } from '../../lib/targets';
+import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_QC, JOB_READY_TYPING } from '../../lib/targets';
 import { copyKphOf } from '../copy/scoreCopy';
 import { MIXED_DIFFICULTY } from '../numpad/entries';
 
-export type PracticeSkill = 'typing' | 'numpad' | 'copy' | 'encoding';
+export type PracticeSkill = 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc';
 
-/** The practice features in the order they are taught (Home steps 1-4). */
-export const SKILL_ORDER: PracticeSkill[] = ['typing', 'numpad', 'copy', 'encoding'];
+/** The practice features in the order they are taught (Home rows 01-05). */
+export const SKILL_ORDER: PracticeSkill[] = ['typing', 'numpad', 'copy', 'encoding', 'qc'];
 
 export const SKILL_INFO: Record<PracticeSkill, { label: string; to: string }> = {
   typing: { label: 'Typing Practice', to: '/typing' },
   numpad: { label: 'Numpad Practice', to: '/numpad' },
   copy: { label: 'Copy Test', to: '/copy' },
   encoding: { label: 'Document Encoding', to: '/encoding' },
+  qc: { label: 'QC Check', to: '/qc' },
 };
 
 export type NextFocus = {
@@ -54,6 +55,10 @@ function latestScore(sessions: Session[], skill: PracticeSkill): Score | null {
     const s = latest(sessions.filter((x) => x.type === 'copy' && x.metrics.records > 0));
     return s && { speed: copyKphOf(s.metrics), speedTarget: JOB_READY_COPY.kph, accuracy: s.metrics.fieldAccuracy, accuracyTarget: JOB_READY_COPY.fieldAccuracy };
   }
+  if (skill === 'qc') {
+    const s = latest(sessions.filter((x) => x.type === 'qc' && x.metrics.records > 0));
+    return s && { speed: s.metrics.perMinute, speedTarget: JOB_READY_QC.perMinute, accuracy: s.metrics.decisionAccuracy, accuracyTarget: JOB_READY_QC.decisionAccuracy };
+  }
   const s = latest(sessions.filter((x) => x.type === 'encoding' && x.metrics.documents > 0));
   return s && { speed: s.metrics.kph, speedTarget: JOB_READY_ENCODING.kph, accuracy: s.metrics.fieldAccuracy, accuracyTarget: JOB_READY_ENCODING.fieldAccuracy };
 }
@@ -64,10 +69,11 @@ function weakReason(skill: PracticeSkill, s: Score): string {
   const accShare = display(s.accuracy) / s.accuracyTarget;
   const speedShare = display(s.speed) / s.speedTarget;
   if (accShare <= speedShare) {
-    const what = skill === 'typing' ? 'tama' : skill === 'numpad' ? 'tamang numero' : 'tamang field';
+    const what =
+      skill === 'typing' ? 'tama' : skill === 'numpad' ? 'tamang numero' : skill === 'qc' ? 'tamang check' : 'tamang field';
     return `${n(s.accuracy)}% pa lang ang ${what} (target: ${s.accuracyTarget}%).`;
   }
-  const unit = skill === 'typing' ? 'WPM' : 'KPH';
+  const unit = skill === 'typing' ? 'WPM' : skill === 'qc' ? 'record bawat minuto' : 'KPH';
   return `${n(s.speed)} ${unit} pa lang (target: ${n(s.speedTarget)}).`;
 }
 

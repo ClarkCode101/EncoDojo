@@ -12,11 +12,11 @@ import type { Session } from '../../lib/storage';
 import { nextFocus } from '../dashboard/coach';
 import { currentStreak } from '../dashboard/stats';
 
-export type SenseiPlace = 'home' | 'typing' | 'numpad' | 'copy' | 'encoding' | 'assessment' | 'settings';
+export type SenseiPlace = 'home' | 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'assessment' | 'settings';
 
 export function placeFromPath(path: string): SenseiPlace {
   const first = path.split('/')[1] ?? '';
-  const known: SenseiPlace[] = ['typing', 'numpad', 'copy', 'encoding', 'assessment', 'settings'];
+  const known: SenseiPlace[] = ['typing', 'numpad', 'copy', 'encoding', 'qc', 'assessment', 'settings'];
   return (known as string[]).includes(first) ? (first as SenseiPlace) : 'home';
 }
 
@@ -45,6 +45,11 @@ export const TIPS: Record<SenseiPlace, string[]> = {
     'Laging mm/dd/yyyy ang petsa, kahit iba ang itsura nito sa papel.',
     'Sa halaga: walang ₱ at walang comma. ₱5,115.25 → 5115.25',
     'Hanapin muna ang 5 detalye sa papel bago mag-type.',
+  ],
+  qc: [
+    'Basahin ang bawat field letra por letra. Madalas nagtatago ang mali sa tuldok at sa digit.',
+    'Ihambing muna ang mga numero (petsa, contact, ID). Doon madalas ang baligtad na digit.',
+    'Kapag walang mali ang record, walang markahan. Enter lang.',
   ],
   assessment: [
     'Huminga muna nang malalim. Parang practice lang ito.',

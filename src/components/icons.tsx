@@ -104,6 +104,15 @@ export const DocumentIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** A magnifying glass with a check: QC / checking someone else's work. */
+export const QcIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="M15.5 15.5L21 21" />
+    <path d="M7.5 10.5l2 2 3.5-3.5" />
+  </Icon>
+);
+
 /** A panel with an arrow: "hide the sidebar" (arrow left) or "show it" (arrow right). */
 export const SidebarToggleIcon = ({ className = 'h-6 w-6', open }: IconProps & { open: boolean }) => (
   <Icon className={className}>

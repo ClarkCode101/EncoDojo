@@ -10,6 +10,7 @@ const TypingTest = lazy(() => import('../features/typing/TypingPage'));
 const NumpadDrill = lazy(() => import('../features/numpad/NumpadPage'));
 const CopyTest = lazy(() => import('../features/copy/CopyPage'));
 const DocumentEncoding = lazy(() => import('../features/encoding/EncodingPage'));
+const QcCheck = lazy(() => import('../features/qc/QcPage'));
 const Settings = lazy(() => import('../features/settings/SettingsPage'));
 
 function NotFound() {
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="numpad" element={<NumpadDrill />} />
           <Route path="copy" element={<CopyTest />} />
           <Route path="encoding" element={<DocumentEncoding />} />
+          <Route path="qc" element={<QcCheck />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Route>
