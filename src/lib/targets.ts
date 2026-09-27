@@ -53,6 +53,19 @@ export const JOB_READY_QC = {
   perMinute: 3,
 } as const;
 
+/**
+ * Excel Practice (round 1: navigation and shortcuts) targets: EncoDojo
+ * ESTIMATES. With 8 tasks per round:
+ * - 85% of the tasks done (7 of 8),
+ * - 75% done WITH the shortcut (6 of 8): Excel tests often watch how you work,
+ *   and the shortcuts are what make an encoder fast.
+ * Not part of the Assessment yet (owner: add it once formulas are in).
+ */
+export const JOB_READY_EXCEL = {
+  taskAccuracy: 85,
+  shortcutRate: 75,
+} as const;
+
 export type KphLevel = { min: number; label: string; description: string };
 
 /**

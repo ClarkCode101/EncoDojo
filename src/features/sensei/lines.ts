@@ -12,11 +12,11 @@ import type { Session } from '../../lib/storage';
 import { nextFocus } from '../dashboard/coach';
 import { currentStreak } from '../dashboard/stats';
 
-export type SenseiPlace = 'home' | 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'assessment' | 'settings';
+export type SenseiPlace = 'home' | 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'excel' | 'assessment' | 'settings';
 
 export function placeFromPath(path: string): SenseiPlace {
   const first = path.split('/')[1] ?? '';
-  const known: SenseiPlace[] = ['typing', 'numpad', 'copy', 'encoding', 'qc', 'assessment', 'settings'];
+  const known: SenseiPlace[] = ['typing', 'numpad', 'copy', 'encoding', 'qc', 'excel', 'assessment', 'settings'];
   return (known as string[]).includes(first) ? (first as SenseiPlace) : 'home';
 }
 
@@ -50,6 +50,11 @@ export const TIPS: Record<SenseiPlace, string[]> = {
     'Basahin ang bawat field letra por letra. Madalas nagtatago ang mali sa tuldok at sa digit.',
     'Ihambing muna ang mga numero (petsa, contact, ID). Doon madalas ang baligtad na digit.',
     'Kapag walang mali ang record, walang markahan. Enter lang.',
+  ],
+  excel: [
+    'Ctrl + ↓ ang pinakamabilis na paraan papunta sa dulo ng mahabang listahan.',
+    'Kapag nagkamali ka sa sheet, Ctrl + Z agad. Walang masisira.',
+    'F2 para ayusin ang laman ng cell nang hindi binubura lahat.',
   ],
   assessment: [
     'Huminga muna nang malalim. Parang practice lang ito.',

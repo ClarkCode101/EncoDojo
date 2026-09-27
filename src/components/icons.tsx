@@ -113,6 +113,14 @@ export const QcIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** A small table with a header row: Excel / spreadsheets. */
+export const ExcelIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M3 9h18M3 14.5h18M9 9v11M15 9v11" />
+  </Icon>
+);
+
 /** A panel with an arrow: "hide the sidebar" (arrow left) or "show it" (arrow right). */
 export const SidebarToggleIcon = ({ className = 'h-6 w-6', open }: IconProps & { open: boolean }) => (
   <Icon className={className}>

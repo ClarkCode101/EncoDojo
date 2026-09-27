@@ -9,14 +9,21 @@
  */
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
-import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_QC, JOB_READY_TYPING } from '../../lib/targets';
+import {
+  JOB_READY_COPY,
+  JOB_READY_ENCODING,
+  JOB_READY_EXCEL,
+  JOB_READY_NUMPAD,
+  JOB_READY_QC,
+  JOB_READY_TYPING,
+} from '../../lib/targets';
 import { copyKphOf } from '../copy/scoreCopy';
 import { MIXED_DIFFICULTY } from '../numpad/entries';
 
-export type PracticeSkill = 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc';
+export type PracticeSkill = 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'excel';
 
-/** The practice features in the order they are taught (Home rows 01-05). */
-export const SKILL_ORDER: PracticeSkill[] = ['typing', 'numpad', 'copy', 'encoding', 'qc'];
+/** The practice features in the order they are taught (Home rows 01-06). */
+export const SKILL_ORDER: PracticeSkill[] = ['typing', 'numpad', 'copy', 'encoding', 'qc', 'excel'];
 
 export const SKILL_INFO: Record<PracticeSkill, { label: string; to: string }> = {
   typing: { label: 'Typing Practice', to: '/typing' },
@@ -24,6 +31,7 @@ export const SKILL_INFO: Record<PracticeSkill, { label: string; to: string }> = 
   copy: { label: 'Copy Test', to: '/copy' },
   encoding: { label: 'Document Encoding', to: '/encoding' },
   qc: { label: 'QC Check', to: '/qc' },
+  excel: { label: 'Excel Practice', to: '/excel' },
 };
 
 export type NextFocus = {
@@ -55,6 +63,11 @@ function latestScore(sessions: Session[], skill: PracticeSkill): Score | null {
     const s = latest(sessions.filter((x) => x.type === 'copy' && x.metrics.records > 0));
     return s && { speed: copyKphOf(s.metrics), speedTarget: JOB_READY_COPY.kph, accuracy: s.metrics.fieldAccuracy, accuracyTarget: JOB_READY_COPY.fieldAccuracy };
   }
+  if (skill === 'excel') {
+    // "speed" = tasks done with the shortcut (the part that makes you fast), "accuracy" = tasks done.
+    const s = latest(sessions.filter((x) => x.type === 'excel'));
+    return s && { speed: s.metrics.shortcutRate, speedTarget: JOB_READY_EXCEL.shortcutRate, accuracy: s.metrics.taskAccuracy, accuracyTarget: JOB_READY_EXCEL.taskAccuracy };
+  }
   if (skill === 'qc') {
     const s = latest(sessions.filter((x) => x.type === 'qc' && x.metrics.records > 0));
     return s && { speed: s.metrics.perMinute, speedTarget: JOB_READY_QC.perMinute, accuracy: s.metrics.decisionAccuracy, accuracyTarget: JOB_READY_QC.decisionAccuracy };
@@ -68,6 +81,11 @@ const n = (v: number) => display(v).toLocaleString('en-US');
 function weakReason(skill: PracticeSkill, s: Score): string {
   const accShare = display(s.accuracy) / s.accuracyTarget;
   const speedShare = display(s.speed) / s.speedTarget;
+  if (skill === 'excel') {
+    return accShare <= speedShare
+      ? `${n(s.accuracy)}% pa lang ang natapos na task (target: ${s.accuracyTarget}%).`
+      : `${n(s.speed)}% pa lang ang gamit ang shortcut (target: ${s.speedTarget}%).`;
+  }
   if (accShare <= speedShare) {
     const what =
       skill === 'typing' ? 'tama' : skill === 'numpad' ? 'tamang numero' : skill === 'qc' ? 'tamang check' : 'tamang field';

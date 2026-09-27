@@ -16,7 +16,7 @@ The owner is learning while building. When you finish a task, **explain what you
 - **Sidebar coach** (owner's decision, 2026-09-27), rule-based, no AI — `features/dashboard/coach.ts` (tested):
   - No "done today" ✓ marks on the practice links (owner's decision, 2026-09-27): a ✓ made a practice look finished and not repeatable. Don't add completion marks to practice links.
   - "Susunod na gagawin" card above the belt card (`NextFocusCard`): first a practice never tried yet (Home order), else the practice whose LATEST result is furthest below its target (speed or accuracy, whichever is weaker, with the number), else the Assessment. Links to it.
-  - On short screens (<800px tall) the sidebar spacing tightens and the card/belt hint lines hide (hover title keeps them), so the sidebar doesn't scroll.
+  - On short screens (<900px tall, and tighter again below 720px) the sidebar spacing tightens and the card/belt hint lines hide (hover title keeps them), so the sidebar doesn't scroll.
 - **Sensei guide — LIVE** (owner's idea, 2026-09-27): `features/sensei/`. An original pixel-art Sensei (`SenseiArt`, one SVG rect per pixel: white beard, gold headband, indigo gi, black belt) fixed at the lower-right. A speech bubble pops up ~1s after a page opens and hides after ~9s; clicking him gives a new line. Lines are rule-based (`lines.ts`, tested): page tips, lines about the user's own results (next focus, near next belt, streak), encouragement; right after a practice he talks about the results (or cheers). He is **hidden while practicing and during the whole Assessment** (`useSenseiQuiet`, called by `PracticeFrame` and the Assessment) so he never covers the work. "Itago si Sensei" makes him small; Settings: Ipakita / Maliit lang / Wala (`settings.sensei`). Scrolling pages get bottom padding so he never covers the last buttons. The TEMPORARY "🧪 Test" dev button sits at the top-right so they don't overlap.
 - Planned: optional on-screen keyboard/numpad guide.
 
@@ -87,9 +87,10 @@ src/
     copy/         # Copy Test
     encoding/     # Document Encoding (documents, rules, paper views)
     qc/           # QC Check (record QC: original vs encoded, mark the wrong fields)
+    excel/        # Excel Practice (own spreadsheet model sheet.ts + timed shortcut tasks)
     assessment/
     settings/
-    (later) excel/, reports/
+    (later) reports/
   lib/
     storage.ts    # localStorage read/write, schema versioning, export/import
     scoring.ts    # WPM, accuracy, KPH calculations
@@ -138,7 +139,7 @@ type AppData = {
 
 type Session = {
   id: string;
-  type: 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'assessment';  // extend in later phases (SESSION_TYPES)
+  type: 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'excel' | 'assessment';  // extend in later phases (SESSION_TYPES)
   startedAt: string;                // ISO
   durationSec: number;
   metrics: Record<string, number>;  // e.g. { grossWpm, netWpm, accuracy } or { kph, entryAccuracy }
@@ -228,7 +229,12 @@ Original Phase 2 plan: Alphanumeric Copy Test (timed list of fake names/addresse
 
 **Phase 3 (IN PROGRESS):**
 - ✅ **QC Check** (`features/qc`, DONE 2026-09-27; owner chose "Record QC" + Assessment Part 5, 2 min): the ORIGINAL record (Copy Test generator) and an ENCODED copy with 0–2 realistic mistakes (swapped/missing letter, wrong digit or nearby key, missing period, lowercased word; ~30% of records have none; numbers only get digit mistakes). One row per field; click the row or press 1–5 to mark "May mali", Enter / Submit passes the record, nothing marked = "walang mali". Scored per field decision (flagging nothing only gets ~80%). Results list missed mistakes (different characters marked) and false alarms ("Tama pero minarkahan"). Home row 05 (Assessment is 06), sidebar link, coach, Sensei tips. Later idea: QC on the encoding documents.
-- NEXT (ask before adding react-data-grid / HyperFormula): Excel Drills with react-data-grid + HyperFormula and auto-checker, in this order: shortcuts/navigation → formatting (dates, numbers, leading zeros) → sort/filter/find & replace/remove duplicates → SUM/COUNT/IF/COUNTIF/SUMIF → text cleanup (TRIM, PROPER, split/combine names) → VLOOKUP/XLOOKUP → pivot tables (bonus).
+- 🟡 **Excel Practice** (`features/excel`, round 1 DONE 2026-09-27; owner chose timed tasks, and Excel joins the Assessment only once formulas are in):
+  - NO react-data-grid (decided with the owner): our own Excel-like model `sheet.ts` (pure, tested): arrows, Ctrl+Arrow to the edge of the data, Home / Ctrl+Home / Ctrl+End, Shift / Ctrl+Shift selection, Enter/Tab, typing = Enter mode (arrows commit), F2 = Edit mode, Esc, Delete, Backspace, Ctrl+C/V, Ctrl+Z, Ctrl+A. `ExcelSheetView` draws it (Name Box, formula bar, column letters, row numbers, frozen row 1, green active cell).
+  - Round 1 "Navigation at shortcuts": a fake sales log (Ref No., Customer, Branch, Date, Amount; 18–26 records) + 8 of 12 task kinds (`tasks.ts`), 3 minutes. Each task auto-checks after every key; "with the shortcut" = at most `maxKeys` command keys and no mouse. Every task uses its own row so tasks never block each other (tested over 300 rounds). "Laktawan" skips.
+  - Session type `'excel'`: metrics `tasksTotal`, `tasksDone`, `tasksShortcut`, `taskAccuracy`, `shortcutRate`, `avgSeconds`, `seconds`, `level` (1). Mistakes: expected = the shortcut, typed = "N pindot" / "Gumamit ng mouse" / "Hindi natapos", field = task id (`TASK_LABEL`).
+  - Targets (EncoDojo estimates, `JOB_READY_EXCEL`): 85% tasks done, 75% with the shortcut. Home row 06 (Assessment is 07), sidebar link, coach, Sensei tips.
+  - NEXT rounds, in order: formatting (dates, numbers, leading zeros) → sort/filter/find & replace/remove duplicates → formulas (ask before adding HyperFormula, `licenseKey: 'gpl-v3'`) → then add Excel as an Assessment part. with react-data-grid + HyperFormula and auto-checker, in this order: shortcuts/navigation → formatting (dates, numbers, leading zeros) → sort/filter/find & replace/remove duplicates → SUM/COUNT/IF/COUNTIF/SUMIF → text cleanup (TRIM, PROPER, split/combine names) → VLOOKUP/XLOOKUP → pivot tables (bonus).
 
 **Phase 4:** (The Assessment now covers the "diagnostic test" and "L6 hiring-exam simulation" ideas.) 6-level unlock system (90%+ accuracy to advance), daily loop, weekly review with weakest-skill highlight, Progress & Reports with Chart.js, PDF "Practice Certificate — self-assessed" via jsPDF at Job-ready (95%+ accuracy, 40+ Net WPM, target KPH).
 

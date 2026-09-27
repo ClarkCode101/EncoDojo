@@ -6,7 +6,7 @@
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon, QcIcon } from '../../components/icons';
+import { ArrowRightIcon, CopyIcon, DocumentIcon, ExcelIcon, KeyboardIcon, NumpadIcon, QcIcon } from '../../components/icons';
 import { ConfirmButton, HelpTip, Section } from '../../components/ui';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
@@ -40,6 +40,9 @@ function summary(session: Session): string {
     if (m.documents === 0) return 'Walang natapos na dokumento';
     return `${display(m.fieldAccuracy)}% tamang field, ${display(m.kph).toLocaleString()} KPH, ${m.documents} dokumento`;
   }
+  if (session.type === 'excel') {
+    return `${m.tasksDone} sa ${m.tasksTotal} na task, ${m.tasksShortcut} gamit ang shortcut`;
+  }
   if (session.type === 'qc') {
     if (m.records === 0) return 'Walang na-check na record';
     return `${display(m.decisionAccuracy)}% tamang check, ${m.records} record`;
@@ -65,6 +68,7 @@ const typeLabel: Record<Session['type'], string> = {
   copy: 'Copy Test',
   encoding: 'Document Encoding',
   qc: 'QC Check',
+  excel: 'Excel Practice',
   assessment: 'Assessment',
 };
 
@@ -117,7 +121,7 @@ function EnsayoRow({
   );
 }
 
-const comingSoon = ['Excel Practice', 'Progress Reports'];
+const comingSoon = ['Excel formulas (SUM, IF, VLOOKUP)', 'Progress Reports'];
 
 export default function DashboardPage() {
   const { profile, sessions } = useAppData();
@@ -144,6 +148,7 @@ export default function DashboardPage() {
   const copyLatest = num(latestMetric(withFinishedItems, 'copy', 'fieldAccuracy'));
   const encodingLatest = num(latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy'));
   const qcLatest = num(latestMetric(withFinishedItems, 'qc', 'decisionAccuracy'));
+  const excelLatest = num(latestMetric(sessions, 'excel', 'shortcutRate'));
 
   const today = now.toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' });
   const hello = `${greeting(now)}${profile.displayName ? `, ${profile.displayName}` : ''}.`;
@@ -163,7 +168,7 @@ export default function DashboardPage() {
         <p className="mt-2 text-lg text-stone-700">{subline}</p>
       </header>
 
-      {/* Ensayo: the five practices, then the Assessment */}
+      {/* Ensayo: the six practices, then the Assessment */}
       <Section
         title="Ensayo"
         aside={
@@ -182,6 +187,10 @@ export default function DashboardPage() {
               </li>
               <li>
                 <strong>QC Check:</strong> ilang porsyento ng check mo ang tama sa huli mong practice.
+              </li>
+              <li>
+                <strong>Excel Practice:</strong> ilang porsyento ng task ang nagawa mo gamit ang shortcut sa huli mong
+                round.
               </li>
             </ul>
           </HelpTip>
@@ -233,11 +242,20 @@ export default function DashboardPage() {
             value={qcLatest}
             unit="% tama"
           />
+          <EnsayoRow
+            n="06"
+            to="/excel"
+            icon={<ExcelIcon className="h-5 w-5" />}
+            title="Excel Practice"
+            text="Mga shortcut sa spreadsheet"
+            value={excelLatest}
+            unit="% shortcut"
+          />
         </ol>
 
-        {/* 06: the Assessment, set apart like a seal on the page */}
+        {/* 07: the Assessment, set apart like a seal on the page */}
         <div className="mt-6 grid grid-cols-[2.5rem_1fr] items-center gap-x-4 gap-y-3 border-l-4 border-belt-400 bg-belt-50 py-5 pl-3 pr-5 sm:grid-cols-[2.5rem_1fr_auto]">
-          <span className="font-display text-2xl font-semibold tabular-nums text-belt-600">06</span>
+          <span className="font-display text-2xl font-semibold tabular-nums text-belt-600">07</span>
           <div>
             <div className="text-lg font-bold text-stone-900">Assessment</div>
             <p className="text-stone-700">

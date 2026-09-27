@@ -35,6 +35,11 @@ export type Sheet = {
 /** A key press as the sheet sees it. */
 export type KeyPress = { key: string; ctrl?: boolean; shift?: boolean };
 
+/** A browser key event -> KeyPress (Cmd counts as Ctrl on a Mac). */
+export function toKeyPress(e: { key: string; ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }): KeyPress {
+  return { key: e.key, ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey };
+}
+
 const MAX_UNDO = 50;
 
 export function makeSheet(data: string[][], rows: number, cols: number): Sheet {

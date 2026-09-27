@@ -138,7 +138,7 @@ describe('removeSessions', () => {
   });
 
   it('PRACTICE_TYPES covers every practice feature (incl. encoding and qc) but not assessments', () => {
-    expect(PRACTICE_TYPES).toEqual(['typing', 'numpad', 'copy', 'encoding', 'qc']);
+    expect(PRACTICE_TYPES).toEqual(['typing', 'numpad', 'copy', 'encoding', 'qc', 'excel']);
     const withEncoding = addSession(data, { ...sampleSession('e1'), type: 'encoding' });
     const left = removeSessions(withEncoding, (s) => PRACTICE_TYPES.includes(s.type));
     expect(left.sessions.map((s) => s.id)).toEqual(['a1']);

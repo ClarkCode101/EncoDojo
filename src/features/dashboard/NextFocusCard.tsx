@@ -10,6 +10,7 @@ import {
   AssessmentIcon,
   CopyIcon,
   DocumentIcon,
+  ExcelIcon,
   KeyboardIcon,
   NumpadIcon,
   QcIcon,
@@ -24,6 +25,7 @@ const ICONS: Record<NextFocus['skill'], (className: string) => ReactNode> = {
   copy: (c) => <CopyIcon className={c} />,
   encoding: (c) => <DocumentIcon className={c} />,
   qc: (c) => <QcIcon className={c} />,
+  excel: (c) => <ExcelIcon className={c} />,
   assessment: (c) => <AssessmentIcon className={c} />,
 };
 
@@ -70,14 +72,14 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
       */}
       <p
         className={
-          'mt-1 text-sm leading-snug text-brand-100 [@media(max-height:800px)]:hidden ' +
+          'mt-1 text-sm leading-snug text-brand-100 [@media(max-height:900px)]:hidden ' +
           (goal ? '[@media(max-height:900px)]:hidden' : '')
         }
       >
         {f.reason}
       </p>
       {goal && (
-        <p className="mt-1 text-sm font-semibold text-belt-300 [@media(max-height:700px)]:hidden">{goal}</p>
+        <p className="mt-1 text-sm font-semibold text-belt-300 [@media(max-height:760px)]:hidden">{goal}</p>
       )}
     </Link>
   );

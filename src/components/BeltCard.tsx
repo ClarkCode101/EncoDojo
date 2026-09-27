@@ -54,7 +54,7 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
         <div className="h-full rounded-full bg-belt-400" style={{ width: `${Math.round(s.progress * 100)}%` }} />
       </div>
       {/* Hidden on short screens so the sidebar never needs to scroll (the hover title has it). */}
-      <p className="mt-2 text-sm leading-snug text-brand-100 [@media(max-height:800px)]:hidden">
+      <p className="mt-2 text-sm leading-snug text-brand-100 [@media(max-height:900px)]:hidden">
         {s.next ? (
           <>
             Susunod: <strong className="text-white">{s.next.label}</strong>. {s.nextHint}
