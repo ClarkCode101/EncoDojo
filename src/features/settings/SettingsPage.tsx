@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { SettingsIcon } from '../../components/icons';
-import { Button, Card, Checkbox, HelpTip, Notice, PageHeader, SegmentedPicker } from '../../components/ui';
+import { Button, Checkbox, HelpTip, Notice, PageHeader, Section, SegmentedPicker } from '../../components/ui';
 import { defaultData, exportFileName, exportJson, parseImport, type AppData } from '../../lib/storage';
 import { replaceAppData, updateAppData, updateSettings, useAppData } from '../../lib/useAppData';
 
@@ -18,7 +18,7 @@ function downloadText(fileName: string, text: string) {
 }
 
 const inputClass =
-  'w-full max-w-sm rounded-lg border-2 border-stone-400 bg-white px-4 py-2.5 text-lg ' +
+  'w-full max-w-sm rounded-lg border-[1.5px] border-stone-500 bg-white px-4 py-2.5 text-lg ' +
   'focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200';
 
 export default function SettingsPage() {
@@ -49,7 +49,7 @@ export default function SettingsPage() {
     setPendingImport(null);
     setMessage(
       saved
-        ? { kind: 'success', text: '✓ Naibalik na ang progress mo mula sa backup.' }
+        ? { kind: 'success', text: 'Naibalik na ang progress mo mula sa backup.' }
         : { kind: 'warning', text: 'Nabasa ang backup, pero hindi ito ma-save ng browser. Subukan sa ibang browser.' },
     );
   }
@@ -57,20 +57,24 @@ export default function SettingsPage() {
   function resetAll() {
     replaceAppData(defaultData());
     setResetText('');
-    setMessage({ kind: 'success', text: '✓ Nabura na ang lahat. Parang bago ulit ang EncoDojo.' });
+    setMessage({ kind: 'success', text: 'Nabura na ang lahat. Parang bago ulit ang EncoDojo.' });
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader
         icon={<SettingsIcon className="h-8 w-8" />}
         title="Settings"
         description="Dito mo maaayos ang pangalan, laki ng text, at backup ng progress mo."
       />
 
-      {message && <Notice kind={message.kind}>{message.text}</Notice>}
+      {message && (
+        <Notice kind={message.kind} className="mb-8">
+          {message.text}
+        </Notice>
+      )}
 
-      <Card title="Ikaw at ang itsura ng app">
+      <Section title="Ikaw at ang itsura ng app" className="mb-12">
         <div className="space-y-6">
           <div>
             <label htmlFor="display-name" className="mb-2 block text-lg font-semibold text-stone-900">
@@ -115,12 +119,12 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
-      </Card>
+      </Section>
 
-      <Card title="Backup ng progress">
+      <Section title="Backup ng progress" className="mb-12">
         <p className="mb-2 text-stone-800">
           Ang progress mo ay naka-save <strong>sa browser na ito lang</strong>. Kapag nag-clear ka ng browser data o
-          lumipat ng computer, mawawala ito — kaya mag-backup paminsan-minsan.
+          lumipat ng computer, mawawala ito. Kaya mag-backup paminsan-minsan.
         </p>
         <HelpTip label="Paano mag-backup?">
           Pindutin ang &quot;I-download ang backup&quot;. May file na mase-save sa computer mo (hal. sa Downloads). Kapag
@@ -145,7 +149,7 @@ export default function SettingsPage() {
           <div
             role="alertdialog"
             aria-labelledby="import-title"
-            className="mt-5 rounded-xl border-2 border-amber-400 bg-amber-50 p-5"
+            className="mt-5 rounded-r-lg border-l-4 border-amber-500 bg-amber-50 p-5"
           >
             <h3 id="import-title" className="text-lg font-bold text-amber-950">
               Palitan ang kasalukuyang progress?
@@ -162,9 +166,10 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-      </Card>
+      </Section>
 
-      <Card title="Burahin lahat" className="border-red-200">
+      {/* Red edge: this one cannot be undone. */}
+      <Section title="Burahin lahat" className="border-l-4 border-red-300 pl-5">
         <p className="mb-4 text-stone-800">
           Buburahin nito ang <strong>lahat</strong> ng session, assessment, at settings. Mag-backup muna kung gusto mo
           pang itago ang mga ito.
@@ -179,13 +184,13 @@ export default function SettingsPage() {
             autoComplete="off"
             value={resetText}
             onChange={(e) => setResetText(e.target.value)}
-            className="w-56 rounded-lg border-2 border-stone-400 px-4 py-2.5 font-mono text-lg focus:border-red-600 focus:outline-none focus:ring-4 focus:ring-red-200"
+            className="w-56 rounded-lg border-[1.5px] border-stone-500 px-4 py-2.5 font-mono text-lg focus:border-red-600 focus:outline-none focus:ring-4 focus:ring-red-200"
           />
           <Button variant="danger" disabled={resetText.trim().toUpperCase() !== RESET_WORD} onClick={resetAll}>
             Burahin ang lahat
           </Button>
         </div>
-      </Card>
+      </Section>
     </div>
   );
 }

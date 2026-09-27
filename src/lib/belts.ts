@@ -88,7 +88,7 @@ export function beltStatus(sessions: Session[]): BeltStatus {
   const next = BELTS[BELTS.indexOf(belt) + 1] ?? null;
 
   let progress = 1;
-  let nextHint = 'Pinakamataas na belt na ito. Ang galing mo! 🎉';
+  let nextHint = 'Pinakamataas na belt na ito. Ang galing mo!';
   if (next?.rank === 'black') {
     const left = BLACK_BELT_DAYS - jobReadyDays;
     progress = jobReadyDays / BLACK_BELT_DAYS;
