@@ -8,9 +8,9 @@ import { JOB_READY_NUMPAD } from '../../lib/targets';
 import { formatClock } from '../../lib/useCountdown';
 
 /** The list of wrong numpad entries (also used by the Assessment report). */
-export function NumpadMistakesCard({ mistakes }: { mistakes: SessionMistake[] }) {
+export function NumpadMistakesCard({ mistakes, nested = false }: { mistakes: SessionMistake[]; nested?: boolean }) {
   return (
-    <Section title={`Mga maling numero (${mistakes.length})`}>
+    <Section title={`Mga maling numero (${mistakes.length})`} small={nested}>
       {mistakes.length === 0 ? (
         <p className="text-lg text-stone-700">Walang maling numero. Ang galing!</p>
       ) : (

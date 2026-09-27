@@ -37,17 +37,20 @@ export default function FieldMistakesCard({
   labels,
   unitLabel,
   title = 'Mga maling field',
+  nested = false,
 }: {
   mistakes: SessionMistake[];
   /** field key -> display name, e.g. { date: "Date (Petsa)" } */
   labels: Record<string, string>;
   /** Column header for the item number, e.g. "Record" or "Dokumento". */
   unitLabel: string;
-  /** Card title; the count is added after it. */
+  /** Section title; the count is added after it. */
   title?: string;
+  /** Inside another section (the Assessment report): lighter heading. */
+  nested?: boolean;
 }) {
   return (
-    <Section title={`${title} (${mistakes.length})`}>
+    <Section title={`${title} (${mistakes.length})`} small={nested}>
       {mistakes.length === 0 ? (
         <p className="text-lg text-stone-700">Walang maling field. Ang galing!</p>
       ) : (

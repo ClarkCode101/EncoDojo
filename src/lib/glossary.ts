@@ -21,22 +21,22 @@ export const HELP = {
   kphLevels:
     'Ito ang karaniwang binabanggit na pamantayan sa 10-key / numpad data entry: mga 8,000 KPH para sa ' +
     'entry-level, 10,000 ang madalas hinihingi, at 12,000 pataas para sa mas mahigpit na trabaho. ' +
-    'Gabay lang ito — iba-iba ang bawat employer, kaya tingnan pa rin ang mismong job post. ' +
+    'Gabay lang ito. Iba-iba ang bawat employer, kaya tingnan pa rin ang mismong job post. ' +
     'Mas maikli (1 minuto) ang practice dito kaysa sa karaniwang test, kaya tingnan ang average ng ilang subok.',
   entryAccuracy: `Entry accuracy = ilang porsyento ng mga numero ang buong tama. ${JOB_READY_NUMPAD.entryAccuracy}% pataas ang target.`,
   fieldAccuracy:
     `Field accuracy = ilang porsyento ng mga field (pangalan, petsa, address, ID) ang EKSAKTONG tama. ` +
-    `Kahit isang letra, tuldok, o space lang ang mali, mali na ang buong field — ganyan sa totoong encoding. ` +
+    `Kahit isang letra, tuldok, o space lang ang mali, mali na ang buong field. Ganyan sa totoong encoding. ` +
     `${JOB_READY_COPY.fieldAccuracy}% pataas ang target.`,
   copyKph:
     `Bilis ng pagkopya (net KPH) = ilang tamang pindot kada oras, bawas na ang mga mali. ` +
-    `${JOB_READY_COPY.kph.toLocaleString('en-US')} pataas ang target — ito ang karaniwang minimum sa "alphanumeric data entry test" ng mga employer.`,
+    `${JOB_READY_COPY.kph.toLocaleString('en-US')} pataas ang target. Ito ang karaniwang minimum sa "alphanumeric data entry test" ng mga employer.`,
   copyWpm:
     'Ang Net WPM dito ay para lang maikumpara sa Typing Practice. Ang KPH ang target sa Copy Test. ' +
     'Mas mabagal talagang i-type ang pangalan, address, at ID kaysa sa ordinaryong pangungusap.',
   encodingKph:
     `Bilis ng pag-encode (net KPH) = ilang tamang pindot kada oras, bawas na ang mga mali. ` +
-    `${JOB_READY_ENCODING.kph.toLocaleString('en-US')} pataas ang target — mas mababa kaysa sa Copy Test dahil kailangan mo munang ` +
+    `${JOB_READY_ENCODING.kph.toLocaleString('en-US')} pataas ang target, mas mababa kaysa sa Copy Test dahil kailangan mo munang ` +
     `HANAPIN ang tamang value sa dokumento at i-convert ang petsa at halaga. Tantiya ito ng EncoDojo (walang iisang pamantayan).`,
   encodingRules:
     'Sa totoong trabaho, iba-iba ang itsura ng petsa at halaga sa bawat dokumento, pero IISA ang format sa system ' +

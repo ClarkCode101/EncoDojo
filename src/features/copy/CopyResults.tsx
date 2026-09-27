@@ -11,8 +11,16 @@ import { FIELD_LABEL } from './records';
 import { copyKphOf } from './scoreCopy';
 
 /** The list of wrong fields (also used by the Assessment report). */
-export function CopyMistakesCard({ mistakes, title }: { mistakes: SessionMistake[]; title?: string }) {
-  return <FieldMistakesCard mistakes={mistakes} labels={FIELD_LABEL} unitLabel="Record" title={title} />;
+export function CopyMistakesCard({
+  mistakes,
+  title,
+  nested,
+}: {
+  mistakes: SessionMistake[];
+  title?: string;
+  nested?: boolean;
+}) {
+  return <FieldMistakesCard mistakes={mistakes} labels={FIELD_LABEL} unitLabel="Record" title={title} nested={nested} />;
 }
 
 export default function CopyResults({

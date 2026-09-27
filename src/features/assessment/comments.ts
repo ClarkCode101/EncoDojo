@@ -40,11 +40,11 @@ function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): 
   } else if (speedOk) {
     out.push(
       `Typing: sapat na ang bilis mo (${net} WPM), pero ${acc}% lang ang tama (target: ${t.accuracy}%). ` +
-        'Bagalan nang kaunti — sa encoding, isang maling letra lang ay puwedeng mali na ang buong record.',
+        'Bagalan nang kaunti. Sa encoding, isang maling letra lang ay puwedeng mali na ang buong record.',
     );
   } else if (accOk) {
     out.push(
-      `Typing: maganda ang accuracy mo (${acc}%). Bilis naman ang kailangan — ${t.netWpm - net} WPM pa. ` +
+      `Typing: maganda ang accuracy mo (${acc}%). Bilis naman ang kailangan: ${t.netWpm - net} WPM pa. ` +
         'Mag-Typing Practice nang ilang beses (1 minuto) araw-araw.',
     );
   } else {
@@ -58,7 +58,7 @@ function typingComments(m: Record<string, number>, mistakes: SessionMistake[]): 
   if (acc - keystrokeAcc >= 5) {
     out.push(
       `Madalas kang magbura gamit ang Backspace (keystroke accuracy: ${keystrokeAcc}%). ` +
-        'Nakakaubos ng oras ang bawat pagbura — subukang tama na agad sa unang pindot.',
+        'Nakakaubos ng oras ang bawat pagbura. Subukang tama na agad sa unang pindot.',
     );
   }
 
@@ -171,7 +171,7 @@ function copyComments(m: Record<string, number>, mistakes: SessionMistake[]): st
     );
   } else if (accOk) {
     out.push(
-      `Copy Test: tama ang pagkopya mo (${acc}%). Bilisan pa nang kaunti — ${(t.kph - speed).toLocaleString('en-US')} KPH pa para sa target.`,
+      `Copy Test: tama ang pagkopya mo (${acc}%). Bilisan pa nang kaunti: ${(t.kph - speed).toLocaleString('en-US')} KPH pa para sa target.`,
     );
   } else {
     out.push(
@@ -193,13 +193,13 @@ function copyComments(m: Record<string, number>, mistakes: SessionMistake[]): st
 const ENCODING_FIELD_TIPS: Record<string, string> = {
   date: 'Madalas mali ang Date. Kahit "Sept. 14, 2026" o "14-Sep-2026" ang nasa papel, i-type ito bilang mm/dd/yyyy (09/14/2026).',
   birthDate: 'Madalas mali ang Birth Date. Laging mm/dd/yyyy, kahit iba ang itsura ng petsa sa form.',
-  total: 'Madalas mali ang Total Amount. Numero at tuldok lang — walang ₱ at walang comma (₱5,115.25 → 5115.25).',
+  total: 'Madalas mali ang Total Amount. Numero at tuldok lang, walang ₱ at walang comma (₱5,115.25 → 5115.25).',
   totalQty: 'Madalas mali ang Total Qty. Kunin ang TOTAL QTY sa ibaba ng delivery receipt, hindi ang isang linya lang.',
   customer: 'Madalas mali ang Customer. Ito ang nasa "Sold to:", hindi ang kumpanyang nasa itaas ng invoice.',
   deliverTo: 'Madalas mali ang Deliver To. Ingat sa pangalan ng kumpanya o tao at sa bawat tuldok.',
   address: 'Madalas mali ang Address. Ingat sa "Brgy.", "Blk", "Lot", mga comma, at pangalan ng lugar.',
   lastName: 'Madalas mali ang Last Name. Ito ang nasa "Surname" na kahon ng form.',
-  firstName: 'Madalas mali ang First Name. Ito ang nasa "Given Name" na kahon — hindi kasama ang middle name.',
+  firstName: 'Madalas mali ang First Name. Ito ang nasa "Given Name" na kahon, hindi kasama ang middle name.',
   contactNo: 'Madalas mali ang Contact No. Tingnan ang panaklong ( ), space, gitling (-), at bawat digit.',
   invoiceNo: 'Madalas mali ang Invoice No. Tingnan ang bawat digit at gitling (-) ng pulang numero.',
   drNo: 'Madalas mali ang DR No. Tingnan ang bawat digit at gitling (-) ng pulang numero.',
@@ -227,7 +227,7 @@ function encodingComments(m: Record<string, number>, mistakes: SessionMistake[])
     );
   } else if (accOk) {
     out.push(
-      `Document Encoding: tama ang pag-encode mo (${acc}%). Bilisan pa ang paghahanap sa dokumento — ` +
+      `Document Encoding: tama ang pag-encode mo (${acc}%). Bilisan pa ang paghahanap sa dokumento: ` +
         `${(t.kph - speed).toLocaleString('en-US')} KPH pa para sa target.`,
     );
   } else {

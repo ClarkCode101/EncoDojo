@@ -2,7 +2,7 @@
  * The report card for one saved assessment (reworked 2026-09-27: the old
  * long page felt overwhelming). From top to bottom:
  * 1. Verdict + stamp + buttons.
- * 2. Scorecard: every part in one glance (each target with ✓ / ✗).
+ * 2. Scorecard: every part in one glance, one ruled row per part (each target with ✓ / ✗).
  * 3. "Ano ang aayusin": tips for the parts that are NOT passed yet, each with
  *    a practice button (or one short "keep going" line when job-ready).
  * 4. Details per part, folded (<details>); parts that need work start open.
@@ -11,8 +11,18 @@
 import type { ReactNode } from 'react';
 import { KphLevels, Stamp } from '../../components/ResultPieces';
 import FieldMistakesCard from '../../components/entry/FieldMistakesCard';
-import { AssessmentIcon, CopyIcon, DocumentIcon, DownloadIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
-import { Button, ButtonLink, Card, PageHeader, StatBadge } from '../../components/ui';
+import {
+  AssessmentIcon,
+  CheckIcon,
+  CopyIcon,
+  DocumentIcon,
+  DownloadIcon,
+  KeyboardIcon,
+  NumpadIcon,
+  XIcon,
+} from '../../components/icons';
+import { Button, ButtonLink, PageHeader, Section, StatBadge } from '../../components/ui';
+import { listNumber } from '../../lib/listNumber';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
@@ -26,10 +36,11 @@ import { assessmentCommentsBySection } from './comments';
 import { downloadResultCard, resultCardData } from './resultCard';
 import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart, type Check } from './evaluate';
 
-type Section = Check['section'];
+/** Which part of the Assessment (typing, numpad, copy, encoding). */
+type PartKey = Check['section'];
 
 const PARTS: Record<
-  Section,
+  PartKey,
   { number: number; title: string; short: string; practice: string; to: string; icon: (c: string) => ReactNode }
 > = {
   typing: {
@@ -82,42 +93,43 @@ function withoutPartName(text: string): string {
 
 const fmt = (c: Check) => `${display(c.value).toLocaleString()}${c.unit}`;
 
-/** One part in the scorecard: its targets with ✓ / ✗. */
-function ScoreTile({ section, checks }: { section: Section; checks: Check[] }) {
+/** One ruled row of the scorecard: the part, then each target (✓/✗, your number / the target), then the verdict. */
+function ScoreRow({ section, checks }: { section: PartKey; checks: Check[] }) {
   const part = PARTS[section];
   const passed = checks.every((c) => c.pass);
   return (
-    <div className={'rounded-xl border-2 bg-white p-4 ' + (passed ? 'border-green-300' : 'border-red-300')}>
-      <div className="mb-2 flex items-center gap-2 font-bold text-stone-900">
+    <li className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 gap-y-2 border-b border-stone-300 py-3 md:grid-cols-[2.5rem_13rem_1fr_1fr_6rem]">
+      <span aria-hidden="true" className="font-display text-2xl font-semibold tabular-nums text-stone-400">
+        {listNumber(part.number)}
+      </span>
+      <span className="flex items-center gap-2 text-lg font-bold text-stone-900">
         <span className="text-brand-700">{part.icon('h-5 w-5')}</span>
         {part.short}
-        <span
-          className={'ml-auto whitespace-nowrap text-sm font-semibold ' + (passed ? 'text-green-800' : 'text-red-700')}
-        >
-          {passed ? 'Pasado' : 'Hindi pa'}
-        </span>
-      </div>
-      {/* One line per target: label on the left; ✓/✗, your number and the target on the right. */}
-      <ul className="space-y-1">
-        {checks.map((c) => (
-          <li key={c.label} className="flex items-baseline justify-between gap-2">
-            <span className="text-sm text-stone-600">{c.label}</span>
-            <span className="whitespace-nowrap">
-              <span aria-hidden="true" className={'mr-1 font-bold ' + (c.pass ? 'text-green-700' : 'text-red-600')}>
-                {c.pass ? '✓' : '✗'}
-              </span>
-              <span className="text-lg font-bold tabular-nums text-stone-900">{fmt(c)}</span>
-              <span className="text-sm text-stone-500">
-                {' '}
-                / {c.target.toLocaleString()}
-                {c.unit}
-              </span>
-              <span className="sr-only">{c.pass ? ' pasado' : ' hindi pa pasado'}</span>
+      </span>
+      <span
+        className={
+          'whitespace-nowrap text-right font-semibold md:order-last ' + (passed ? 'text-green-800' : 'text-red-700')
+        }
+      >
+        {passed ? 'Pasado' : 'Hindi pa'}
+      </span>
+      {checks.map((c) => (
+        <span key={c.label} className="col-start-2 col-end-4 md:col-auto">
+          <span className="block text-sm text-stone-600">{c.label}</span>
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            <span aria-hidden="true">
+              {c.pass ? <CheckIcon className="h-5 w-5 text-green-700" /> : <XIcon className="h-5 w-5 text-red-700" />}
             </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+            <span className="font-display text-xl font-bold tabular-nums text-stone-900">{fmt(c)}</span>
+            <span className="text-sm text-stone-500">
+              / {c.target.toLocaleString()}
+              {c.unit}
+            </span>
+            <span className="sr-only">{c.pass ? ' pasado' : ' hindi pa pasado'}</span>
+          </span>
+        </span>
+      ))}
+    </li>
   );
 }
 
@@ -128,26 +140,26 @@ function PartDetails({
   mistakeCount,
   children,
 }: {
-  section: Section;
+  section: PartKey;
   passed: boolean;
   mistakeCount: number;
   children: ReactNode;
 }) {
   const part = PARTS[section];
   return (
-    <details open={!passed} className="group rounded-xl border border-stone-200 bg-white shadow-sm">
-      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-5 py-4 text-lg font-bold text-stone-900 hover:bg-stone-50 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden">
+    <details open={!passed} className="group border-b border-stone-300">
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-1 py-4 text-lg font-bold text-stone-900 hover:bg-white/70 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden">
         <span aria-hidden="true" className="inline-block text-brand-700 transition-transform group-open:rotate-90">
           ›
         </span>
         <span className="text-brand-700">{part.icon('h-6 w-6')}</span>
         Bahagi {part.number}: {part.title}
         <span className="ml-auto text-sm font-semibold text-stone-600">
-          {mistakeCount > 0 ? `${mistakeCount} mali · ` : ''}
+          {mistakeCount > 0 ? `${mistakeCount} mali, ` : ''}
           <span className={passed ? 'text-green-800' : 'text-red-700'}>{passed ? 'Pasado' : 'Hindi pa'}</span>
         </span>
       </summary>
-      <div className="space-y-5 border-t border-stone-200 px-5 py-5">{children}</div>
+      <div className="space-y-6 pb-6 pl-8 pr-1 pt-1">{children}</div>
     </details>
   );
 }
@@ -174,13 +186,13 @@ export default function AssessmentReport({
   const date = new Date(assessment.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
   // The parts this assessment has (older ones lack Copy Test / Document Encoding).
-  const sections = (['typing', 'numpad', 'copy', 'encoding'] as Section[]).filter(
+  const sections = (['typing', 'numpad', 'copy', 'encoding'] as PartKey[]).filter(
     (s) => (s !== 'copy' || hasCopyPart(m)) && (s !== 'encoding' || hasEncodingPart(m)),
   );
-  const checksOf = (s: Section) => checks.filter((c) => c.section === s);
-  const passedPart = (s: Section) => checksOf(s).every((c) => c.pass);
+  const checksOf = (s: PartKey) => checks.filter((c) => c.section === s);
+  const passedPart = (s: PartKey) => checksOf(s).every((c) => c.pass);
   const toFix = sections.filter((s) => !passedPart(s));
-  const mistakesOf = (s: Section) => assessment.mistakes.filter((x) => x.section === s);
+  const mistakesOf = (s: PartKey) => assessment.mistakes.filter((x) => x.section === s);
 
   return (
     <div>
@@ -190,14 +202,14 @@ export default function AssessmentReport({
       <section
         role="status"
         className={
-          'mb-5 rounded-2xl border-2 p-6 ' +
-          (ready ? 'border-green-500 bg-green-50 text-green-950' : 'border-amber-400 bg-amber-50 text-amber-950')
+          'mb-10 rounded-r-lg border-l-4 py-6 pl-6 pr-5 ' +
+          (ready ? 'border-green-600 bg-green-50 text-green-950' : 'border-amber-500 bg-amber-50 text-amber-950')
         }
       >
         {/* Text on the left, stamp on the right (stamp goes on top on small screens). */}
         <div className="flex flex-col-reverse gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-3xl font-bold">{ready ? '✅ Job-ready ka na!' : 'Hindi pa job-ready'}</div>
+            <h2 className="text-4xl font-bold">{ready ? 'Job-ready ka na!' : 'Hindi pa job-ready'}</h2>
             <p className="mt-2 text-xl">
               <strong>
                 {m.targetsMet} sa {m.targetsTotal}
@@ -230,14 +242,16 @@ export default function AssessmentReport({
       </section>
 
       {/* 2. Scorecard */}
-      <section aria-label="Scorecard" className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {sections.map((s) => (
-          <ScoreTile key={s} section={s} checks={checksOf(s)} />
-        ))}
-      </section>
+      <Section title="Scorecard" className="mb-10">
+        <ol className="-mt-4">
+          {sections.map((s) => (
+            <ScoreRow key={s} section={s} checks={checksOf(s)} />
+          ))}
+        </ol>
+      </Section>
 
       {/* 3. What to fix (only the parts that are not passed yet) */}
-      <Card title={toFix.length ? `Ano ang aayusin (${toFix.length})` : 'Ano ang susunod?'} className="mb-6">
+      <Section title={toFix.length ? `Ano ang aayusin (${toFix.length})` : 'Ano ang susunod?'} className="mb-10">
         {toFix.length === 0 ? (
           <p className="text-lg text-stone-800">{comments.overall}</p>
         ) : (
@@ -245,7 +259,7 @@ export default function AssessmentReport({
             {toFix.map((s) => (
               <li
                 key={s}
-                className="flex flex-col gap-3 border-l-4 border-red-300 pl-4 sm:flex-row sm:items-start sm:justify-between"
+                className="flex flex-col gap-3 border-l-4 border-red-400 pl-4 sm:flex-row sm:items-start sm:justify-between"
               >
                 <div>
                   <div className="flex items-center gap-2 font-bold text-stone-900">
@@ -267,118 +281,127 @@ export default function AssessmentReport({
             ))}
           </ul>
         )}
-      </Card>
+      </Section>
 
       {/* 4. Details per part (folded; the parts that need work start open) */}
-      <h2 className="mb-3 text-xl font-bold text-stone-900">Mga detalye</h2>
-      <div className="space-y-3">
-        <PartDetails section="typing" passed={passedPart('typing')} mistakeCount={m.typingErrors ?? 0}>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatBadge
-              label="Bilis (Net WPM)"
-              value={display(m.typingNetWpm)}
-              hint={change(m.typingNetWpm, p?.typingNetWpm)}
-              help={HELP.netWpm}
-            />
-            <StatBadge
-              label="Accuracy (tama)"
-              value={`${display(m.typingAccuracy)}%`}
-              hint={change(m.typingAccuracy, p?.typingAccuracy, '%')}
-              help={HELP.accuracy}
-            />
-            <StatBadge
-              label="Keystroke accuracy"
-              value={`${display(m.typingKeystrokeAccuracy)}%`}
-              help={HELP.keystrokeAccuracy}
-            />
-            <StatBadge label="Gross WPM" value={display(m.typingGrossWpm)} help={HELP.grossWpm} />
-          </div>
-          <TypingMistakesCard mistakes={mistakesOf('typing')} errors={m.typingErrors} />
-        </PartDetails>
-
-        <PartDetails section="numpad" passed={passedPart('numpad')} mistakeCount={mistakesOf('numpad').length}>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatBadge
-              label="Bilis (KPH)"
-              value={display(m.numpadKph).toLocaleString()}
-              hint={change(m.numpadKph, p?.numpadKph)}
-              help={HELP.kph}
-            />
-            <StatBadge
-              label="Tamang numero"
-              value={`${display(m.numpadEntryAccuracy)}%`}
-              hint={change(m.numpadEntryAccuracy, p?.numpadEntryAccuracy, '%')}
-              help={HELP.entryAccuracy}
-            />
-            <StatBadge label="Natapos na numero" value={m.numpadEntries} hint={`${m.numpadCorrectEntries} ang tama`} />
-          </div>
-          <div>
-            <h3 className="mb-2 text-lg font-bold text-stone-900">Antas ng bilis mo (KPH)</h3>
-            <KphLevels kph={m.numpadKph} />
-          </div>
-          <NumpadMistakesCard mistakes={mistakesOf('numpad')} />
-        </PartDetails>
-
-        {/* Older assessments were only typing + numpad, so this part may be missing. */}
-        {hasCopyPart(m) && (
-          <PartDetails section="copy" passed={passedPart('copy')} mistakeCount={mistakesOf('copy').length}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <Section title="Mga detalye">
+        <div className="-mt-4">
+          <PartDetails section="typing" passed={passedPart('typing')} mistakeCount={m.typingErrors ?? 0}>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
               <StatBadge
-                label="Tamang field"
-                value={`${display(m.copyFieldAccuracy)}%`}
-                hint={change(m.copyFieldAccuracy, p?.copyFieldAccuracy, '%')}
-                help={HELP.fieldAccuracy}
+                label="Bilis (Net WPM)"
+                value={display(m.typingNetWpm)}
+                hint={change(m.typingNetWpm, p?.typingNetWpm)}
+                help={HELP.netWpm}
               />
+              <StatBadge
+                label="Accuracy (tama)"
+                value={`${display(m.typingAccuracy)}%`}
+                hint={change(m.typingAccuracy, p?.typingAccuracy, '%')}
+                help={HELP.accuracy}
+              />
+              <StatBadge
+                label="Keystroke accuracy"
+                value={`${display(m.typingKeystrokeAccuracy)}%`}
+                help={HELP.keystrokeAccuracy}
+              />
+              <StatBadge label="Gross WPM" value={display(m.typingGrossWpm)} help={HELP.grossWpm} />
+            </div>
+            <TypingMistakesCard mistakes={mistakesOf('typing')} errors={m.typingErrors} nested />
+          </PartDetails>
+
+          <PartDetails section="numpad" passed={passedPart('numpad')} mistakeCount={mistakesOf('numpad').length}>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-3">
               <StatBadge
                 label="Bilis (KPH)"
-                value={display(assessmentCopyKph(m)).toLocaleString()}
-                hint={p && hasCopyPart(p) ? change(assessmentCopyKph(m), assessmentCopyKph(p)) : undefined}
-                help={HELP.copyKph}
+                value={display(m.numpadKph).toLocaleString()}
+                hint={change(m.numpadKph, p?.numpadKph)}
+                help={HELP.kph}
               />
-              <StatBadge label="Net WPM" value={display(m.copyNetWpm)} help={HELP.copyWpm} />
               <StatBadge
-                label="Natapos na record"
-                value={m.copyRecords}
-                hint={`${m.copyCorrectFields} sa ${m.copyTotalFields} field ang tama`}
+                label="Tamang numero"
+                value={`${display(m.numpadEntryAccuracy)}%`}
+                hint={change(m.numpadEntryAccuracy, p?.numpadEntryAccuracy, '%')}
+                help={HELP.entryAccuracy}
+              />
+              <StatBadge
+                label="Natapos na numero"
+                value={m.numpadEntries}
+                hint={`${m.numpadCorrectEntries} ang tama`}
               />
             </div>
-            <CopyMistakesCard title="Mga maling field" mistakes={mistakesOf('copy')} />
+            <Section title="Antas ng bilis mo (KPH)" small>
+              <KphLevels kph={m.numpadKph} />
+            </Section>
+            <NumpadMistakesCard mistakes={mistakesOf('numpad')} nested />
           </PartDetails>
-        )}
 
-        {/* Assessments from before Document Encoding don't have this part. */}
-        {hasEncodingPart(m) && (
-          <PartDetails section="encoding" passed={passedPart('encoding')} mistakeCount={mistakesOf('encoding').length}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <StatBadge
-                label="Tamang field"
-                value={`${display(m.encodingFieldAccuracy)}%`}
-                hint={
-                  p && hasEncodingPart(p) ? change(m.encodingFieldAccuracy, p.encodingFieldAccuracy, '%') : undefined
-                }
-                help={HELP.fieldAccuracy}
+          {/* Older assessments were only typing + numpad, so this part may be missing. */}
+          {hasCopyPart(m) && (
+            <PartDetails section="copy" passed={passedPart('copy')} mistakeCount={mistakesOf('copy').length}>
+              <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+                <StatBadge
+                  label="Tamang field"
+                  value={`${display(m.copyFieldAccuracy)}%`}
+                  hint={change(m.copyFieldAccuracy, p?.copyFieldAccuracy, '%')}
+                  help={HELP.fieldAccuracy}
+                />
+                <StatBadge
+                  label="Bilis (KPH)"
+                  value={display(assessmentCopyKph(m)).toLocaleString()}
+                  hint={p && hasCopyPart(p) ? change(assessmentCopyKph(m), assessmentCopyKph(p)) : undefined}
+                  help={HELP.copyKph}
+                />
+                <StatBadge label="Net WPM" value={display(m.copyNetWpm)} help={HELP.copyWpm} />
+                <StatBadge
+                  label="Natapos na record"
+                  value={m.copyRecords}
+                  hint={`${m.copyCorrectFields} sa ${m.copyTotalFields} field ang tama`}
+                />
+              </div>
+              <CopyMistakesCard title="Mga maling field" mistakes={mistakesOf('copy')} nested />
+            </PartDetails>
+          )}
+
+          {/* Assessments from before Document Encoding don't have this part. */}
+          {hasEncodingPart(m) && (
+            <PartDetails
+              section="encoding"
+              passed={passedPart('encoding')}
+              mistakeCount={mistakesOf('encoding').length}
+            >
+              <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-3">
+                <StatBadge
+                  label="Tamang field"
+                  value={`${display(m.encodingFieldAccuracy)}%`}
+                  hint={
+                    p && hasEncodingPart(p) ? change(m.encodingFieldAccuracy, p.encodingFieldAccuracy, '%') : undefined
+                  }
+                  help={HELP.fieldAccuracy}
+                />
+                <StatBadge
+                  label="Bilis (KPH)"
+                  value={display(m.encodingKph).toLocaleString()}
+                  hint={p && hasEncodingPart(p) ? change(m.encodingKph, p.encodingKph) : undefined}
+                  help={HELP.encodingKph}
+                />
+                <StatBadge
+                  label="Natapos na dokumento"
+                  value={m.encodingDocuments}
+                  hint={`${m.encodingCorrectFields} sa ${m.encodingTotalFields} field ang tama`}
+                />
+              </div>
+              <FieldMistakesCard
+                mistakes={mistakesOf('encoding')}
+                labels={ENCODING_FIELD_LABEL}
+                unitLabel="Dokumento"
+                title="Mga maling field"
+                nested
               />
-              <StatBadge
-                label="Bilis (KPH)"
-                value={display(m.encodingKph).toLocaleString()}
-                hint={p && hasEncodingPart(p) ? change(m.encodingKph, p.encodingKph) : undefined}
-                help={HELP.encodingKph}
-              />
-              <StatBadge
-                label="Natapos na dokumento"
-                value={m.encodingDocuments}
-                hint={`${m.encodingCorrectFields} sa ${m.encodingTotalFields} field ang tama`}
-              />
-            </div>
-            <FieldMistakesCard
-              mistakes={mistakesOf('encoding')}
-              labels={ENCODING_FIELD_LABEL}
-              unitLabel="Dokumento"
-              title="Mga maling field"
-            />
-          </PartDetails>
-        )}
-      </div>
+            </PartDetails>
+          )}
+        </div>
+      </Section>
     </div>
   );
 }

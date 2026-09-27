@@ -8,9 +8,19 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import EntryFormRunner from '../../components/entry/EntryFormRunner';
-import { AssessmentIcon, ClockIcon, CopyIcon, DocumentIcon, KeyboardIcon, NumpadIcon } from '../../components/icons';
+import {
+  ArrowRightIcon,
+  AssessmentIcon,
+  CheckIcon,
+  ClockIcon,
+  CopyIcon,
+  DocumentIcon,
+  KeyboardIcon,
+  NumpadIcon,
+} from '../../components/icons';
 import { PracticeFrame } from '../../components/Practice';
-import { Button, Card, ConfirmButton, HelpTip, Kbd, Notice, PageHeader } from '../../components/ui';
+import { Button, ConfirmButton, HelpTip, Kbd, Notice, PageHeader, Section } from '../../components/ui';
+import { listNumber } from '../../lib/listNumber';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
 import { makeRng, randomSeed } from '../../lib/random';
@@ -70,9 +80,7 @@ function PartHeader({
   return (
     <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-x-6 gap-y-2">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-800 sm:flex">
-          {icon}
-        </div>
+        <span className="hidden text-brand-700 sm:inline-flex">{icon}</span>
         <h1 className="text-2xl font-bold text-stone-900">
           {title} {note && <span className="ml-1 text-base font-normal text-stone-600">{note}</span>}
         </h1>
@@ -100,57 +108,59 @@ function PartHeader({
   );
 }
 
+/** The four parts, in order. */
+const PARTS = [
+  { icon: <KeyboardIcon className="h-5 w-5" />, title: 'Typing', minutes: 1, text: 'Ordinaryong text, gaya sa karaniwang hiring test.' },
+  { icon: <NumpadIcon className="h-5 w-5" />, title: 'Numpad', minutes: 1, text: 'Mga numero, halaga at reference number.' },
+  { icon: <CopyIcon className="h-5 w-5" />, title: 'Copy Test', minutes: 2, text: 'Pangalan, petsa, address, contact no. at ID, sa form.' },
+  {
+    icon: <DocumentIcon className="h-5 w-5" />,
+    title: 'Document Encoding',
+    minutes: 3,
+    text: 'Mga detalye mula sa invoice, delivery receipt at application form.',
+  },
+];
+
 function Rules() {
   return (
-    <div className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
-          <KeyboardIcon className="h-8 w-8 shrink-0 text-brand-700" />
-          <div>
-            <div className="text-lg font-bold">Bahagi 1: Typing (1 minuto)</div>
-            <div className="text-stone-700">I-type ang ordinaryong text, gaya sa karaniwang hiring test.</div>
-          </div>
-        </div>
-        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
-          <NumpadIcon className="h-8 w-8 shrink-0 text-brand-700" />
-          <div>
-            <div className="text-lg font-bold">Bahagi 2: Numpad (1 minuto)</div>
-            <div className="text-stone-700">I-type ang mga numero, halaga, at reference number.</div>
-          </div>
-        </div>
-        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
-          <CopyIcon className="h-8 w-8 shrink-0 text-brand-700" />
-          <div>
-            <div className="text-lg font-bold">Bahagi 3: Copy Test (2 minuto)</div>
-            <div className="text-stone-700">Kopyahin ang pangalan, petsa, address, contact no., at ID sa form.</div>
-          </div>
-        </div>
-        <div className="flex gap-3 rounded-xl bg-stone-50 p-4">
-          <DocumentIcon className="h-8 w-8 shrink-0 text-brand-700" />
-          <div>
-            <div className="text-lg font-bold">Bahagi 4: Document Encoding (3 minuto)</div>
-            <div className="text-stone-700">
-              I-encode ang mahahalagang detalye mula sa invoice, delivery receipt, at application form.
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      <Section title="Apat na bahagi" className="mb-10">
+        {/* Ruled rows like the "Ensayo" list on Home. */}
+        <ol className="-mt-4">
+          {PARTS.map((p, i) => (
+            <li
+              key={p.title}
+              className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 border-b border-stone-300 py-3"
+            >
+              <span aria-hidden="true" className="font-display text-2xl font-semibold tabular-nums text-stone-400">
+                {listNumber(i + 1)}
+              </span>
+              <span>
+                <span className="flex items-center gap-2 text-lg font-bold text-stone-900">
+                  <span className="text-brand-700">{p.icon}</span>
+                  <span className="sr-only">Bahagi {i + 1}: </span>
+                  {p.title}
+                </span>
+                <span className="block text-stone-600">{p.text}</span>
+              </span>
+              <span className="whitespace-nowrap text-stone-700">{p.minutes} minuto</span>
+            </li>
+          ))}
+        </ol>
+      </Section>
 
-      <div>
-        <h3 className="mb-2 text-lg font-bold text-stone-900">Mga paalala</h3>
-        <ul className="list-disc space-y-1 pl-6 text-stone-800">
-          <li>Parang totoong exam: walang score habang nagta-type, walang &quot;Finish&quot; (tapusin nang maaga), at walang ulitan kapag nasimulan na.</li>
+      <Section title="Tandaan" className="mb-8">
+        <ul className="list-disc space-y-1 pl-6 text-lg text-stone-800">
+          <li>Parang totoong exam: walang score habang ginagawa, walang &quot;Finish&quot;, at walang ulitan.</li>
           <li>
-            Sa totoong hiring test, karaniwang <strong>English</strong> ang instructions at mga label. Kaya dito, English
-            ang mga label ng field at button (hal. <em>Name</em>, <em>Submit</em>), may Tagalog sa tabi para madaling
-            maintindihan.
+            <strong>English</strong> ang mga label (hal. <em>Name</em>, <em>Submit</em>), gaya sa totoong hiring test.
+            May Tagalog sa tabi.
           </li>
-          <li>Magsisimula ang oras sa unang pindot mo. May pahinga sa pagitan ng bawat bahagi.</li>
-          <li>Huwag umalis sa page na ito hangga't hindi lumalabas ang resulta.</li>
-          <li>Automatic na mase-save ang resulta. Puwede mo itong burahin mamaya sa listahan sa ibaba.</li>
+          <li>Magsisimula ang oras sa unang pindot mo. May pahinga pagkatapos ng bawat bahagi.</li>
+          <li>Huwag umalis sa page hangga&apos;t wala pa ang resulta. Automatic itong mase-save.</li>
         </ul>
-      </div>
-    </div>
+      </Section>
+    </>
   );
 }
 
@@ -162,7 +172,7 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-base">
-          <thead className="text-stone-600">
+          <thead className="text-sm text-stone-600">
             <tr>
               <th className="py-2 pr-4 font-semibold">Petsa</th>
               <th className="py-2 pr-4 font-semibold">Resulta</th>
@@ -182,24 +192,28 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
                   {new Date(s.startedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                 </td>
                 <td className="py-3 pr-4 font-semibold">
-                  {s.metrics.jobReady === 1
-                    ? '✅ Job-ready'
-                    : `${s.metrics.targetsMet} sa ${s.metrics.targetsTotal} pasado`}
+                  {s.metrics.jobReady === 1 ? (
+                    <span className="inline-flex items-center gap-1 text-green-800">
+                      <CheckIcon className="h-5 w-5" /> Job-ready
+                    </span>
+                  ) : (
+                    `${s.metrics.targetsMet} sa ${s.metrics.targetsTotal} pasado`
+                  )}
                 </td>
                 <td className="py-3 pr-4">
-                  {display(s.metrics.typingNetWpm)} WPM · {display(s.metrics.typingAccuracy)}%
+                  {display(s.metrics.typingNetWpm)} WPM, {display(s.metrics.typingAccuracy)}%
                 </td>
                 <td className="py-3 pr-4">
-                  {display(s.metrics.numpadKph).toLocaleString()} KPH · {display(s.metrics.numpadEntryAccuracy)}%
+                  {display(s.metrics.numpadKph).toLocaleString()} KPH, {display(s.metrics.numpadEntryAccuracy)}%
                 </td>
                 <td className="py-3 pr-4">
                   {hasCopyPart(s.metrics)
-                    ? `${display(s.metrics.copyFieldAccuracy)}% · ${display(assessmentCopyKph(s.metrics)).toLocaleString()} KPH`
+                    ? `${display(s.metrics.copyFieldAccuracy)}%, ${display(assessmentCopyKph(s.metrics)).toLocaleString()} KPH`
                     : '—'}
                 </td>
                 <td className="py-3 pr-4">
                   {hasEncodingPart(s.metrics)
-                    ? `${display(s.metrics.encodingFieldAccuracy)}% · ${display(s.metrics.encodingKph).toLocaleString()} KPH`
+                    ? `${display(s.metrics.encodingFieldAccuracy)}%, ${display(s.metrics.encodingKph).toLocaleString()} KPH`
                     : '—'}
                 </td>
                 <td className="py-3">
@@ -221,7 +235,7 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
         </table>
       </div>
 
-      <div className="mt-5 flex justify-end border-t border-stone-200 pt-5">
+      <div className="mt-4 flex justify-end">
         <ConfirmButton
           label="Burahin lahat ng assessment"
           question={
@@ -355,8 +369,8 @@ export default function AssessmentPage() {
   if (step.name === 'break1') {
     return (
       <div>
-        <PartHeader onCancel={cancel} icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 1! 👏" note="Magpahinga muna saglit." part={2} />
-        <Card title="Susunod: Bahagi 2, Numpad (1 minuto)" icon={<NumpadIcon />}>
+        <PartHeader onCancel={cancel} icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 1." note="Magpahinga muna saglit." part={2} />
+        <Section title="Susunod: Bahagi 2, Numpad (1 minuto)" className="mt-6">
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
             <li>
               Siguraduhing naka-ON ang <strong>Num Lock</strong>.
@@ -369,10 +383,10 @@ export default function AssessmentPage() {
           <HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>
           <div className="mt-6">
             <Button size="lg" autoFocus onClick={() => setStep({ name: 'numpad', typing: step.typing })}>
-              Simulan ang Bahagi 2
+              Simulan ang Bahagi 2 <ArrowRightIcon className="h-5 w-5" />
             </Button>
           </div>
-        </Card>
+        </Section>
       </div>
     );
   }
@@ -397,11 +411,11 @@ export default function AssessmentPage() {
   if (step.name === 'break2') {
     return (
       <div>
-        <PartHeader onCancel={cancel} icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 2! 👏" note="Magpahinga muna saglit." part={3} />
-        <Card title="Susunod: Bahagi 3, Copy Test (2 minuto)" icon={<CopyIcon />}>
+        <PartHeader onCancel={cancel} icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 2." note="Magpahinga muna saglit." part={3} />
+        <Section title="Susunod: Bahagi 3, Copy Test (2 minuto)" className="mt-6">
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
             <li>Makikita mo ang isang record (pangalan, petsa, address, contact no., ID).</li>
-            <li>Kopyahin ito nang EKSAKTO sa form — pati malalaking titik, tuldok, at comma.</li>
+            <li>Kopyahin ito nang EKSAKTO sa form, pati malalaking titik, tuldok at comma.</li>
             <li>
               Pindutin ang <Kbd>Tab</Kbd> para lumipat sa susunod na field. Sa huling field, pindutin ang{' '}
               <Kbd>Enter</Kbd> para ipasa ang record at lalabas ang susunod.
@@ -414,10 +428,10 @@ export default function AssessmentPage() {
               autoFocus
               onClick={() => setStep({ name: 'copy', typing: step.typing, numpad: step.numpad })}
             >
-              Simulan ang Bahagi 3
+              Simulan ang Bahagi 3 <ArrowRightIcon className="h-5 w-5" />
             </Button>
           </div>
-        </Card>
+        </Section>
       </div>
     );
   }
@@ -441,12 +455,12 @@ export default function AssessmentPage() {
   if (step.name === 'break3') {
     return (
       <div>
-        <PartHeader onCancel={cancel} icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 3! 👏" note="Magpahinga muna saglit." part={4} />
-        <Card title="Susunod: Bahagi 4, Document Encoding (3 minuto)" icon={<DocumentIcon />}>
+        <PartHeader onCancel={cancel} icon={<ClockIcon className="h-6 w-6" />} title="Tapos na ang Bahagi 3." note="Magpahinga muna saglit." part={4} />
+        <Section title="Susunod: Bahagi 4, Document Encoding (3 minuto)" className="mt-6">
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
             <li>Makikita mo ang isang dokumento: invoice, delivery receipt, o application form (salitan).</li>
             <li>Hanapin sa dokumento ang 5 detalyeng hinihingi ng form. Hindi lahat ng nasa papel ay ie-encode.</li>
-            <li>Sundin ang mga patakaran sa ibaba — lalo na sa petsa at halaga.</li>
+            <li>Sundin ang mga patakaran sa ibaba, lalo na sa petsa at halaga.</li>
             <li>
               <Kbd>Tab</Kbd> para sa susunod na field, <Kbd>Enter</Kbd> sa huling field para ipasa ang dokumento.
             </li>
@@ -458,10 +472,10 @@ export default function AssessmentPage() {
               autoFocus
               onClick={() => setStep({ name: 'encoding', typing: step.typing, numpad: step.numpad, copy: step.copy })}
             >
-              Simulan ang Bahagi 4
+              Simulan ang Bahagi 4 <ArrowRightIcon className="h-5 w-5" />
             </Button>
           </div>
-        </Card>
+        </Section>
       </div>
     );
   }
@@ -493,32 +507,32 @@ export default function AssessmentPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader
         icon={<AssessmentIcon className="h-8 w-8" />}
         title="Assessment"
-        description="Parang totoong hiring exam para sa Encoder / Data Entry. Sa dulo, malalaman mo kung job-ready ka na at kung ano pa ang dapat i-practice."
+        description="Parang totoong hiring exam para sa Encoder / Data Entry. Sa dulo, malalaman mo kung job-ready ka na."
       />
 
       {/* TEMPORARY (DevJump): localhost only */}
       {DEV_TOOLS && <DevJumpPanel onJump={jump} onSampleReport={sampleReport} />}
 
-      <Card title="Paano ito gumagana">
-        <Rules />
-        <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Button size="lg" onClick={start}>
-            Simulan ang Assessment
-          </Button>
-          <span className="text-stone-600">Mga 8–10 minuto ito, kasama ang pahinga.</span>
-        </div>
-      </Card>
+      <Rules />
 
-      <Card title="Mga dati mong resulta" icon={<ClockIcon />}>
+      {/* The start button, set apart with a gold edge like the Assessment row on Home. */}
+      <div className="mb-12 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-r-lg border-l-4 border-belt-400 bg-belt-50 px-5 py-5">
+        <Button size="lg" onClick={start}>
+          Simulan ang Assessment <ArrowRightIcon className="h-5 w-5" />
+        </Button>
+        <span className="text-stone-700">Mga 8 hanggang 10 minuto, kasama ang pahinga.</span>
+      </div>
+
+      <Section title="Mga dati mong resulta">
         <History
           sessions={history}
           onOpen={(assessment) => setStep({ name: 'report', assessment, fromHistory: true })}
         />
-      </Card>
+      </Section>
     </div>
   );
 }

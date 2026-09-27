@@ -35,9 +35,18 @@ function showChar(char: string): string {
 }
 
 /** The list of typing mistakes (also used by the Assessment report). */
-export function TypingMistakesCard({ mistakes, errors }: { mistakes: SessionMistake[]; errors: number }) {
+export function TypingMistakesCard({
+  mistakes,
+  errors,
+  nested = false,
+}: {
+  mistakes: SessionMistake[];
+  errors: number;
+  /** Inside another section (the Assessment report): lighter heading. */
+  nested?: boolean;
+}) {
   return (
-    <Section title={`Mga mali sa typing (${errors})`}>
+    <Section title={`Mga mali sa typing (${errors})`} small={nested}>
       {mistakes.length === 0 ? (
         <p className="text-lg text-stone-700">Walang mali. Ang galing!</p>
       ) : (

@@ -148,22 +148,34 @@ export function Card({
  * A part of a page with a ruled heading, like a section in a notebook:
  * a slab heading over a dark line, then the content (no box around it).
  * `aside` sits at the right of the heading (e.g. a HelpTip).
+ * `small`: a lighter heading for a section inside another one (e.g. inside a folded part of a report).
  */
 export function Section({
   title,
   aside,
+  small = false,
   children,
   className = '',
 }: {
   title: string;
   aside?: ReactNode;
+  small?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <section className={className}>
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 border-b-2 border-stone-800 pb-2">
-        <h2 className="text-2xl font-bold text-stone-900">{title}</h2>
+      <div
+        className={
+          'flex flex-wrap items-baseline justify-between gap-x-4 ' +
+          (small ? 'mb-2 border-b border-stone-300 pb-1' : 'mb-4 border-b-2 border-stone-800 pb-2')
+        }
+      >
+        {small ? (
+          <h3 className="text-lg font-bold text-stone-900">{title}</h3>
+        ) : (
+          <h2 className="text-2xl font-bold text-stone-900">{title}</h2>
+        )}
         {aside}
       </div>
       {children}
