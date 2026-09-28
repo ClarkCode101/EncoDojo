@@ -25,7 +25,7 @@ import { QUIZ_PASS, QUIZ_TASKS } from './tasks';
 /** Every screen except the list belongs to one lesson (`level`). */
 type Screen =
   | { name: 'list' }
-  | { name: 'lesson'; level: number }
+  | { name: 'lesson'; level: number; topic?: number }
   | { name: 'lessonDone'; level: number }
   | { name: 'quiz'; level: number }
   | { name: 'result'; session: Session };
@@ -69,6 +69,7 @@ export default function ExcelPage() {
           <ExcelLesson
             key={attempt}
             content={lesson.content}
+            startTopic={screen.topic ?? 0}
             onDone={() => go({ name: 'lessonDone', level: lesson.level })}
           />
         ) : (
@@ -140,7 +141,15 @@ export default function ExcelPage() {
             // The first lesson not passed yet gets the focus (Enter starts it).
             const suggested = l.level === (LESSONS.find((x) => x.content && !passed.has(x.level)) ?? LESSONS[0]).level;
             return (
-              <LessonRow key={l.level} n={l.level} title={l.title} ready={ready} passed={passed.has(l.level)}>
+              <LessonRow
+                key={l.level}
+                n={l.level}
+                title={l.title}
+                ready={ready}
+                passed={passed.has(l.level)}
+                topics={l.content?.topics.map((t) => t.title) ?? []}
+                onTopic={(topic) => go({ name: 'lesson', level: l.level, topic })}
+              >
                 {ready && (
                   <>
                     <Button
@@ -183,12 +192,18 @@ function LessonRow({
   title,
   ready,
   passed,
+  topics,
+  onTopic,
   children,
 }: {
   n: number;
   title: string;
   ready: boolean;
   passed: boolean;
+  /** The titles of the lesson's topics (empty when not ready). */
+  topics: string[];
+  /** Start the lesson at this topic. */
+  onTopic: (topic: number) => void;
   children: ReactNode;
 }) {
   return (
@@ -212,6 +227,24 @@ function LessonRow({
         </span>
       </span>
       {ready && <span className="col-start-2 flex flex-wrap gap-2 sm:col-start-auto">{children}</span>}
+      {/* The topics: go straight to one (no need to go through the ones before it). */}
+      {topics.length > 0 && (
+        <span className="col-start-2 sm:col-span-2">
+          <span className="sr-only">Mga bahagi ng Aralin {n}:</span>
+          <span className="flex flex-wrap gap-x-1 gap-y-1">
+            {topics.map((t, i) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onTopic(i)}
+                className="rounded px-1.5 py-0.5 text-sm text-brand-700 underline decoration-dotted underline-offset-2 hover:bg-brand-50 hover:text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
+              >
+                <span className="font-display tabular-nums text-stone-500">{i + 1}</span> {t}
+              </button>
+            ))}
+          </span>
+        </span>
+      )}
     </li>
   );
 }

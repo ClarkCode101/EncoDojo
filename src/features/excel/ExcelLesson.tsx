@@ -17,7 +17,18 @@ import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
 import type { LessonContent } from './lessons';
-import { clickCell, editCell, isTypingKey, pressKey, runCommand, typeInCell, type KeyPress, type Pos, type Sheet, type SheetCommand } from './sheet';
+import {
+  clickCell,
+  editCell,
+  isTypingKey,
+  pressKey,
+  runCommand,
+  typeInCell,
+  type KeyPress,
+  type Pos,
+  type Sheet,
+  type SheetCommand,
+} from './sheet';
 import { solutionFrames, startTask } from './tasks';
 import TaskRecord from './TaskRecord';
 import TipKeys from './TipKeys';
@@ -29,7 +40,16 @@ const DEMO_STEP_MS = 700;
 const DEMO_FAST_STEP_MS = 300;
 const DEMO_END_MS = 1600;
 
-export default function ExcelLesson({ content, onDone }: { content: LessonContent; onDone: () => void }) {
+export default function ExcelLesson({
+  content,
+  startTopic = 0,
+  onDone,
+}: {
+  content: LessonContent;
+  /** Start at this topic (0 = the first), e.g. from the list of topics on the lessons page. */
+  startTopic?: number;
+  onDone: () => void;
+}) {
   const { topics } = content;
   const [set] = useState(() => content.makeSet(makeRng(randomSeed())));
   // Every topic: first "Alamin" (task null), then one step per task to try.
@@ -37,7 +57,15 @@ export default function ExcelLesson({ content, onDone }: { content: LessonConten
     () => topics.flatMap((t, i) => [{ topic: i, task: null }, ...t.tasks.map((task) => ({ topic: i, task }))]),
     [topics],
   );
-  const [index, setIndex] = useState(0);
+  /** The first step (the Alamin) of a topic. */
+  const firstStepOf = (topicIndex: number) =>
+    Math.max(
+      0,
+      steps.findIndex((s) => s.topic === topicIndex),
+    );
+  const [index, setIndex] = useState(() => firstStepOf(startTopic));
+  /** The try steps done in this lesson (to show which topics are finished). */
+  const [doneSteps, setDoneSteps] = useState<Set<number>>(() => new Set());
   const [sheet, setSheet] = useState<Sheet>(set.sheet);
   const [hintLevel, setHintLevel] = useState(0);
   const [done, setDone] = useState<{ shortcut: boolean; keys: number; mouse: boolean } | null>(null);
@@ -82,6 +110,7 @@ export default function ExcelLesson({ content, onDone }: { content: LessonConten
     if (!task || done || demo === 'playing' || !task.check(next)) return;
     const shortcut = !mouseRef.current && keysRef.current <= task.maxKeys;
     setDone({ shortcut, keys: keysRef.current, mouse: mouseRef.current });
+    setDoneSteps((d) => new Set(d).add(index));
     if (soundCorrect) correctTick();
   }
 
@@ -141,17 +170,42 @@ export default function ExcelLesson({ content, onDone }: { content: LessonConten
 
   return (
     <div className="flex min-h-0 flex-col">
-      {/* Progress: which topic, and a thin bar of all the steps. */}
-      <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <span className="text-sm font-semibold text-stone-600">
+      {/*
+        The topics of the lesson as buttons: see where you are, and jump to any topic
+        (back or ahead) without doing the ones in between (owner's request, 2026-09-28).
+      */}
+      <nav aria-label="Mga bahagi ng aralin" className="mb-2 flex shrink-0 flex-wrap gap-1.5">
+        <span className="sr-only">
           Bahagi {step.topic + 1} sa {topics.length}: {topic.title}
         </span>
-        <div className="flex w-56 gap-1" aria-hidden="true">
-          {steps.map((_, i) => (
-            <div key={i} className={'h-1.5 flex-1 rounded-full ' + (i <= index ? 'bg-brand-700' : 'bg-stone-300')} />
-          ))}
-        </div>
-      </div>
+        {topics.map((t, i) => {
+          const current = i === step.topic;
+          const finished = steps.every((s, si) => s.topic !== i || s.task === null || doneSteps.has(si));
+          return (
+            <button
+              key={t.title}
+              type="button"
+              aria-current={current ? 'step' : undefined}
+              title={t.title}
+              disabled={demo === 'playing'}
+              onClick={() => goTo(firstStepOf(i), sheet)}
+              className={
+                'inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold transition-colors ' +
+                'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed ' +
+                (current
+                  ? 'border-brand-700 bg-brand-700 text-white'
+                  : finished
+                    ? 'border-brand-200 bg-brand-100 text-brand-900 hover:border-brand-400'
+                    : 'border-stone-300 bg-white text-stone-700 hover:border-stone-500')
+              }
+            >
+              <span className="font-display tabular-nums">{i + 1}</span>
+              {/* Short screens: only the numbers (the title shows on hover), so the sheet keeps its room. */}
+              <span className={current ? '' : '[@media(max-height:760px)]:sr-only'}>{t.title}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       <div className="mb-3 shrink-0 rounded-r-lg border-l-4 border-brand-700 bg-white px-5 py-3">
         {!task ? (
