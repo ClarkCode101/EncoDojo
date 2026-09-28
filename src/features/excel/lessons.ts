@@ -19,6 +19,8 @@ import { LESSON_6, TASK_LABEL_6 } from './lesson6';
 import { LESSON_7, TASK_LABEL_7 } from './lesson7';
 import { LESSON_8, TASK_LABEL_8 } from './lesson8';
 import { LESSON_9, TASK_LABEL_9 } from './lesson9';
+import { LESSON_10, TASK_LABEL_10 } from './lesson10';
+import type { ToolName } from './DataTools';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
@@ -36,8 +38,8 @@ export type LessonContent = {
   columnWidths: string[];
   /** Short names of the task kinds (results table). */
   labels: Record<string, string>;
-  /** Show the Data toolbar and dialogs (Aralin 4+). */
-  tools?: boolean;
+  /** Show the tools toolbar and dialogs (Aralin 4+): true = all tools, or only the ones the lesson teaches. */
+  tools?: boolean | ToolName[];
   /** Formula lessons: computes the formulas for the view and the checks. */
   compute?: ComputeSheet;
 };
@@ -149,6 +151,14 @@ export const LESSONS: Lesson[] = [
     labels: TASK_LABEL_9,
     content: null,
     load: () => import('./lesson9Content').then((m) => m.CONTENT_9),
+  },
+  {
+    level: 10,
+    title: 'Pag-check ng trabaho',
+    topics: LESSON_10,
+    labels: TASK_LABEL_10,
+    content: null,
+    load: () => import('./lesson10Content').then((m) => m.CONTENT_10),
   },
 ];
 

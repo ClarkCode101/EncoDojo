@@ -16,7 +16,7 @@
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits } from '../typing/generatePassage';
-import { computeSheet } from './formulaEngine';
+import { computeSheet, sameResult } from './formulaEngine';
 import { cellName, isFormula, makeSheet, type Pos, type Sheet } from './sheet';
 import type { ExcelTask, SolutionStep } from './tasks';
 
@@ -77,9 +77,6 @@ function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
   return { ...s, cells };
 }
 
-/** The number of columns (the extra column for the reference comes right after). */
-const row0Width = (s: Sheet) => s.cells[0].length;
-
 function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
   const n = table.length - 1; // records are rows 1..n
   const rows = Array.from({ length: n }, (_, i) => i + 1);
@@ -99,12 +96,7 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
   const sameAs = (s: Sheet, p: Pos, reference: string, words: string[], raw: Pos, other: string) => {
     const f = s.cells[p.r][p.c];
     if (s.editing || !isFormula(f) || !words.every((w) => f.toUpperCase().includes(w))) return false;
-    // The reference goes in an extra column on the same row (these formulas only point at other
-    // columns, so its place does not matter): one computation gives both answers.
-    return [s, setCells(s, [[raw, other]])].every((base) => {
-      const values = computeSheet(base.cells.map((row, r) => [...row, r === p.r ? reference : '']));
-      return values[p.r][p.c] === values[p.r][row0Width(base)];
-    });
+    return [s, setCells(s, [[raw, other]])].every((base) => sameResult(base.cells, p, reference));
   };
   const b2 = at(1, COL.name);
   const d2 = at(1, COL.ref);

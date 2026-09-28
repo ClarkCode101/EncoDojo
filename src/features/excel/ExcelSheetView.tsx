@@ -7,7 +7,18 @@
  * filter arrows in the header, and hides the rows a filter hides.
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { DedupeDialog, FilterPopup, FindReplaceDialog, TextToColumnsDialog, Toolbar, type Dialog } from './DataTools';
+import {
+  CondFormatDialog,
+  DedupeDialog,
+  FilterPopup,
+  FindReplaceDialog,
+  ListPopup,
+  TextToColumnsDialog,
+  Toolbar,
+  ValidationDialog,
+  type Dialog,
+  type ToolName,
+} from './DataTools';
 import { focusSheet } from './focusSheet';
 import {
   alignsRight,
@@ -17,11 +28,14 @@ import {
   displayValue,
   formatOf,
   formulaBarValue,
+  highlightedCells,
+  formatKey,
   isFormula,
   isHidden,
   isNumberText,
   isSelected,
   lastUsed,
+  listFor,
   selectionRange,
   toKeyPress,
   type KeyPress,
@@ -58,8 +72,8 @@ export default function ExcelSheetView({
   onEditChange: (value: string) => void;
   onCellClick: (p: Pos, shift: boolean) => void;
   onCellDoubleClick: (p: Pos) => void;
-  /** Show the Data toolbar, dialogs and filter arrows (Aralin 4). */
-  tools?: boolean;
+  /** Show the tools toolbar, dialogs and filter arrows (Aralin 4+): true = all tools, or only the listed ones. */
+  tools?: boolean | ToolName[];
   /** A data tool was used (sort, filter, find, replace, remove duplicates, or a dialog opened). */
   onCommand?: (cmd: SheetCommand) => void;
   /** Changes when a new task starts: open dialogs close and the toolbar message clears. */
@@ -83,6 +97,10 @@ export default function ExcelSheetView({
     if (computed && isFormula(raw)) return isNumberText(computed[p.r]?.[p.c] ?? '');
     return alignsRight(sheet, p);
   };
+  const hasTools = tools === true || (Array.isArray(tools) && tools.length > 0);
+  /** Cells colored by Conditional Formatting (Aralin 10). */
+  const highlighted = highlightedCells(sheet);
+  const activeList = listFor(sheet, sheet.active);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [toolMessage, setToolMessage] = useState<string | null>(null);
   // A new task starts with no dialog open (like closing it after finishing).
@@ -144,8 +162,37 @@ export default function ExcelSheetView({
         </div>
       </div>
 
-      {tools && <Toolbar sheet={sheet} onCommand={command} onOpen={open} message={toolMessage} />}
-      {tools && (dialog === 'find' || dialog === 'replace') && (
+      {sheet.alert && (
+        <div
+          role="alert"
+          className="shrink-0 border-b border-red-300 border-l-4 border-l-red-700 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-900"
+        >
+          {sheet.alert}
+        </div>
+      )}
+      {hasTools && (
+        <Toolbar
+          sheet={sheet}
+          onCommand={command}
+          onOpen={open}
+          message={toolMessage}
+          only={Array.isArray(tools) ? tools : undefined}
+        />
+      )}
+      {dialog === 'pick' && activeList && <ListPopup sheet={sheet} onCommand={command} onClose={close} />}
+      {hasTools && (dialog === 'cond' || dialog === 'validation') && (
+        <ToolDialog
+          kind={dialog}
+          sheet={sheet}
+          onCommand={command}
+          onClose={close}
+          onDone={(m) => {
+            close();
+            setToolMessage(m);
+          }}
+        />
+      )}
+      {hasTools && (dialog === 'find' || dialog === 'replace') && (
         <FindReplaceDialog
           key={dialog}
           sheet={sheet}
@@ -154,7 +201,7 @@ export default function ExcelSheetView({
           onClose={close}
         />
       )}
-      {tools && dialog === 'dedupe' && (
+      {hasTools && dialog === 'dedupe' && (
         <DedupeDialog
           sheet={sheet}
           onCommand={command}
@@ -165,7 +212,7 @@ export default function ExcelSheetView({
           }}
         />
       )}
-      {tools && dialog === 'split' && (
+      {hasTools && dialog === 'split' && (
         <TextToColumnsDialog
           sheet={sheet}
           onCommand={command}
@@ -176,7 +223,7 @@ export default function ExcelSheetView({
           }}
         />
       )}
-      {tools && dialog && typeof dialog === 'object' && (
+      {hasTools && dialog && typeof dialog === 'object' && (
         <FilterPopup key={dialog.filterCol} sheet={sheet} col={dialog.filterCol} onCommand={command} onClose={close} />
       )}
 
@@ -188,7 +235,13 @@ export default function ExcelSheetView({
         aria-label={`Spreadsheet. Active cell ${cellName(sheet.active)}: ${sheet.cells[sheet.active.r][sheet.active.c] || 'walang laman'}`}
         onKeyDown={(e) => {
           if (sheet.editing) return; // the edit box handles its own keys
-          if (tools) {
+          // Alt+↓ on a dropdown cell: its list (Data Validation, Aralin 10).
+          if (e.altKey && e.key === 'ArrowDown' && activeList) {
+            e.preventDefault();
+            open('pick');
+            return;
+          }
+          if (hasTools) {
             const ctrl = e.ctrlKey || e.metaKey;
             const k = e.key.toLowerCase();
             // Ctrl+F / Ctrl+H: Excel's Find / Replace (not the browser's).
@@ -274,7 +327,14 @@ export default function ExcelSheetView({
                           // only from Ctrl+B, and numbers sit on the right, like Excel.
                           ((sheet.formatting ? formatOf(sheet, { r, c }).bold : r === 0) ? 'font-bold ' : '') +
                           (rightAligned({ r, c }) ? 'text-right ' : '') +
-                          (selected && !active ? 'bg-green-50 ' : r === 0 ? 'bg-stone-50 ' : '') +
+                          // Conditional Formatting: Excel's "Light Red Fill with Dark Red Text".
+                          (highlighted.has(formatKey({ r, c }))
+                            ? 'bg-red-100 text-red-900 '
+                            : selected && !active
+                              ? 'bg-green-50 '
+                              : r === 0
+                                ? 'bg-stone-50 '
+                                : '') +
                           (active ? 'outline outline-2 -outline-offset-2 outline-green-700' : '')
                         }
                       >
@@ -302,7 +362,21 @@ export default function ExcelSheetView({
                         ) : (
                           shown({ r, c })
                         )}
-                        {tools && sheet.filterOn && r === 0 && c < tableCols && (
+                        {active && activeList && !sheet.editing && (
+                          <button
+                            type="button"
+                            aria-label={`Mga pagpipilian para sa ${cellName({ r, c })}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation(); // not a click on the cell
+                              open('pick');
+                            }}
+                            className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded border border-stone-400 bg-white text-[0.6rem] text-stone-600"
+                          >
+                            ▼
+                          </button>
+                        )}
+                        {hasTools && sheet.filterOn && r === 0 && c < tableCols && (
                           <button
                             type="button"
                             aria-label={`Filter ng ${sheet.cells[0][c]}`}
@@ -332,4 +406,18 @@ export default function ExcelSheetView({
       </div>
     </div>
   );
+}
+
+/** Conditional Formatting or Data Validation (Aralin 10). */
+function ToolDialog({
+  kind,
+  ...props
+}: {
+  kind: 'cond' | 'validation';
+  sheet: Sheet;
+  onCommand: (cmd: SheetCommand) => void;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  return kind === 'cond' ? <CondFormatDialog {...props} /> : <ValidationDialog {...props} />;
 }

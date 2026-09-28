@@ -37,6 +37,9 @@ import { CONTENT_8 } from './lesson8Content';
 import { HEADERS_9, makePeople9, makeQuiz9, makeTaskSet9 } from './tasks9';
 import { LESSON_9, TASK_LABEL_9 } from './lesson9';
 import { CONTENT_9 } from './lesson9Content';
+import { HEADERS_10, makeQuiz10, makeTable10, makeTaskSet10 } from './tasks10';
+import { LESSON_10, TASK_LABEL_10 } from './lesson10';
+import { CONTENT_10 } from './lesson10Content';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
@@ -492,6 +495,60 @@ describe('Excel Aralin 9 tasks (Flash Fill, Text to Columns, &, Paste Values)', 
     p = pressKey(pressKey(p, { key: 'ArrowDown', ctrl: true, shift: true }), { key: 'c', ctrl: true });
     expect(set.tasks.pasteValues.check(pressKey(p, { key: 'v', ctrl: true }))).toBe(false);
     expect(set.tasks.pasteValues.check(pressKey(p, { key: 'v', ctrl: true, shift: true }))).toBe(true);
+  });
+});
+
+describe('Excel Aralin 10 tasks (Conditional Formatting, COUNTBLANK, COUNTIFS, SUMIFS, dropdown)', () => {
+  it('the collection log: 2 Ref Nos. encoded twice, 4 blank cells, never in Ref No. or the first record', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const { table, duplicateRows } = makeTable10(makeRng(seed));
+      const body = table.slice(1);
+      expect(table[0]).toEqual(HEADERS_10);
+      expect(duplicateRows).toHaveLength(2);
+      for (const r of duplicateRows) expect(table.slice(1, r).some((row) => row[0] === table[r][0])).toBe(true);
+      expect(body.flatMap((row) => row.slice(0, 5)).filter((v) => v === '')).toHaveLength(4);
+      expect(body.every((row) => row[0] !== '')).toBe(true);
+      expect(body[0].slice(0, 5).every((v) => v !== '')).toBe(true);
+      expect(body.filter((row) => row[4] === '').length).toBe(2);
+    }
+    const set = makeTaskSet10(makeRng(1));
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_10).sort());
+    expect(LESSON_10.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_10).sort());
+    expect(CONTENT_10.tools).toEqual(['cond', 'validation']);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet10(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_10.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: 6 of the 7 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz10(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('a count typed by hand is not accepted; the dropdown refuses a value that is not in the list', () => {
+    const set = makeTaskSet10(makeRng(5));
+    const s = startTask(set.sheet, set.tasks.countBlank);
+    expect(
+      set.tasks.countBlank.check(pressKey({ ...s, editing: { value: '4', mode: 'enter' } }, { key: 'Enter' })),
+    ).toBe(false);
+    const d = startTask(set.sheet, set.tasks.useDropdown);
+    const refused = pressKey({ ...d, editing: { value: 'Bayad', mode: 'enter' } }, { key: 'Enter' });
+    expect(refused.editing?.value).toBe('Bayad');
+    expect(refused.alert).toContain('Paid, Unpaid');
+    // Typed in small letters: accepted, saved as the list spells it.
+    const typed = pressKey({ ...d, editing: { value: 'paid', mode: 'enter' } }, { key: 'Enter' });
+    expect(set.tasks.useDropdown.check(typed)).toBe(true);
   });
 });
 

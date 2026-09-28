@@ -43,7 +43,22 @@ export type CellFormat = {
 };
 
 /** One Ctrl+Z step: the cells and their formats before a change. */
-type Snapshot = { cells: string[][]; formats: Record<string, CellFormat> };
+/** A block of cells (like a selection): rows top..bottom, columns left..right. */
+export type Range = { top: number; left: number; bottom: number; right: number };
+
+/** Conditional Formatting (Aralin 10): cells in `range` turn light red when duplicated / blank. */
+export type CondRule = { kind: 'duplicates' | 'blanks'; range: Range };
+
+/** Data Validation, List (Aralin 10): the cells in `range` only accept these values (a dropdown). */
+export type ListRule = { range: Range; list: string[] };
+
+/** One Ctrl+Z step: the cells, formats and rules before a change. */
+type Snapshot = {
+  cells: string[][];
+  formats: Record<string, CellFormat>;
+  condRules: CondRule[];
+  lists: ListRule[];
+};
 
 export type Sheet = {
   /** cells[row][col], always rows x cols; '' = empty. */
@@ -79,6 +94,12 @@ export type Sheet = {
   filterOn: boolean;
   /** Only rows whose value in `col` is one of `values` are shown (null = all rows shown). */
   filter: { col: number; values: string[] } | null;
+  /** Conditional Formatting rules (Aralin 10). */
+  condRules: CondRule[];
+  /** Dropdown lists, Data Validation (Aralin 10). */
+  lists: ListRule[];
+  /** A message after a refused entry (a value not in the dropdown list); cleared by the next key. */
+  alert: string | null;
 };
 
 /** The data tools of Aralin 4 (from the toolbar, the dialogs, or their shortcuts). */
@@ -89,6 +110,14 @@ export type SheetCommand =
   | { kind: 'find'; text: string }
   | { kind: 'replaceAll'; find: string; replace: string }
   | { kind: 'removeDuplicates' }
+  /** Conditional Formatting on the selection (Aralin 10). */
+  | { kind: 'condFormat'; rule: CondRule['kind'] }
+  /** Clear Rules from the entire sheet. */
+  | { kind: 'clearRules' }
+  /** Data Validation, List, on the selection. */
+  | { kind: 'validation'; list: string[] }
+  /** A value picked from the active cell's dropdown list. */
+  | { kind: 'pick'; value: string }
   /** Text to Columns (Aralin 9): split the selected column at `delimiter`, the parts go from `dest` to the right. */
   | { kind: 'textToColumns'; delimiter: string; dest: Pos }
   /** Opening a dialog: nothing changes in the sheet (counted as one key by the lessons). */
@@ -199,6 +228,9 @@ export function makeSheet(
     formatting: options.formatting ?? false,
     filterOn: false,
     filter: null,
+    condRules: [],
+    lists: [],
+    alert: null,
   };
 }
 
@@ -378,6 +410,8 @@ function moveTo(s: Sheet, p: Pos, extend = false): Sheet {
 
 /** A click on a cell (Shift+click extends the selection). Ends an edit first, like Excel. */
 export function clickCell(s: Sheet, p: Pos, extend = false): Sheet {
+  const refused = refusal(s);
+  if (refused) return { ...s, alert: refused };
   const base = s.editing ? commit(s) : s;
   return moveTo(base, p, extend);
 }
@@ -409,7 +443,19 @@ export function todayText(now: Date = new Date()): string {
 // ---------- editing ----------
 
 function withCells(s: Sheet, cells: string[][], formats: Record<string, CellFormat> = s.formats): Sheet {
-  return { ...s, cells, formats, undo: [...s.undo, { cells: s.cells, formats: s.formats }].slice(-MAX_UNDO) };
+  return { ...s, cells, formats, undo: [...s.undo, snapshot(s)].slice(-MAX_UNDO) };
+}
+
+const snapshot = (s: Sheet): Snapshot => ({
+  cells: s.cells,
+  formats: s.formats,
+  condRules: s.condRules,
+  lists: s.lists,
+});
+
+/** New Conditional Formatting rules or dropdown lists, as one Ctrl+Z step. */
+function withRules(s: Sheet, rules: { condRules?: CondRule[]; lists?: ListRule[] }): Sheet {
+  return { ...s, ...rules, undo: [...s.undo, snapshot(s)].slice(-MAX_UNDO) };
 }
 
 /** A new formats object with `change` applied to every cell in `cellsToChange`. */
@@ -458,8 +504,10 @@ function setCell(s: Sheet, p: Pos, value: string): Sheet {
 /** Save what is being typed into the active cell (and stop editing). With formatting: Excel's number rules. */
 function commit(s: Sheet): Sheet {
   if (!s.editing) return s;
-  if (!s.formatting) return { ...setCell(s, s.active, s.editing.value), editing: null };
-  const { value, text } = excelValue(s.editing.value);
+  // A dropdown cell keeps the list's own spelling ("paid" -> "Paid").
+  const typed = listMatch(s, s.active, s.editing.value) ?? s.editing.value;
+  if (!s.formatting) return { ...setCell(s, s.active, typed), editing: null };
+  const { value, text } = excelValue(typed);
   const cells = s.cells.map((row, r) => (r === s.active.r ? row.map((v, c) => (c === s.active.c ? value : v)) : row));
   return {
     ...withCells(
@@ -670,7 +718,15 @@ function fillSelection(s: Sheet): Sheet {
 function undo(s: Sheet): Sheet {
   if (s.undo.length === 0) return s;
   const last = s.undo[s.undo.length - 1];
-  return { ...s, cells: last.cells, formats: last.formats, undo: s.undo.slice(0, -1), editing: null };
+  return {
+    ...s,
+    cells: last.cells,
+    formats: last.formats,
+    condRules: last.condRules,
+    lists: last.lists,
+    undo: s.undo.slice(0, -1),
+    editing: null,
+  };
 }
 
 /** True for a key that types a character (a letter, digit, space, symbol). */
@@ -689,9 +745,16 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   const ctrl = !!k.ctrl;
   const shift = !!k.shift;
 
+  // A refused-entry message goes away with the next key.
+  if (s.alert) s = { ...s, alert: null };
+
   // ----- while editing a cell -----
   if (s.editing) {
     if (key === 'Escape') return { ...s, editing: null };
+    // A dropdown cell refuses a value that is not in its list (Excel's "doesn't match the data validation").
+    const saving = key === 'Enter' || key === 'Tab' || (s.editing.mode === 'enter' && ARROWS[key] !== undefined);
+    const refused = saving ? refusal(s) : null;
+    if (refused) return { ...s, alert: refused };
     if (key === 'Enter' && ctrl) return fillSelection(s);
     if (key === ';' && ctrl) return { ...s, editing: { ...s.editing, value: s.editing.value + todayText() } };
     // Ctrl+E right after typing the example: save it, then Flash Fill.
@@ -880,7 +943,73 @@ export function runCommand(s: Sheet, cmd: SheetCommand): Sheet {
       return removeDuplicateRows(base);
     case 'textToColumns':
       return textToColumns(base, cmd.delimiter, cmd.dest);
+    case 'condFormat':
+      return withRules(base, { condRules: [...base.condRules, { kind: cmd.rule, range: selectionRange(base) }] });
+    case 'clearRules':
+      return base.condRules.length === 0 ? base : withRules(base, { condRules: [] });
+    case 'validation': {
+      const range = selectionRange(base);
+      const list = cmd.list.map((v) => v.trim()).filter((v) => v !== '');
+      if (list.length === 0) return base;
+      // A new list replaces the lists it overlaps (like Excel's "apply to the selected cells").
+      return withRules(base, { lists: [...base.lists.filter((l) => !overlaps(l.range, range)), { range, list }] });
+    }
+    case 'pick': {
+      const list = listFor(base, base.active);
+      return list && list.includes(cmd.value) ? setCell(base, base.active, cmd.value) : base;
+    }
     case 'open':
       return base;
   }
+}
+
+// ---------- Conditional Formatting and Data Validation (Aralin 10) ----------
+
+const inRange = (g: Range, p: Pos) => p.r >= g.top && p.r <= g.bottom && p.c >= g.left && p.c <= g.right;
+const overlaps = (a: Range, b: Range) =>
+  a.top <= b.bottom && b.top <= a.bottom && a.left <= b.right && b.left <= a.right;
+
+/**
+ * The cells a Conditional Formatting rule colors (as formatKey "r,c"): a value that appears
+ * more than once in its rule's range (not case-sensitive, like Excel), or an empty cell.
+ */
+export function highlightedCells(s: Sheet): Set<string> {
+  const out = new Set<string>();
+  for (const rule of s.condRules) {
+    const cellsIn: Pos[] = [];
+    for (let r = rule.range.top; r <= rule.range.bottom && r < rows(s); r++) {
+      for (let c = rule.range.left; c <= rule.range.right && c < cols(s); c++) cellsIn.push({ r, c });
+    }
+    if (rule.kind === 'blanks') {
+      for (const p of cellsIn) if (s.cells[p.r][p.c] === '') out.add(formatKey(p));
+      continue;
+    }
+    const count = new Map<string, number>();
+    for (const p of cellsIn) {
+      const v = s.cells[p.r][p.c].toLowerCase();
+      if (v !== '') count.set(v, (count.get(v) ?? 0) + 1);
+    }
+    for (const p of cellsIn) if ((count.get(s.cells[p.r][p.c].toLowerCase()) ?? 0) > 1) out.add(formatKey(p));
+  }
+  return out;
+}
+
+/** The dropdown list of a cell (the newest Data Validation rule on it), or null. */
+export function listFor(s: Sheet, p: Pos): string[] | null {
+  for (let i = s.lists.length - 1; i >= 0; i--) if (inRange(s.lists[i].range, p)) return s.lists[i].list;
+  return null;
+}
+
+/** A typed value as the list spells it ("paid" -> "Paid"), or null when the cell has no list or no match. */
+function listMatch(s: Sheet, p: Pos, typed: string): string | null {
+  const list = listFor(s, p);
+  return list?.find((v) => v.toLowerCase() === typed.trim().toLowerCase()) ?? null;
+}
+
+/** The message when the value being typed is refused by the cell's dropdown list, or null when it is fine. */
+function refusal(s: Sheet): string | null {
+  if (!s.editing || s.editing.value.trim() === '') return null;
+  const list = listFor(s, s.active);
+  if (!list || listMatch(s, s.active, s.editing.value) !== null) return null;
+  return `Hindi puwede ang "${s.editing.value}" dito. Pumili sa listahan: ${list.join(', ')} (Alt + ↓).`;
 }

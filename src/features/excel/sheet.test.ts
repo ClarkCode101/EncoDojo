@@ -8,6 +8,8 @@ import {
   runCommand,
   shiftFormula,
   cellName,
+  highlightedCells,
+  listFor,
   parseCellName,
   clickCell,
   colLetter,
@@ -543,6 +545,45 @@ describe('Paste Values, Flash Fill, Text to Columns (Aralin 9)', () => {
     // A normal paste on the same selection keeps the formulas (and starts at the top, D2).
     const t = press(s, ctrl('z'), ctrl('v'));
     expect(t.cells[1][3]).toBe('=C2&" "&B2');
+  });
+
+  it('Conditional Formatting colors duplicates (any capitals) and blanks in its range; Ctrl+Z takes it back', () => {
+    const base = makeSheet(
+      [
+        ['Ref', 'Name'],
+        ['CR-1', 'Ana'],
+        ['cr-1', ''],
+        ['CR-2', 'Ben'],
+      ],
+      6,
+      2,
+    );
+    let s = press(base, 'ArrowDown', shift('ArrowDown'), shift('ArrowDown'));
+    s = runCommand(s, { kind: 'condFormat', rule: 'duplicates' });
+    expect([...highlightedCells(s)].sort()).toEqual(['1,0', '2,0']);
+    s = runCommand(press(s, 'ArrowRight'), { kind: 'condFormat', rule: 'blanks' });
+    expect(highlightedCells(s).has('2,1')).toBe(false); // only B4 was selected
+    s = press(s, ctrl('z'));
+    expect(s.condRules).toHaveLength(1);
+    s = runCommand(s, { kind: 'clearRules' });
+    expect(highlightedCells(s).size).toBe(0);
+  });
+
+  it('Data Validation: a dropdown list; other values are refused with a message, the list spelling is kept', () => {
+    let s = press(names(), 'ArrowDown', 'ArrowRight', shift('ArrowDown'));
+    s = runCommand(s, { kind: 'validation', list: [' Paid ', 'Unpaid', ''] });
+    expect(listFor(s, { r: 1, c: 1 })).toEqual(['Paid', 'Unpaid']);
+    expect(listFor(s, { r: 3, c: 1 })).toBeNull();
+    let t = press(s, 'x');
+    t = press(typeInCell(t, 'Bayad'), 'Enter');
+    expect(t.editing?.value).toBe('Bayad');
+    expect(t.alert).toMatch(/Hindi puwede/);
+    t = press(t, 'Escape');
+    expect(t.alert).toBeNull();
+    t = press(typeInCell(press(t, 'u'), 'UNPAID'), 'Enter');
+    expect(t.cells[2][1]).toBe('Unpaid');
+    expect(runCommand(s, { kind: 'pick', value: 'Paid' }).cells[2][1]).toBe('Paid');
+    expect(runCommand(s, { kind: 'pick', value: 'Maybe' })).toBe(s);
   });
 
   it('Text to Columns splits the selection at the delimiter into the Destination (spaces stay, like Excel)', () => {

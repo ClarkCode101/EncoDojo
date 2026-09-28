@@ -33,6 +33,17 @@ const EXCEL_NAMES = [
   { name: 'FALSE', expression: '=FALSE()' },
 ];
 
+/**
+ * True when the cell at `p` shows the same value as the lesson's own `reference` formula would
+ * there. The reference is put in an extra column on the same row (these formulas only point at
+ * other cells, so its place does not matter), so one computation gives both answers.
+ */
+export function sameResult(cells: string[][], p: { r: number; c: number }, reference: string): boolean {
+  const width = cells[0].length;
+  const values = computeSheet(cells.map((row, r) => [...row, r === p.r ? reference : '']));
+  return values[p.r][p.c] === values[p.r][width];
+}
+
 /** The value of every cell as shown (formulas computed; other cells as they are). */
 export function computeSheet(cells: string[][]): string[][] {
   const hf = HyperFormula.buildFromArray(

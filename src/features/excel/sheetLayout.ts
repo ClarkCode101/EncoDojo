@@ -66,5 +66,17 @@ export const COLUMN_WIDTHS_8 = [
 /** Aralin 9: Full Name ("Last, First"), Last Name, First Name, Name Tag. */
 export const COLUMN_WIDTHS_9 = ['w-64 min-w-[16rem]', 'w-40 min-w-[10rem]', 'w-40 min-w-[10rem]', 'w-64 min-w-[16rem]'];
 
+/** Aralin 10: Ref No., Customer, Branch, Amount, Status, a narrow gap, and the Check block (label, value). */
+export const COLUMN_WIDTHS_10 = [
+  'w-[6.5rem] min-w-[6.5rem]',
+  'w-40 min-w-[10rem]',
+  'w-24 min-w-[6rem]',
+  'w-24 min-w-[6rem]',
+  'w-24 min-w-[6rem]',
+  'w-4 min-w-[1rem]',
+  'w-40 min-w-[10rem]',
+  'w-24 min-w-[6rem]',
+];
+
 /** Aralin 2 adds a Status column (F). */
 export const COLUMN_WIDTHS_2 = [...COLUMN_WIDTHS, 'w-36 min-w-[9rem]'];
