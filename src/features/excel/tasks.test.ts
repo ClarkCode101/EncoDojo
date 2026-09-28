@@ -47,6 +47,10 @@ import { LESSON_12, TASK_LABEL_12 } from './lesson12';
 import { CONTENT_12 } from './lesson12Content';
 import { REPORT, TAB_NAMES, makeData13, makeQuiz13, makeTaskSet13 } from './tasks13';
 import { LESSON_13, TASK_LABEL_13 } from './lesson13';
+import { BASE_PIVOT, HEADERS_14, makeData14, makeQuiz14, makeTaskSet14 } from './tasks14';
+import { LESSON_14, TASK_LABEL_14 } from './lesson14';
+import { CONTENT_14 } from './lesson14Content';
+import { findPivot, pivotCells } from './sheet';
 import { makeSheet as makeSheet13, makeWorkbook, switchTab, tabCells } from './sheet';
 import { excelDateText } from './formulaEngine';
 import { alignsRight as alignsRight11, cellsForCompute, todayText } from './sheet';
@@ -745,6 +749,100 @@ describe('Excel Aralin 13 tasks (tabs)', () => {
     expect(w.active).toEqual({ r: 1, c: 0 });
     expect(switchTab(w, 5).tabs?.index).toBe(1); // clamped
     expect(runCommand(w, { kind: 'renameTab', index: 1, name: 'one' }).alert).toMatch(/Hindi puwede/);
+  });
+});
+
+describe('Excel Aralin 14 tasks (PivotTable)', () => {
+  it('the sales: every branch and every month has a sale; each agent is in one branch', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const { sales } = makeData14(makeRng(seed));
+      expect(new Set(sales.map((s) => s[0])).size).toBe(3);
+      expect(new Set(sales.map((s) => s[2])).size).toBe(3);
+      const branchOf = new Map<string, string>();
+      for (const s of sales) {
+        expect(branchOf.get(s[1]) ?? s[0]).toBe(s[0]);
+        branchOf.set(s[1], s[0]);
+      }
+    }
+    const set = makeTaskSet14(makeRng(1));
+    expect(set.sheet.tabs?.names).toEqual(['Sales']);
+    expect(set.sheet.cells[0].slice(0, 5)).toEqual(HEADERS_14);
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_14).sort());
+    expect(LESSON_14.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_14).sort());
+    expect(CONTENT_14.tools).toEqual(['pivot']);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet14(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_14.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz14(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('a PivotTable like Excel: Row Labels, one row per branch (A to Z), Grand Total; months in calendar order', () => {
+    const table = {
+      headers: ['Branch', 'Month', 'Amount', 'Status'],
+      rows: [
+        ['Naga', 'Mar', '100', 'Paid'],
+        ['Lipa', 'Jan', '50.5', 'Unpaid'],
+        ['Naga', 'Jan', '25', 'Paid'],
+        ['Lipa', 'Feb', '', 'Paid'],
+      ],
+    };
+    const def = { ...BASE_PIVOT, source: 'Sales', rows: 0, values: 2 };
+    expect(pivotCells(table, def).cells).toEqual([
+      ['Row Labels', 'Sum of Amount'],
+      ['Lipa', '50.5'],
+      ['Naga', '125'],
+      ['Grand Total', '175.5'],
+    ]);
+    expect(pivotCells(table, { ...def, fn: 'count' }).cells[1]).toEqual(['Lipa', '1']);
+    expect(pivotCells(table, { ...def, fn: 'average' }).cells[2]).toEqual(['Naga', '62.5']);
+    expect(pivotCells(table, { ...def, cols: 1 }).cells.slice(0, 3)).toEqual([
+      ['Sum of Amount', 'Column Labels'],
+      ['Row Labels', 'Jan', 'Feb', 'Mar', 'Grand Total'],
+      ['Lipa', '50.5', '', '', '50.5'],
+    ]);
+    const filtered = pivotCells(table, { ...def, filter: { col: 3, value: 'Paid' } }).cells;
+    expect(filtered.slice(0, 2)).toEqual([['Status', 'Paid'], []]);
+    expect(filtered[filtered.length - 1]).toEqual(['Grand Total', '125']);
+  });
+
+  it('create: a new "Pivot" tab in front; a data change leaves it stale until Alt+F5', () => {
+    const set = makeTaskSet14(makeRng(3));
+    let s = runCommand(startTask(set.sheet, set.tasks.createPivot), { kind: 'createPivot', def: BASE_PIVOT });
+    expect(s.tabs?.names).toEqual(['Sales', 'Pivot']);
+    expect(s.tabs?.index).toBe(1);
+    const before = findPivot(s)!
+      .cells.map((r) => r.join('|'))
+      .join('\n');
+    s = switchTab(s, 0);
+    s = { ...s, cells: s.cells.map((row, r) => (r === 1 ? [row[0], row[1], row[2], '99999', row[4]] : row)) };
+    s = switchTab(s, 1);
+    expect(
+      findPivot(s)!
+        .cells.map((r) => r.join('|'))
+        .join('\n'),
+    ).toBe(before); // not updated by itself
+    s = pressKey(s, { key: 'F5', alt: true });
+    expect(
+      findPivot(s)!
+        .cells.map((r) => r.join('|'))
+        .join('\n'),
+    ).not.toBe(before);
+    expect(runCommand(s, { kind: 'createPivot', def: BASE_PIVOT }).tabs?.names).toContain('Pivot2');
   });
 });
 

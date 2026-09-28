@@ -11,6 +11,8 @@ import {
   CondFormatDialog,
   DedupeDialog,
   FreezeDialog,
+  PivotDialog,
+  PivotFields,
   FilterPopup,
   FindReplaceDialog,
   ListPopup,
@@ -196,6 +198,8 @@ export default function ExcelSheetView({
           only={Array.isArray(tools) ? tools : undefined}
         />
       )}
+      {sheet.pivot && <PivotFields sheet={sheet} onCommand={command} />}
+      {hasTools && dialog === 'pivot' && <PivotDialog sheet={sheet} onCommand={command} onClose={close} />}
       {dialog === 'pick' && activeList && <ListPopup sheet={sheet} onCommand={command} onClose={close} />}
       {hasTools && dialog === 'freeze' && (
         <FreezeDialog

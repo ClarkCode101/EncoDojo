@@ -15,7 +15,12 @@ import {
   columnValues,
   countDuplicates,
   countMatches,
+  isNumberText,
   listFor,
+  pivotSource,
+  tableOf,
+  type PivotDef,
+  type PivotFn,
   parseCellName,
   selectionRange,
   type Sheet,
@@ -31,13 +36,26 @@ export type Dialog =
   | 'cond'
   | 'validation'
   | 'freeze'
+  | 'pivot'
   /** The dropdown list of the active cell (Alt + ↓). */
   | 'pick'
   | { filterCol: number };
 
 /** The tools a lesson can show on the toolbar (all of them when a lesson just says `tools: true`). */
-export type ToolName = 'sort' | 'filter' | 'find' | 'replace' | 'dedupe' | 'split' | 'cond' | 'validation' | 'freeze';
-const ALL_TOOLS: ToolName[] = ['sort', 'filter', 'find', 'replace', 'dedupe', 'split', 'cond', 'validation', 'freeze'];
+export type ToolName =
+  'sort' | 'filter' | 'find' | 'replace' | 'dedupe' | 'split' | 'cond' | 'validation' | 'freeze' | 'pivot';
+const ALL_TOOLS: ToolName[] = [
+  'sort',
+  'filter',
+  'find',
+  'replace',
+  'dedupe',
+  'split',
+  'cond',
+  'validation',
+  'freeze',
+  'pivot',
+];
 
 const toolBtn =
   'rounded border border-stone-300 bg-white px-2.5 py-1 text-sm font-semibold text-stone-800 hover:border-stone-500 hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600';
@@ -56,7 +74,9 @@ export function Toolbar({
   /** Only these tools (a lesson shows what it teaches). */
   only?: ToolName[];
 }) {
-  const has = (t: ToolName) => only.includes(t);
+  // PivotTable is not offered on a PivotTable's own tab (it has its field list instead).
+  const has = (t: ToolName) => only.includes(t) && !(t === 'pivot' && sheet.pivot);
+  if (!ALL_TOOLS.some(has) && !message) return null; // nothing to show: no empty bar
   // mouseDown: keep the keyboard on the sheet; click: do it.
   const button = (label: ReactNode, action: () => void, pressed?: boolean) => (
     <button
@@ -82,6 +102,7 @@ export function Toolbar({
       {has('cond') && button('Conditional Formatting', () => onOpen('cond'))}
       {has('validation') && button('Data Validation', () => onOpen('validation'))}
       {has('freeze') && button('Freeze Panes', () => onOpen('freeze'))}
+      {has('pivot') && button('PivotTable', () => onOpen('pivot'))}
       {message && (
         <span role="status" className="ml-2 text-sm font-semibold text-green-800">
           {message}
@@ -443,6 +464,202 @@ export function ValidationDialog({
         </div>
       </form>
     </Box>
+  );
+}
+
+const FNS: { value: PivotFn; en: string }[] = [
+  { value: 'sum', en: 'Sum' },
+  { value: 'count', en: 'Count' },
+  { value: 'average', en: 'Average' },
+];
+const select =
+  'rounded border-[1.5px] border-stone-500 bg-white px-1.5 py-1 font-sans text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200';
+
+/**
+ * Insert > PivotTable (Aralin 14): the table of the active tab, summarized on a new tab. Excel asks
+ * for the range and the place first, then the fields; here it is one box: Rows, Values and how.
+ */
+export function PivotDialog({
+  sheet,
+  onCommand,
+  onClose,
+}: {
+  sheet: Sheet;
+  onCommand: (cmd: SheetCommand) => void;
+  onClose: () => void;
+}) {
+  const { headers, rows } = tableOf(sheet);
+  const numeric = (c: number) => rows.length > 0 && rows.every((r) => r[c] === '' || isNumberText(r[c]));
+  const firstText = Math.max(
+    0,
+    headers.findIndex((_, c) => !numeric(c)),
+  );
+  const lastNumber =
+    headers
+      .map((_, c) => c)
+      .filter(numeric)
+      .pop() ?? headers.length - 1;
+  const [rowField, setRowField] = useState(firstText);
+  const [valueField, setValueField] = useState(lastNumber);
+  const [fn, setFn] = useState<PivotFn>('sum');
+  const range = `$A$1:$${cellName({ r: rows.length, c: headers.length - 1 }).replace(/(\d+)$/, '$$$1')}`;
+  return (
+    <Box title="Create PivotTable" onClose={onClose}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onCommand({ kind: 'createPivot', def: { rows: rowField, cols: null, values: valueField, fn, filter: null } });
+          onClose();
+        }}
+      >
+        <p className="text-sm text-stone-700">
+          Table/Range: <span className="font-mono">{range}</span>. Location: New Worksheet (bagong tab).
+        </p>
+        <label className="mt-2 block text-sm font-semibold text-stone-800">
+          Rows (ano ang ililista)
+          <select
+            autoFocus
+            value={rowField}
+            onChange={(e) => setRowField(Number(e.target.value))}
+            className={`${select} mt-1 block w-full`}
+          >
+            {headers.map((h, i) => (
+              <option key={i} value={i}>
+                {h}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="mt-2 text-sm font-semibold text-stone-800">Values (ano ang kukuwentahin)</div>
+        <div className="mt-1 flex gap-2">
+          <select
+            aria-label="Paano kukuwentahin"
+            value={fn}
+            onChange={(e) => setFn(e.target.value as PivotFn)}
+            className={select}
+          >
+            {FNS.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.en}
+              </option>
+            ))}
+          </select>
+          <span className="self-center text-sm">of</span>
+          <select
+            aria-label="Aling column"
+            value={valueField}
+            onChange={(e) => setValueField(Number(e.target.value))}
+            className={`${select} flex-1`}
+          >
+            {headers.map((h, i) => (
+              <option key={i} value={i}>
+                {h}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <button type="submit" className={primary}>
+            <EnTl en="OK" tl="Gawin" />
+          </button>
+          <button type="button" onClick={onClose} className={toolBtn}>
+            <EnTl en="Cancel" tl="Huwag na" />
+          </button>
+        </div>
+      </form>
+    </Box>
+  );
+}
+
+/**
+ * The PivotTable Fields of a pivot tab (Aralin 14), in one line over the sheet: Filters, Columns,
+ * Rows, Values (Sum / Count / Average of a column), and Refresh (Alt+F5). Every change builds the
+ * PivotTable again from its source.
+ */
+export function PivotFields({ sheet, onCommand }: { sheet: Sheet; onCommand: (cmd: SheetCommand) => void }) {
+  const def = sheet.pivot!;
+  const source = pivotSource(sheet);
+  if (!source) return null;
+  const { headers, rows } = source;
+  const set = (change: Partial<PivotDef>) => onCommand({ kind: 'pivot', def: { ...def, ...change } });
+  const fieldSelect = (label: string, value: number | null, onChange: (v: number | null) => void, none: boolean) => (
+    <label className="flex items-center gap-1 text-sm font-semibold text-stone-700">
+      {label}
+      <select
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+        className={select}
+      >
+        {none && <option value="">(wala)</option>}
+        {headers.map((h, i) => (
+          <option key={i} value={i}>
+            {h}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  const filterValues = def.filter ? [...new Set(rows.map((r) => r[def.filter!.col]))].sort() : [];
+  return (
+    <div
+      aria-label="PivotTable Fields"
+      className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-stone-300 bg-green-50 px-2 py-1.5"
+    >
+      <span className="text-xs font-semibold text-green-900">PivotTable Fields</span>
+      {fieldSelect('Rows', def.rows, (v) => v !== null && set({ rows: v }), false)}
+      {fieldSelect('Columns', def.cols, (v) => set({ cols: v }), true)}
+      <label className="flex items-center gap-1 text-sm font-semibold text-stone-700">
+        Values
+        <select value={def.fn} onChange={(e) => set({ fn: e.target.value as PivotFn })} className={select}>
+          {FNS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.en}
+            </option>
+          ))}
+        </select>
+        <span className="font-normal">of</span>
+        <select
+          value={def.values}
+          onChange={(e) => set({ values: Number(e.target.value) })}
+          className={select}
+          aria-label="Values: aling column"
+        >
+          {headers.map((h, i) => (
+            <option key={i} value={i}>
+              {h}
+            </option>
+          ))}
+        </select>
+      </label>
+      {fieldSelect(
+        'Filters',
+        def.filter?.col ?? null,
+        (v) => set({ filter: v === null ? null : { col: v, value: [...new Set(rows.map((r) => r[v]))].sort()[0] } }),
+        true,
+      )}
+      {def.filter && (
+        <select
+          aria-label="Filter: aling value"
+          value={def.filter.value}
+          onChange={(e) => set({ filter: { col: def.filter!.col, value: e.target.value } })}
+          className={select}
+        >
+          {filterValues.map((v) => (
+            <option key={v} value={v}>
+              {v}
+            </option>
+          ))}
+        </select>
+      )}
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onCommand({ kind: 'refreshPivot' })}
+        className={toolBtn}
+      >
+        <EnTl en="Refresh" tl="Alt + F5" />
+      </button>
+    </div>
   );
 }
 
