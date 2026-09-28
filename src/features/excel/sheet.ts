@@ -58,6 +58,8 @@ type Snapshot = {
   formats: Record<string, CellFormat>;
   condRules: CondRule[];
   lists: ListRule[];
+  hiddenCols: number[];
+  colWidths?: string[];
 };
 
 export type Sheet = {
@@ -100,6 +102,14 @@ export type Sheet = {
   lists: ListRule[];
   /** A message after a refused entry (a value not in the dropdown list); cleared by the next key. */
   alert: string | null;
+  /** Shift+Space / Ctrl+Space (Aralin 12): the selection is whole rows / whole columns. */
+  whole: 'rows' | 'cols' | null;
+  /** Hidden columns (Ctrl+0, Aralin 12). */
+  hiddenCols: number[];
+  /** Frozen rows at the top and columns at the left (Freeze Panes). Default: the header row. */
+  freeze: { rows: number; cols: number };
+  /** Column widths (Tailwind classes) kept with the sheet, so inserting a column moves them too (Aralin 12). */
+  colWidths?: string[];
 };
 
 /** The data tools of Aralin 4 (from the toolbar, the dialogs, or their shortcuts). */
@@ -118,6 +128,8 @@ export type SheetCommand =
   | { kind: 'validation'; list: string[] }
   /** A value picked from the active cell's dropdown list. */
   | { kind: 'pick'; value: string }
+  /** Freeze Panes (Aralin 12): this many rows at the top and columns at the left stay in view. */
+  | { kind: 'freeze'; rows: number; cols: number }
   /** Text to Columns (Aralin 9): split the selected column at `delimiter`, the parts go from `dest` to the right. */
   | { kind: 'textToColumns'; delimiter: string; dest: Pos }
   /** Opening a dialog: nothing changes in the sheet (counted as one key by the lessons). */
@@ -210,6 +222,8 @@ export function makeSheet(
     formatting?: boolean;
     formats?: Record<string, CellFormat>;
     compute?: (cells: string[][]) => string[][];
+    freeze?: { rows: number; cols: number };
+    colWidths?: string[];
   } = {},
 ): Sheet {
   const cells = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => data[r]?.[c] ?? ''));
@@ -231,6 +245,10 @@ export function makeSheet(
     condRules: [],
     lists: [],
     alert: null,
+    whole: null,
+    hiddenCols: [],
+    freeze: options.freeze ?? { rows: 1, cols: 0 },
+    ...(options.colWidths ? { colWidths: options.colWidths } : {}),
   };
 }
 
@@ -357,12 +375,16 @@ export function parseCellName(name: string): Pos | null {
 
 /** The selected rectangle (top-left and bottom-right). */
 export function selectionRange(s: Sheet): { top: number; left: number; bottom: number; right: number } {
-  return {
+  const range = {
     top: Math.min(s.active.r, s.anchor.r),
     bottom: Math.max(s.active.r, s.anchor.r),
     left: Math.min(s.active.c, s.anchor.c),
     right: Math.max(s.active.c, s.anchor.c),
   };
+  // Shift+Space / Ctrl+Space: the whole rows / columns of the selection.
+  if (s.whole === 'rows') return { ...range, left: 0, right: cols(s) - 1 };
+  if (s.whole === 'cols') return { ...range, top: 0, bottom: rows(s) - 1 };
+  return range;
 }
 
 /** "B2:B25", or just "B2" for one cell. */
@@ -434,7 +456,7 @@ const ARROWS: Record<string, [number, number]> = {
 /** Move the active cell; with `extend` the anchor stays (the selection grows). */
 function moveTo(s: Sheet, p: Pos, extend = false): Sheet {
   const active = clampPos(s, p);
-  return { ...s, active, anchor: extend ? s.anchor : active, tabStartCol: null };
+  return { ...s, active, anchor: extend ? s.anchor : active, tabStartCol: null, whole: null };
 }
 
 /** A click on a cell (Shift+click extends the selection). Ends an edit first, like Excel. */
@@ -480,10 +502,15 @@ const snapshot = (s: Sheet): Snapshot => ({
   formats: s.formats,
   condRules: s.condRules,
   lists: s.lists,
+  hiddenCols: s.hiddenCols,
+  colWidths: s.colWidths,
 });
 
-/** New Conditional Formatting rules or dropdown lists, as one Ctrl+Z step. */
-function withRules(s: Sheet, rules: { condRules?: CondRule[]; lists?: ListRule[] }): Sheet {
+/** New Conditional Formatting rules, dropdown lists, hidden columns or widths, as one Ctrl+Z step. */
+function withRules(
+  s: Sheet,
+  rules: { condRules?: CondRule[]; lists?: ListRule[]; hiddenCols?: number[]; colWidths?: string[] },
+): Sheet {
   return { ...s, ...rules, undo: [...s.undo, snapshot(s)].slice(-MAX_UNDO) };
 }
 
@@ -753,6 +780,8 @@ function undo(s: Sheet): Sheet {
     formats: last.formats,
     condRules: last.condRules,
     lists: last.lists,
+    hiddenCols: last.hiddenCols,
+    colWidths: last.colWidths,
     undo: s.undo.slice(0, -1),
     editing: null,
   };
@@ -799,9 +828,15 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   }
 
   // ----- not editing -----
+  // Shift+Space: whole rows; Ctrl+Space: whole columns (Aralin 12).
+  if (key === ' ' && (shift || ctrl)) return { ...s, whole: ctrl ? 'cols' : 'rows' };
   if (ARROWS[key]) {
     const [dr, dc] = ARROWS[key];
     let target = ctrl ? ctrlJump(s, s.active, dr, dc) : { r: s.active.r + dr, c: s.active.c + dc };
+    // Hidden columns are skipped, like Excel.
+    while (dc !== 0 && s.hiddenCols.includes(target.c) && inside(s, { r: target.r, c: target.c + dc })) {
+      target = { r: target.r, c: target.c + dc };
+    }
     // Rows hidden by a filter are skipped, like Excel.
     while (!ctrl && dr !== 0 && isHidden(s, target.r) && inside(s, { r: target.r + dr, c: target.c })) {
       target = { r: target.r + dr, c: target.c };
@@ -827,6 +862,11 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
     if (lower === 'a') return { ...s, anchor: { r: 0, c: 0 }, active: lastUsed(s) };
     if (lower === 'd') return fillDown(s);
     if (lower === 'l' && shift) return runCommand(s, { kind: 'toggleFilter' });
+    // Aralin 12: Ctrl + + (Ctrl+Shift+=) inserts, Ctrl + - deletes, Ctrl+0 hides columns, Ctrl+Shift+0 shows them.
+    if (key === '+' || (key === '=' && shift)) return insertCells(s);
+    if (key === '-' || key === '_') return deleteCells(s);
+    if (key === '0' && !shift) return hideColumns(s, true);
+    if (key === ')' || (key === '0' && shift)) return hideColumns(s, false);
     if (s.formatting) {
       if (lower === 'b') return toggleBold(s);
       // Ctrl+Shift+1: on most keyboards Shift+1 gives "!", so both are accepted.
@@ -984,6 +1024,8 @@ export function runCommand(s: Sheet, cmd: SheetCommand): Sheet {
       // A new list replaces the lists it overlaps (like Excel's "apply to the selected cells").
       return withRules(base, { lists: [...base.lists.filter((l) => !overlaps(l.range, range)), { range, list }] });
     }
+    case 'freeze':
+      return { ...base, freeze: { rows: Math.max(0, cmd.rows), cols: Math.max(0, cmd.cols) } };
     case 'pick': {
       const list = listFor(base, base.active);
       return list && list.includes(cmd.value) ? setCell(base, base.active, cmd.value) : base;
@@ -1043,3 +1085,165 @@ function refusal(s: Sheet): string | null {
   if (!list || listMatch(s, s.active, s.editing.value) !== null) return null;
   return `Hindi puwede ang "${s.editing.value}" dito. Pumili sa listahan: ${list.join(', ')} (Alt + ↓).`;
 }
+
+// ---------- rows and columns: insert, delete, hide (Aralin 12) ----------
+
+const DEFAULT_WIDTH = 'w-24 min-w-[6rem]';
+const NEED_WHOLE = 'Piliin muna ang buong row (Shift + Space) o ang buong column (Ctrl + Space).';
+
+/**
+ * A formula after rows (or columns) were inserted or deleted, like Excel: references move with
+ * their cells, ALSO the ones with $ (=SUM(E2:E9) with a row inserted at row 5 -> =SUM(E2:E10)).
+ * `at` is the first inserted/deleted index (0-based), `delta` how many (+ insert, - delete).
+ * A single reference to a deleted cell, or a range that was deleted whole, becomes #REF!.
+ */
+export function adjustRefs(formula: string, axis: 'row' | 'col', at: number, delta: number): string {
+  if (!isFormula(formula) || delta === 0) return formula;
+  const gone = (i: number) => delta < 0 && i >= at && i < at - delta;
+  const move = (i: number) => (i < at ? i : i + delta); // only for cells that stay
+  const parse = (ref: string) => {
+    const m = /^(\$?)([A-Z]{1,3})(\$?)(\d+)$/.exec(ref)!;
+    return { colAbs: m[1], col: colIndex(m[2]), rowAbs: m[3], row: Number(m[4]) - 1 };
+  };
+  const text = (p: ReturnType<typeof parse>) => `${p.colAbs}${colLetter(p.col)}${p.rowAbs}${p.row + 1}`;
+  const idx = (p: ReturnType<typeof parse>) => (axis === 'row' ? p.row : p.col);
+  const withIdx = (p: ReturnType<typeof parse>, i: number) => (axis === 'row' ? { ...p, row: i } : { ...p, col: i });
+  return formula
+    .split(/("[^"]*")/)
+    .map((part, i) =>
+      i % 2 === 1
+        ? part
+        : part.replace(
+            /(^|[^A-Za-z0-9_$.])(\$?[A-Z]{1,3}\$?\d+)(?::(\$?[A-Z]{1,3}\$?\d+))?(?![A-Za-z0-9_(])/g,
+            (_m, before: string, a: string, b?: string) => {
+              const start = parse(a);
+              if (!b) {
+                const j = idx(start);
+                return `${before}${gone(j) ? '#REF!' : text(withIdx(start, move(j)))}`;
+              }
+              const end = parse(b);
+              const [i1, i2] = [idx(start), idx(end)];
+              // A deleted start moves to the first row after the deleted ones; a deleted end to the last one before.
+              const n1 = gone(i1) ? at : move(i1);
+              const n2 = gone(i2) ? at - 1 : move(i2);
+              if (n1 > n2) return `${before}#REF!`;
+              return `${before}${text(withIdx(start, n1))}:${text(withIdx(end, n2))}`;
+            },
+          ),
+    )
+    .join('');
+}
+
+/** Formats by "row,col" after rows/columns moved: `map` gives the new index, or null (deleted). */
+function moveFormats(s: Sheet, axis: 'row' | 'col', map: (i: number) => number | null): Record<string, CellFormat> {
+  const out: Record<string, CellFormat> = {};
+  for (const [k, f] of Object.entries(s.formats)) {
+    const [r, c] = k.split(',').map(Number);
+    const i = map(axis === 'row' ? r : c);
+    if (i !== null) out[axis === 'row' ? `${i},${c}` : `${r},${i}`] = f;
+  }
+  return out;
+}
+
+const adjustAll = (cells: string[][], axis: 'row' | 'col', at: number, delta: number) =>
+  cells.map((row) => row.map((v) => (isFormula(v) ? adjustRefs(v, axis, at, delta) : v)));
+
+/** Ctrl + + on whole rows / columns: insert as many empty ones before the selection. */
+function insertCells(s: Sheet): Sheet {
+  if (!s.whole) return { ...s, alert: NEED_WHOLE };
+  const { top, left, bottom, right } = selectionRange(s);
+  if (s.whole === 'rows') {
+    const k = bottom - top + 1;
+    const empty = () => Array.from({ length: cols(s) }, () => '');
+    const cells = adjustAll(
+      [...s.cells.slice(0, top), ...Array.from({ length: k }, empty), ...s.cells.slice(top)],
+      'row',
+      top,
+      k,
+    );
+    const formats = moveFormats(s, 'row', (r) => (r >= top ? r + k : r));
+    return {
+      ...withCells(s, cells, formats),
+      freeze: { ...s.freeze, rows: s.freeze.rows > top ? s.freeze.rows + k : s.freeze.rows },
+    };
+  }
+  const k = right - left + 1;
+  const cells = adjustAll(
+    s.cells.map((row) => [...row.slice(0, left), ...Array.from({ length: k }, () => ''), ...row.slice(left)]),
+    'col',
+    left,
+    k,
+  );
+  const widths = s.colWidths && [
+    ...s.colWidths.slice(0, left),
+    ...Array.from({ length: k }, () => s.colWidths![left] ?? DEFAULT_WIDTH),
+    ...s.colWidths.slice(left),
+  ];
+  return {
+    ...withCells(
+      s,
+      cells,
+      moveFormats(s, 'col', (c) => (c >= left ? c + k : c)),
+    ),
+    colWidths: widths,
+    hiddenCols: s.hiddenCols.map((c) => (c >= left ? c + k : c)),
+    freeze: { ...s.freeze, cols: s.freeze.cols > left ? s.freeze.cols + k : s.freeze.cols },
+  };
+}
+
+/** Ctrl + - on whole rows / columns: delete them; the ones after move up / left (the sheet keeps its size). */
+function deleteCells(s: Sheet): Sheet {
+  if (!s.whole) return { ...s, alert: NEED_WHOLE };
+  const { top, left, bottom, right } = selectionRange(s);
+  if (s.whole === 'rows') {
+    const k = bottom - top + 1;
+    const empty = () => Array.from({ length: cols(s) }, () => '');
+    const kept = [...s.cells.slice(0, top), ...s.cells.slice(bottom + 1), ...Array.from({ length: k }, empty)];
+    const formats = moveFormats(s, 'row', (r) => (r < top ? r : r > bottom ? r - k : null));
+    return withCells(s, adjustAll(kept, 'row', top, -k), formats);
+  }
+  const k = right - left + 1;
+  const kept = s.cells.map((row) => [
+    ...row.slice(0, left),
+    ...row.slice(right + 1),
+    ...Array.from({ length: k }, () => ''),
+  ]);
+  const widths = s.colWidths && [
+    ...s.colWidths.slice(0, left),
+    ...s.colWidths.slice(right + 1),
+    ...Array.from({ length: k }, () => DEFAULT_WIDTH),
+  ];
+  return {
+    ...withCells(
+      s,
+      adjustAll(kept, 'col', left, -k),
+      moveFormats(s, 'col', (c) => (c < left ? c : c > right ? c - k : null)),
+    ),
+    colWidths: widths,
+    hiddenCols: s.hiddenCols.filter((c) => c < left || c > right).map((c) => (c > right ? c - k : c)),
+  };
+}
+
+/** Ctrl+0 hides the selected columns; Ctrl+Shift+0 shows the hidden ones in the selection again. */
+function hideColumns(s: Sheet, hide: boolean): Sheet {
+  const { left, right } = selectionRange(s);
+  const inSel = (c: number) => c >= left && c <= right;
+  if (!hide) {
+    if (!s.hiddenCols.some(inSel)) return s;
+    return withRules(s, { hiddenCols: s.hiddenCols.filter((c) => !inSel(c)) });
+  }
+  const hidden = [...new Set([...s.hiddenCols, ...Array.from({ length: right - left + 1 }, (_, i) => left + i)])].sort(
+    (a, b) => a - b,
+  );
+  if (hidden.length >= cols(s)) return s; // never hide every column
+  // The cursor moves to the next column that is still shown (right first, like Excel).
+  const shown = (c: number) => c >= 0 && c < cols(s) && !hidden.includes(c);
+  let c = right + 1;
+  while (c < cols(s) && !shown(c)) c++;
+  if (!shown(c)) for (c = left - 1; c >= 0 && !shown(c); c--);
+  const p = { r: s.active.r, c };
+  return { ...withRules(s, { hiddenCols: hidden }), active: p, anchor: p, whole: null };
+}
+
+/** True when a column is hidden (Ctrl+0). */
+export const isColHidden = (s: Sheet, c: number) => s.hiddenCols.includes(c);

@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import {
   CondFormatDialog,
   DedupeDialog,
+  FreezeDialog,
   FilterPopup,
   FindReplaceDialog,
   ListPopup,
@@ -31,6 +32,7 @@ import {
   highlightedCells,
   formatKey,
   isFormula,
+  isColHidden,
   isHidden,
   isDateText,
   isNumberText,
@@ -132,6 +134,16 @@ export default function ExcelSheetView({
   const activeRef = useRef<HTMLTableCellElement>(null);
   const { top, left, bottom, right } = selectionRange(sheet);
   const cols = sheet.cells[0]?.length ?? 0;
+  /** The sheet's own widths (they move when a column is inserted, Aralin 12), else the lesson's. */
+  const widths = sheet.colWidths ?? columnWidths;
+  const widthOf = (c: number) => widths[c] ?? 'w-24 min-w-[6rem]';
+  // Freeze Panes: frozen rows stick under the column letters, frozen columns next to the row numbers.
+  const remOf = (c: number) => Number(/min-w-\[(\d+(?:\.\d+)?)rem\]/.exec(widthOf(c))?.[1] ?? 6);
+  const frozenTop = (r: number) => `calc(1.75rem + ${r} * (2rem + 1px))`;
+  const frozenLeft = (c: number) => {
+    const before = Array.from({ length: c }, (_, i) => i).filter((i) => !isColHidden(sheet, i));
+    return `calc(3rem + ${before.reduce((sum, i) => sum + remOf(i), 0)}rem + ${before.length}px)`;
+  };
 
   // Keep the active cell in view (the sheet scrolls inside its own box, not the page).
   useEffect(() => {
@@ -184,6 +196,17 @@ export default function ExcelSheetView({
         />
       )}
       {dialog === 'pick' && activeList && <ListPopup sheet={sheet} onCommand={command} onClose={close} />}
+      {hasTools && dialog === 'freeze' && (
+        <FreezeDialog
+          sheet={sheet}
+          onCommand={command}
+          onClose={close}
+          onDone={(m) => {
+            close();
+            setToolMessage(m);
+          }}
+        />
+      )}
       {hasTools && (dialog === 'cond' || dialog === 'validation') && (
         <ToolDialog
           kind={dialog}
@@ -268,8 +291,10 @@ export default function ExcelSheetView({
             }
           }
           const used = onKey(toKeyPress(e));
-          // Excel's Ctrl+E (Flash Fill) is the browser's search bar: never let it through, even when nothing fills.
-          if (used || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e')) e.preventDefault();
+          // Excel's shortcuts that are also the browser's (never let them through, even when nothing happens):
+          // Ctrl+E (Flash Fill; the search bar) and Ctrl + + / - / 0 (insert, delete, hide; the page zoom).
+          const ctrl = e.ctrlKey || e.metaKey;
+          if (used || (ctrl && ['e', 'E', '=', '+', '-', '_', '0', ')'].includes(e.key))) e.preventDefault();
         }}
         className="min-h-0 flex-1 overflow-auto outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-200"
       >
@@ -277,18 +302,22 @@ export default function ExcelSheetView({
           <thead>
             <tr>
               <th className="sticky left-0 top-0 z-30 h-7 w-12 min-w-[3rem] border-b border-r border-stone-300 bg-stone-100" />
-              {Array.from({ length: cols }, (_, c) => (
-                <th
-                  key={c}
-                  scope="col"
-                  className={
-                    `sticky top-0 z-20 h-7 border-b border-r border-stone-300 px-2 text-center text-xs font-semibold ${columnWidths[c] ?? 'w-24 min-w-[6rem]'} ` +
-                    (c >= left && c <= right ? 'bg-green-100 text-green-900' : 'bg-stone-100 text-stone-500')
-                  }
-                >
-                  {colLetter(c)}
-                </th>
-              ))}
+              {Array.from({ length: cols }, (_, c) =>
+                isColHidden(sheet, c) ? null : (
+                  <th
+                    key={c}
+                    scope="col"
+                    style={c < sheet.freeze.cols ? { left: frozenLeft(c) } : undefined}
+                    className={
+                      `sticky top-0 h-7 border-b border-r border-stone-300 px-2 text-center text-xs font-semibold ${widthOf(c)} ` +
+                      (c < sheet.freeze.cols ? 'z-[25] ' : 'z-20 ') +
+                      (c >= left && c <= right ? 'bg-green-100 text-green-900' : 'bg-stone-100 text-stone-500')
+                    }
+                  >
+                    {colLetter(c)}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -297,9 +326,10 @@ export default function ExcelSheetView({
                 <tr key={r}>
                   <th
                     scope="row"
+                    style={r < sheet.freeze.rows ? { top: frozenTop(r) } : undefined}
                     className={
-                      // Row 1 (the table headers) stays on top while scrolling, like "Freeze Top Row" in Excel.
-                      `sticky left-0 border-b border-r border-stone-300 px-1 text-center text-xs font-semibold ${r === 0 ? 'top-7 z-30' : 'z-10'} ` +
+                      // Frozen rows (by default row 1, the table headers) stay on top while scrolling.
+                      `sticky left-0 border-b border-r border-stone-300 px-1 text-center text-xs font-semibold ${r < sheet.freeze.rows ? 'z-30' : 'z-10'} ` +
                       (r >= top && r <= bottom
                         ? 'bg-green-100 text-green-900'
                         : sheet.filter && r > 0 && r <= lastUsed(sheet).r
@@ -310,12 +340,20 @@ export default function ExcelSheetView({
                     {r + 1}
                   </th>
                   {row.map((_, c) => {
+                    if (isColHidden(sheet, c)) return null;
                     const active = sheet.active.r === r && sheet.active.c === c;
                     const selected = isSelected(sheet, { r, c });
+                    const frozenR = r < sheet.freeze.rows;
+                    const frozenC = c < sheet.freeze.cols;
                     return (
                       <td
                         key={c}
                         ref={active ? activeRef : undefined}
+                        style={
+                          frozenR || frozenC
+                            ? { top: frozenR ? frozenTop(r) : undefined, left: frozenC ? frozenLeft(c) : undefined }
+                            : undefined
+                        }
                         onMouseDown={(e) => {
                           e.preventDefault(); // keep the focus on the grid
                           onCellClick({ r, c }, e.shiftKey);
@@ -324,9 +362,13 @@ export default function ExcelSheetView({
                         className={
                           // whitespace-pre: extra spaces show, like Excel (Aralin 8 cleans them with TRIM).
                           'relative h-8 max-w-0 cursor-cell overflow-hidden text-ellipsis whitespace-pre border-b border-r border-stone-200 px-2 scroll-ml-12 scroll-mt-[3.75rem] ' +
-                          (r === 0
-                            ? 'sticky top-7 z-[15] border-b-stone-400 font-sans text-stone-900 '
-                            : 'text-stone-900 ') +
+                          (r === 0 ? 'border-b-stone-400 font-sans text-stone-900 ' : 'text-stone-900 ') +
+                          (frozenR || frozenC
+                            ? `sticky ${frozenR && frozenC ? 'z-[16]' : frozenR ? 'z-[15]' : 'z-[12]'} `
+                            : '') +
+                          // The freeze line, like Excel's.
+                          (frozenC && c === sheet.freeze.cols - 1 ? 'border-r-stone-500 ' : '') +
+                          (frozenR && r === sheet.freeze.rows - 1 && r !== 0 ? 'border-b-stone-500 ' : '') +
                           // Aralin 1-2: the header row is always bold. With formatting (Aralin 3+), bold comes
                           // only from Ctrl+B, and numbers sit on the right, like Excel.
                           ((sheet.formatting ? formatOf(sheet, { r, c }).bold : r === 0) ? 'font-bold ' : '') +
@@ -338,7 +380,9 @@ export default function ExcelSheetView({
                               ? 'bg-green-50 '
                               : r === 0
                                 ? 'bg-stone-50 '
-                                : '') +
+                                : frozenR || frozenC
+                                  ? 'bg-white '
+                                  : '') +
                           (active ? 'outline outline-2 -outline-offset-2 outline-green-700' : '')
                         }
                       >

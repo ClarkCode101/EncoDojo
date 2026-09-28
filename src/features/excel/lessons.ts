@@ -21,6 +21,7 @@ import { LESSON_8, TASK_LABEL_8 } from './lesson8';
 import { LESSON_9, TASK_LABEL_9 } from './lesson9';
 import { LESSON_10, TASK_LABEL_10 } from './lesson10';
 import { LESSON_11, TASK_LABEL_11 } from './lesson11';
+import { LESSON_12, TASK_LABEL_12 } from './lesson12';
 import type { ToolName } from './DataTools';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
@@ -168,6 +169,14 @@ export const LESSONS: Lesson[] = [
     labels: TASK_LABEL_11,
     content: null,
     load: () => import('./lesson11Content').then((m) => m.CONTENT_11),
+  },
+  {
+    level: 12,
+    title: 'Rows at columns',
+    topics: LESSON_12,
+    labels: TASK_LABEL_12,
+    content: null,
+    load: () => import('./lesson12Content').then((m) => m.CONTENT_12),
   },
 ];
 

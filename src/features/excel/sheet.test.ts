@@ -8,6 +8,8 @@ import {
   runCommand,
   shiftFormula,
   cellName,
+  adjustRefs,
+  selectionRange,
   highlightedCells,
   listFor,
   parseCellName,
@@ -600,5 +602,80 @@ describe('Paste Values, Flash Fill, Text to Columns (Aralin 9)', () => {
     expect(parseCellName('=$B$2')).toEqual({ r: 1, c: 1 });
     expect(parseCellName('b12')).toEqual({ r: 11, c: 1 });
     expect(parseCellName('hello')).toBeNull();
+  });
+});
+
+describe('rows and columns: insert, delete, hide, freeze (Aralin 12)', () => {
+  it('adjustRefs moves references like Excel when rows or columns are inserted or deleted', () => {
+    // Row 5 (index 4) inserted:
+    expect(adjustRefs('=SUM(E2:E9)', 'row', 4, 1)).toBe('=SUM(E2:E10)');
+    expect(adjustRefs('=E5+E4+$E$9', 'row', 4, 1)).toBe('=E6+E4+$E$10');
+    expect(adjustRefs('=IF(E5>0,"E5","")', 'row', 4, 1)).toBe('=IF(E6>0,"E5","")');
+    // Row 5 deleted:
+    expect(adjustRefs('=SUM(E2:E9)', 'row', 4, -1)).toBe('=SUM(E2:E8)');
+    expect(adjustRefs('=E5*2', 'row', 4, -1)).toBe('=#REF!*2');
+    expect(adjustRefs('=SUM(E5:E6)', 'row', 4, -2)).toBe('=SUM(#REF!)');
+    expect(adjustRefs('=SUM(E5:E9)', 'row', 4, -1)).toBe('=SUM(E5:E8)');
+    // Columns: C (index 2) deleted; E (index 4) inserted.
+    expect(adjustRefs('=SUM(E2:J2)', 'col', 2, -1)).toBe('=SUM(D2:I2)');
+    expect(adjustRefs('=SUM(E2:J2)', 'col', 4, 1)).toBe('=SUM(F2:K2)');
+    expect(adjustRefs('=C2&D2', 'col', 2, -1)).toBe('=#REF!&C2');
+  });
+
+  const table = () =>
+    makeSheet(
+      [
+        ['Name', 'Code', 'Qty'],
+        ['Ana', 'x', '2'],
+        ['Ben', 'y', '3'],
+        ['Total', '', '=SUM(C2:C3)'],
+      ],
+      6,
+      3,
+      { formatting: true, formats: { '2,2': { bold: true } }, colWidths: ['w-40', 'w-20', 'w-24'] },
+    );
+
+  it('Shift+Space then Ctrl + + inserts a row above; formulas and formats move; Ctrl+Z undoes', () => {
+    let s = press(table(), 'ArrowDown', 'ArrowDown', shift(' '));
+    expect(selectionRange(s)).toEqual({ top: 2, bottom: 2, left: 0, right: 2 });
+    expect(at(s)).toBe('A3'); // the active cell stays
+    s = press(s, { key: '+', ctrl: true, shift: true });
+    expect(s.cells.map((r) => r[0])).toEqual(['Name', 'Ana', '', 'Ben', 'Total', '', '']);
+    expect(s.cells[4][2]).toBe('=SUM(C2:C4)');
+    expect(formatOf(s, { r: 3, c: 2 }).bold).toBe(true);
+    expect(press(s, ctrl('z')).cells[3][2]).toBe('=SUM(C2:C3)');
+  });
+
+  it('Ctrl + - deletes the whole row; without a whole row or column it only reminds', () => {
+    const s = press(table(), 'ArrowDown', shift(' '), ctrl('-'));
+    expect(s.cells.map((r) => r[0]).slice(0, 3)).toEqual(['Name', 'Ben', 'Total']);
+    expect(s.cells[2][2]).toBe('=SUM(C2:C2)');
+    expect(s.cells).toHaveLength(6);
+    const t = press(table(), 'ArrowDown', ctrl('-'));
+    expect(t.cells).toEqual(table().cells);
+    expect(t.alert).toMatch(/Shift \+ Space/);
+  });
+
+  it('Ctrl+Space then Ctrl + + / Ctrl + - on columns; the widths move along', () => {
+    let s = press(table(), 'ArrowRight', ctrl(' '), { key: '+', ctrl: true, shift: true });
+    expect(s.cells[0]).toEqual(['Name', '', 'Code', 'Qty']);
+    expect(s.cells[3][3]).toBe('=SUM(D2:D3)');
+    expect(s.colWidths).toEqual(['w-40', 'w-20', 'w-20', 'w-24']);
+    s = press(s, 'ArrowRight', ctrl(' '), ctrl('-')); // delete Code (now C)
+    expect(s.cells[0]).toEqual(['Name', '', 'Qty', '']);
+    expect(s.cells[3][2]).toBe('=SUM(C2:C3)');
+  });
+
+  it('Ctrl+0 hides a column (the cursor moves on, arrows skip it); Ctrl+Shift+0 shows it; Freeze Panes', () => {
+    let s = press(table(), 'ArrowRight', ctrl('0'));
+    expect(s.hiddenCols).toEqual([1]);
+    expect(at(s)).toBe('C1');
+    s = press(s, 'ArrowLeft');
+    expect(at(s)).toBe('A1');
+    expect(press(s, ctrl('z')).hiddenCols).toEqual([]);
+    s = press(s, shift('ArrowRight'), shift('ArrowRight'), { key: ')', ctrl: true, shift: true });
+    expect(s.hiddenCols).toEqual([]);
+    expect(runCommand(s, { kind: 'freeze', rows: 1, cols: 1 }).freeze).toEqual({ rows: 1, cols: 1 });
+    expect(table().freeze).toEqual({ rows: 1, cols: 0 }); // the header row, as before
   });
 });

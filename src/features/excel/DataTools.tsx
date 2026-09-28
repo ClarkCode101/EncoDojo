@@ -30,13 +30,14 @@ export type Dialog =
   | 'split'
   | 'cond'
   | 'validation'
+  | 'freeze'
   /** The dropdown list of the active cell (Alt + ↓). */
   | 'pick'
   | { filterCol: number };
 
 /** The tools a lesson can show on the toolbar (all of them when a lesson just says `tools: true`). */
-export type ToolName = 'sort' | 'filter' | 'find' | 'replace' | 'dedupe' | 'split' | 'cond' | 'validation';
-const ALL_TOOLS: ToolName[] = ['sort', 'filter', 'find', 'replace', 'dedupe', 'split', 'cond', 'validation'];
+export type ToolName = 'sort' | 'filter' | 'find' | 'replace' | 'dedupe' | 'split' | 'cond' | 'validation' | 'freeze';
+const ALL_TOOLS: ToolName[] = ['sort', 'filter', 'find', 'replace', 'dedupe', 'split', 'cond', 'validation', 'freeze'];
 
 const toolBtn =
   'rounded border border-stone-300 bg-white px-2.5 py-1 text-sm font-semibold text-stone-800 hover:border-stone-500 hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600';
@@ -80,6 +81,7 @@ export function Toolbar({
       {has('split') && button('Text to Columns', () => onOpen('split'))}
       {has('cond') && button('Conditional Formatting', () => onOpen('cond'))}
       {has('validation') && button('Data Validation', () => onOpen('validation'))}
+      {has('freeze') && button('Freeze Panes', () => onOpen('freeze'))}
       {message && (
         <span role="status" className="ml-2 text-sm font-semibold text-green-800">
           {message}
@@ -440,6 +442,50 @@ export function ValidationDialog({
           </button>
         </div>
       </form>
+    </Box>
+  );
+}
+
+/**
+ * Freeze Panes (Aralin 12), Excel's View > Freeze Panes menu: at the active cell (the rows above it
+ * and the columns left of it stay in view), the top row, the first column, or unfreeze.
+ */
+export function FreezeDialog({
+  sheet,
+  onCommand,
+  onClose,
+  onDone,
+}: {
+  sheet: Sheet;
+  onCommand: (cmd: SheetCommand) => void;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const { r, c } = sheet.active;
+  const options: { en: string; tl: string; rows: number; cols: number }[] = [
+    { en: 'Freeze Panes', tl: `sa itaas at kaliwa ng ${cellName(sheet.active)}`, rows: r, cols: c },
+    { en: 'Freeze Top Row', tl: 'row 1 lang', rows: 1, cols: 0 },
+    { en: 'Freeze First Column', tl: 'column A lang', rows: 0, cols: 1 },
+    { en: 'Unfreeze Panes', tl: 'tanggalin', rows: 0, cols: 0 },
+  ];
+  return (
+    <Box title="Freeze Panes" onClose={onClose}>
+      <div className="space-y-1.5">
+        {options.map((o, i) => (
+          <button
+            key={o.en}
+            type="button"
+            autoFocus={i === 0}
+            onClick={() => {
+              onCommand({ kind: 'freeze', rows: o.rows, cols: o.cols });
+              onDone(o.rows + o.cols === 0 ? 'Wala nang naka-freeze.' : `Naka-freeze: ${o.en}.`);
+            }}
+            className="block w-full rounded border border-stone-300 px-3 py-1.5 text-left text-sm hover:bg-green-50 focus-visible:bg-green-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700"
+          >
+            <EnTl en={o.en} tl={o.tl} />
+          </button>
+        ))}
+      </div>
     </Box>
   );
 }

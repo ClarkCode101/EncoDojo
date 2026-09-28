@@ -5,7 +5,7 @@ import { LESSON_1 } from './lesson1';
 import { LESSON_2 } from './lesson2';
 import { LESSONS, passedLessons } from './lessons';
 import { buildExcelSession, scoreExcel, type TaskResult } from './scoreExcel';
-import { isTypingKey, pressKey, type Sheet } from './sheet';
+import { isTypingKey, pressKey, runCommand, type Sheet } from './sheet';
 import {
   HEADERS,
   QUIZ_TASKS,
@@ -42,6 +42,9 @@ import { LESSON_10, TASK_LABEL_10 } from './lesson10';
 import { CONTENT_10 } from './lesson10Content';
 import { HEADERS_11, makeQuiz11, makeTable11, makeTaskSet11 } from './tasks11';
 import { LESSON_11, TASK_LABEL_11 } from './lesson11';
+import { HEADERS_12, makeQuiz12, makeTable12, makeTaskSet12 } from './tasks12';
+import { LESSON_12, TASK_LABEL_12 } from './lesson12';
+import { CONTENT_12 } from './lesson12Content';
 import { excelDateText } from './formulaEngine';
 import { alignsRight as alignsRight11, cellsForCompute, todayText } from './sheet';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
@@ -624,6 +627,52 @@ describe('Excel Aralin 11 tasks (dates)', () => {
     expect(computeSheet([["'05/08/2026", '=ISTEXT(A1)', '=TEXT(1234.5,"#,##0.00")']])).toEqual([
       ['05/08/2026', 'TRUE', '1,234.50'],
     ]);
+  });
+});
+
+describe('Excel Aralin 12 tasks (rows and columns)', () => {
+  it('the sales report: one agent twice (one row under the other), Total formulas, nothing frozen', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const { table, duplicateRow, insertAt } = makeTable12(makeRng(seed));
+      expect(table[0]).toEqual(HEADERS_12);
+      expect(table[duplicateRow].slice(0, 10)).toEqual(table[duplicateRow - 1].slice(0, 10));
+      expect(Math.abs(insertAt - duplicateRow)).toBeGreaterThan(1);
+      expect(table[table.length - 1][0]).toBe('Total');
+    }
+    const set = makeTaskSet12(makeRng(1));
+    expect(set.sheet.freeze).toEqual({ rows: 0, cols: 0 });
+    expect(set.sheet.colWidths).toHaveLength(set.sheet.cells[0].length);
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_12).sort());
+    expect(LESSON_12.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_12).sort());
+    expect(CONTENT_12.tools).toEqual(['freeze']);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet12(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_12.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz12(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('clearing a row instead of deleting it, or only freezing the top row, is not accepted', () => {
+    const set = makeTaskSet12(makeRng(6));
+    const s = startTask(set.sheet, set.tasks.deleteRow);
+    const cleared = pressKey(pressKey(s, { key: ' ', shift: true }), { key: 'Delete' });
+    expect(set.tasks.deleteRow.check(cleared)).toBe(false);
+    const f = startTask(set.sheet, set.tasks.freeze);
+    expect(set.tasks.freeze.check(runCommand(f, { kind: 'freeze', rows: 1, cols: 0 }))).toBe(false);
   });
 });
 
