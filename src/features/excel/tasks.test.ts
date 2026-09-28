@@ -25,12 +25,17 @@ import { HEADERS_5, makeQuiz5, makeTaskSet5 } from './tasks5';
 import { LESSON_5, TASK_LABEL_5 } from './lesson5';
 import { CONTENT_5 } from './lesson5Content';
 import { computeSheet } from './formulaEngine';
+import { HEADERS_6, QUOTA, makeQuiz6, makeTable6, makeTaskSet6 } from './tasks6';
+import { LESSON_6, TASK_LABEL_6 } from './lesson6';
+import { CONTENT_6 } from './lesson6Content';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
 function solve(s: Sheet, task: ExcelTask): { sheet: Sheet; keys: number } {
   const frames = solutionFrames(s, task);
-  const keys = task.solution.filter((step) => ('press' in step && !isTypingKey(step.press)) || 'command' in step).length;
+  const keys = task.solution.filter(
+    (step) => ('press' in step && !isTypingKey(step.press)) || 'command' in step,
+  ).length;
   return { sheet: frames[frames.length - 1], keys };
 }
 
@@ -94,7 +99,11 @@ describe('Excel Aralin 2 tasks', () => {
   it('the lesson order: every task starts not done and is done by its solution', () => {
     for (let seed = 1; seed <= 200; seed++) {
       const set = makeTaskSet2(makeRng(seed));
-      runAll(set.sheet, LESSON_2.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+      runAll(
+        set.sheet,
+        LESSON_2.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
     }
   });
 
@@ -109,7 +118,8 @@ describe('Excel Aralin 2 tasks', () => {
   it('every ready lesson has content for all its topics', () => {
     for (const l of LESSONS.filter((x) => x.content)) {
       const set = l.content!.makeSet(makeRng(3));
-      for (const id of l.content!.topics.flatMap((t) => t.tasks)) expect(set.tasks[id], `${l.level}: ${id}`).toBeDefined();
+      for (const id of l.content!.topics.flatMap((t) => t.tasks))
+        expect(set.tasks[id], `${l.level}: ${id}`).toBeDefined();
     }
   });
 });
@@ -129,7 +139,11 @@ describe('Excel Aralin 3 tasks', () => {
   it('the lesson order: every task starts not done and is done by its solution', () => {
     for (let seed = 1; seed <= 200; seed++) {
       const set = makeTaskSet3(makeRng(seed));
-      runAll(set.sheet, LESSON_3.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+      runAll(
+        set.sheet,
+        LESSON_3.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
     }
   });
 
@@ -165,7 +179,11 @@ describe('Excel Aralin 4 tasks', () => {
   it('the lesson order: every task starts not done and is done by its solution', () => {
     for (let seed = 1; seed <= 200; seed++) {
       const set = makeTaskSet4(makeRng(seed));
-      runAll(set.sheet, LESSON_4.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+      runAll(
+        set.sheet,
+        LESSON_4.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
     }
   });
 
@@ -191,7 +209,11 @@ describe('Excel Aralin 5 tasks (formulas, with HyperFormula)', () => {
   it('the lesson order: every task starts not done and is done by its solution', () => {
     for (let seed = 1; seed <= 40; seed++) {
       const set = makeTaskSet5(makeRng(seed));
-      runAll(set.sheet, LESSON_5.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+      runAll(
+        set.sheet,
+        LESSON_5.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
     }
   });
 
@@ -222,6 +244,70 @@ describe('Excel Aralin 5 tasks (formulas, with HyperFormula)', () => {
       { key: 'Enter' },
     );
     expect(s.cells[1][3]).toBe('=SUM(B2:B3)');
+  });
+});
+
+describe('Excel Aralin 6 tasks (IF, COUNTIF, SUMIF)', () => {
+  it('the sales list: 3 branches, both sides of the quota, a Summary block; labels for every task kind', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const { table, branches } = makeTable6(makeRng(seed));
+      const agents = table.slice(1);
+      expect(table[0]).toEqual(HEADERS_6);
+      expect(agents.length).toBeGreaterThanOrEqual(8);
+      for (const b of branches) expect(agents.filter((a) => a[1] === b).length).toBeGreaterThanOrEqual(2);
+      expect(agents.filter((a) => Number(a[2]) >= QUOTA).length).toBeGreaterThanOrEqual(2);
+      expect(agents.filter((a) => Number(a[2]) < QUOTA).length).toBeGreaterThanOrEqual(2);
+      expect(table[4][5]).toBe(branches[2]);
+    }
+    const set = makeTaskSet6(makeRng(1));
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_6).sort());
+    expect(LESSON_6.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_6).sort());
+    expect(CONTENT_6.compute).toBe(computeSheet);
+    expect(LESSONS.find((l) => l.level === 6)?.topics).toBe(LESSON_6);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet6(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_6.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz6(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  /** Type a formula into the task's start cell and press Enter. */
+  const typeAnswer = (set: ReturnType<typeof makeTaskSet6>, id: string, value: string) => {
+    const s = startTask(set.sheet, set.tasks[id]);
+    return pressKey({ ...s, editing: { value, mode: 'enter' } }, { key: 'Enter' });
+  };
+
+  it('IF: ">" instead of ">=" and a typed "Met" are not accepted; lowercase formulas are', () => {
+    const set = makeTaskSet6(makeRng(5));
+    const task = set.tasks.ifFirst;
+    expect(task.check(typeAnswer(set, 'ifFirst', '=IF(C2>20000,"Met","Below")'))).toBe(false);
+    expect(task.check(typeAnswer(set, 'ifFirst', 'Met'))).toBe(false);
+    expect(task.check(typeAnswer(set, 'ifFirst', '=if(c2>=20000,"met","below")'))).toBe(true);
+  });
+
+  it('SUMIF with F5: the branch name typed in instead of F5 is not accepted', () => {
+    const set = makeTaskSet6(makeRng(6));
+    const s = startTask(set.sheet, set.tasks.sumifCell);
+    const last = set.sheet.cells.findIndex((row, r) => r > 0 && row[0] === '');
+    const f5 = s.cells[4][5];
+    expect(set.tasks.sumifCell.check(typeAnswer(set, 'sumifCell', `=SUMIF(B2:B${last},"${f5}",C2:C${last})`))).toBe(
+      false,
+    );
+    expect(set.tasks.sumifCell.check(typeAnswer(set, 'sumifCell', `=SUMIF(B2:B${last},F5,C2:C${last})`))).toBe(true);
   });
 });
 

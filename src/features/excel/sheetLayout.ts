@@ -27,5 +27,19 @@ export const COLUMN_WIDTHS_5 = [
   'w-28 min-w-[7rem]',
 ];
 
+/**
+ * Aralin 6: the sales per agent (Agent, Branch, Sales, Result), a narrow gap, and the Summary block
+ * (label, value). Narrow on purpose: all 7 columns fit a 1366px screen, so the sheet never scrolls sideways.
+ */
+export const COLUMN_WIDTHS_6 = [
+  'w-32 min-w-[8rem]',
+  'w-44 min-w-[11rem]', // the branch names matter here (COUNTIF, SUMIF): "San Fernando City" fits
+  'w-[5.5rem] min-w-[5.5rem]',
+  'w-[5.5rem] min-w-[5.5rem]',
+  'w-4 min-w-[1rem]',
+  'w-60 min-w-[15rem]',
+  'w-[5.5rem] min-w-[5.5rem]',
+];
+
 /** Aralin 2 adds a Status column (F). */
 export const COLUMN_WIDTHS_2 = [...COLUMN_WIDTHS, 'w-36 min-w-[9rem]'];

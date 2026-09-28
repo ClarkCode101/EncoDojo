@@ -15,6 +15,7 @@ import { LESSON_2 } from './lesson2';
 import { LESSON_3 } from './lesson3';
 import { LESSON_4 } from './lesson4';
 import { LESSON_5, TASK_LABEL_5 } from './lesson5';
+import { LESSON_6, TASK_LABEL_6 } from './lesson6';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
@@ -114,7 +115,14 @@ export const LESSONS: Lesson[] = [
     // HyperFormula comes with this lesson only.
     load: () => import('./lesson5Content').then((m) => m.CONTENT_5),
   },
-  { level: 6, title: 'IF, COUNTIF at SUMIF', topics: null, labels: {}, content: null },
+  {
+    level: 6,
+    title: 'IF, COUNTIF at SUMIF',
+    topics: LESSON_6,
+    labels: TASK_LABEL_6,
+    content: null,
+    load: () => import('./lesson6Content').then((m) => m.CONTENT_6),
+  },
   { level: 7, title: 'VLOOKUP', topics: null, labels: {}, content: null },
   { level: 8, title: 'Paglinis ng text (TRIM, PROPER)', topics: null, labels: {}, content: null },
 ];
