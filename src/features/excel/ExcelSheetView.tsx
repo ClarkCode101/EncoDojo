@@ -6,8 +6,12 @@
  */
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import {
+  alignsRight,
   cellName,
   colLetter,
+  displayValue,
+  formatOf,
+  formulaBarValue,
   isSelected,
   selectionRange,
   toKeyPress,
@@ -55,7 +59,7 @@ export default function ExcelSheetView({
     if (!sheet.editing) gridRef.current?.focus({ preventScroll: true });
   }, [sheet.editing]);
 
-  const value = sheet.editing ? sheet.editing.value : sheet.cells[sheet.active.r][sheet.active.c];
+  const value = sheet.editing ? sheet.editing.value : formulaBarValue(sheet, sheet.active);
 
   return (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-md border border-stone-400 bg-white">
@@ -118,7 +122,7 @@ export default function ExcelSheetView({
                 >
                   {r + 1}
                 </th>
-                {row.map((v, c) => {
+                {row.map((_, c) => {
                   const active = sheet.active.r === r && sheet.active.c === c;
                   const selected = isSelected(sheet, { r, c });
                   return (
@@ -132,9 +136,11 @@ export default function ExcelSheetView({
                       onDoubleClick={() => onCellDoubleClick({ r, c })}
                       className={
                         'relative h-8 max-w-0 cursor-cell truncate whitespace-nowrap border-b border-r border-stone-200 px-2 scroll-ml-12 scroll-mt-[3.75rem] ' +
-                        (r === 0
-                          ? 'sticky top-7 z-[15] border-b-stone-400 font-sans font-bold text-stone-900 '
-                          : 'text-stone-900 ') +
+                        (r === 0 ? 'sticky top-7 z-[15] border-b-stone-400 font-sans text-stone-900 ' : 'text-stone-900 ') +
+                        // Aralin 1-2: the header row is always bold. With formatting (Aralin 3+), bold comes
+                        // only from Ctrl+B, and numbers sit on the right, like Excel.
+                        ((sheet.formatting ? formatOf(sheet, { r, c }).bold : r === 0) ? 'font-bold ' : '') +
+                        (alignsRight(sheet, { r, c }) ? 'text-right ' : '') +
                         (selected && !active ? 'bg-green-50 ' : r === 0 ? 'bg-stone-50 ' : '') +
                         (active ? 'outline outline-2 -outline-offset-2 outline-green-700' : '')
                       }
@@ -161,7 +167,7 @@ export default function ExcelSheetView({
                           className="absolute inset-0 w-full bg-white px-2 font-mono text-[0.95rem] outline outline-2 -outline-offset-2 outline-green-700"
                         />
                       ) : (
-                        v
+                        displayValue(sheet, { r, c })
                       )}
                     </td>
                   );

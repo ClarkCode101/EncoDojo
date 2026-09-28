@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  alignsRight,
   cellName,
   clickCell,
   colLetter,
   ctrlJump,
+  displayValue,
+  formatOf,
+  formulaBarValue,
   lastUsed,
   makeSheet,
   pressKey,
@@ -249,5 +253,57 @@ describe('data entry (Aralin 2)', () => {
     s = clickCell(press(s, 'Q'), { r: 5, c: 3 });
     expect(s.cells[0].slice(0, 2)).toEqual(['Xyz', 'Q']);
     expect(at(press(s, 'Enter'))).toBe('D7');
+  });
+});
+
+describe('formatting (Aralin 3)', () => {
+  const fmt = () =>
+    makeSheet([['Emp No.', 'Rate'], ['00457', '610'], ['00458', '645.5']], 6, 3, {
+      formatting: true,
+      formats: { '1,0': { text: true }, '2,0': { text: true } },
+    });
+
+  it('digits typed without an apostrophe become a number (the zeros go), with one they stay text', () => {
+    let s = press(fmt(), 'ArrowDown', 'ArrowDown', 'ArrowDown'); // A4
+    s = press(typeInCell(press(s, '0'), '00459'), 'Enter');
+    expect(s.cells[3][0]).toBe('459');
+    expect(alignsRight(s, { r: 3, c: 0 })).toBe(true);
+    s = press(typeInCell(press(s, "'"), "'00460"), 'Enter');
+    expect(s.cells[4][0]).toBe('00460');
+    expect(formatOf(s, { r: 4, c: 0 }).text).toBe(true);
+    expect(alignsRight(s, { r: 4, c: 0 })).toBe(false);
+    expect(formulaBarValue(s, { r: 4, c: 0 })).toBe("'00460");
+  });
+
+  it('F2 on a text number shows the apostrophe, so saving it keeps the zeros', () => {
+    const s = press(fmt(), 'ArrowDown', 'F2');
+    expect(s.editing?.value).toBe("'00457");
+    expect(press(s, 'Enter').cells[1][0]).toBe('00457');
+  });
+
+  it('Ctrl+Shift+1 shows comma and 2 decimals; Ctrl+Shift+~ goes back to General', () => {
+    let s = press(fmt(), 'ArrowDown', 'ArrowRight', { key: 'ArrowDown', ctrl: true, shift: true }, { key: '!', ctrl: true, shift: true });
+    expect(displayValue(s, { r: 1, c: 1 })).toBe('610.00');
+    expect(displayValue(s, { r: 2, c: 1 })).toBe('645.50');
+    s = press(typeInCell(press(s, 'ArrowDown', '1'), '1500'), 'Enter');
+    expect(displayValue(s, { r: 3, c: 1 })).toBe('1500'); // not formatted: outside the selection
+    s = press(s, 'ArrowUp', 'ArrowUp', { key: '~', ctrl: true, shift: true });
+    expect(displayValue(s, { r: 2, c: 1 })).toBe('645.5');
+  });
+
+  it('Ctrl+B bolds the selection, and again un-bolds it; Ctrl+Z undoes a format', () => {
+    let s = press(fmt(), shift('ArrowRight'), ctrl('b'));
+    expect(formatOf(s, { r: 0, c: 0 }).bold && formatOf(s, { r: 0, c: 1 }).bold).toBe(true);
+    s = press(s, ctrl('b'));
+    expect(formatOf(s, { r: 0, c: 1 }).bold).toBe(false);
+    s = press(s, ctrl('z'));
+    expect(formatOf(s, { r: 0, c: 1 }).bold).toBe(true);
+  });
+
+  it('sheets without formatting keep every typed value as it is (Aralin 1-2)', () => {
+    const s = press(typeInCell(press(makeSheet([], 3, 2), '0'), '00457'), 'Enter');
+    expect(s.cells[0][0]).toBe('00457');
+    const up = press(s, 'ArrowUp');
+    expect(press(up, ctrl('b'))).toBe(up); // Ctrl+B does nothing there
   });
 });

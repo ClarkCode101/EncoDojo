@@ -15,7 +15,7 @@ import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
 import { buildExcelSession, type TaskResult } from './scoreExcel';
-import { clickCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
+import { clickCell, editCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
 import type { LessonContent } from './lessons';
 import { QUIZ_TASKS, startTask } from './tasks';
 import TaskRecord from './TaskRecord';
@@ -115,7 +115,7 @@ export default function ExcelQuiz({
 
   function onCellDoubleClick(p: Pos) {
     mouseRef.current = true;
-    setSheet({ ...sheet, active: p, anchor: p, editing: { value: sheet.cells[p.r][p.c], mode: 'edit' } });
+    setSheet(editCell(sheet, p));
   }
 
   return (

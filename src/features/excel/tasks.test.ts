@@ -5,7 +5,7 @@ import { LESSON_1 } from './lesson1';
 import { LESSON_2 } from './lesson2';
 import { LESSONS, passedLessons } from './lessons';
 import { buildExcelSession, scoreExcel, type TaskResult } from './scoreExcel';
-import { isTypingKey, type Sheet } from './sheet';
+import { isTypingKey, pressKey, type Sheet } from './sheet';
 import {
   HEADERS,
   QUIZ_TASKS,
@@ -17,6 +17,9 @@ import {
   type ExcelTask,
 } from './tasks';
 import { HEADERS_2, TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
+import { HEADERS_3, TASK_LABEL_3, makeQuiz3, makeTaskSet3 } from './tasks3';
+import { LESSON_3 } from './lesson3';
+import { alignsRight, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
 function solve(s: Sheet, task: ExcelTask): { sheet: Sheet; keys: number } {
@@ -102,6 +105,43 @@ describe('Excel Aralin 2 tasks', () => {
       const set = l.content!.makeSet(makeRng(3));
       for (const id of l.content!.topics.flatMap((t) => t.tasks)) expect(set.tasks[id], `${l.level}: ${id}`).toBeDefined();
     }
+  });
+});
+
+describe('Excel Aralin 3 tasks', () => {
+  it('the payroll sheet: text Emp No. and Account No. keep their zeros; rates are numbers', () => {
+    const set = makeTaskSet3(makeRng(1));
+    expect(set.sheet.cells[0].slice(0, 5)).toEqual(HEADERS_3);
+    expect(set.sheet.cells[1][0]).toMatch(/^00\d{3}$/);
+    expect(formatOf(set.sheet, { r: 1, c: 0 }).text).toBe(true);
+    expect(alignsRight(set.sheet, { r: 1, c: 4 })).toBe(true);
+    expect(displayValue(set.sheet, { r: 1, c: 4 })).not.toContain(',');
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_3).sort());
+    expect(LESSON_3.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_3).sort());
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const set = makeTaskSet3(makeRng(seed));
+      runAll(set.sheet, LESSON_3.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const quiz = makeQuiz3(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('typing the zeros without the apostrophe does NOT finish the task (Excel drops them)', () => {
+    const set = makeTaskSet3(makeRng(5));
+    const task = set.tasks.leadingZero;
+    let s = startTask(set.sheet, task);
+    const value = /: (00\d{3})\./.exec(task.text)![1];
+    s = pressKey({ ...s, editing: { value, mode: 'enter' } }, { key: 'Enter' });
+    expect(task.check(s)).toBe(false);
   });
 });
 

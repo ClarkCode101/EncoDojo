@@ -14,10 +14,27 @@
  *   Tabs started (next row); Ctrl+D fills down; Ctrl+Enter puts what you typed
  *   in every selected cell; Ctrl+; types today's date. Typing keeps the
  *   selection (so Ctrl+Enter can fill it).
+ * - Formatting (Aralin 3), only on sheets made with `formatting: true` so the
+ *   earlier lessons keep plain text cells: digits-only entries become numbers
+ *   (00457 -> 457, like Excel) unless typed with an apostrophe ('00457 stays
+ *   text); numbers sit on the right, text on the left; Ctrl+Shift+1 = number
+ *   with comma and 2 decimals; Ctrl+B = bold; Ctrl+Z undoes formats too.
  * No formulas yet: those come later with HyperFormula (owner approval needed).
  */
 
 export type Pos = { r: number; c: number };
+
+/** How a cell looks (Aralin 3). Missing = General, not bold, not text. */
+export type CellFormat = {
+  /** Typed with an apostrophe: kept as text even if it looks like a number (keeps leading zeros). */
+  text?: boolean;
+  /** Number with comma and 2 decimals (Ctrl+Shift+1), e.g. 1,500.00. */
+  number2?: boolean;
+  bold?: boolean;
+};
+
+/** One Ctrl+Z step: the cells and their formats before a change. */
+type Snapshot = { cells: string[][]; formats: Record<string, CellFormat> };
 
 export type Sheet = {
   /** cells[row][col], always rows x cols; '' = empty. */
@@ -32,8 +49,12 @@ export type Sheet = {
    */
   editing: { value: string; mode: 'enter' | 'edit' } | null;
   clipboard: string[][] | null;
-  /** Earlier versions of `cells` for Ctrl+Z (newest last). */
-  undo: string[][][];
+  /** Earlier versions of the cells and formats for Ctrl+Z (newest last). */
+  undo: Snapshot[];
+  /** Cell formats by "row,col" (only used when `formatting` is on). */
+  formats: Record<string, CellFormat>;
+  /** true = Excel's number and format rules (Aralin 3+). false = every cell is plain text (Aralin 1-2). */
+  formatting: boolean;
   /** The column where a row of Tabs started (Enter goes back to it), or null. */
   tabStartCol: number | null;
 };
@@ -48,7 +69,12 @@ export function toKeyPress(e: { key: string; ctrlKey: boolean; metaKey: boolean;
 
 const MAX_UNDO = 50;
 
-export function makeSheet(data: string[][], rows: number, cols: number): Sheet {
+export function makeSheet(
+  data: string[][],
+  rows: number,
+  cols: number,
+  options: { formatting?: boolean; formats?: Record<string, CellFormat> } = {},
+): Sheet {
   const cells = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => data[r]?.[c] ?? ''));
   return {
     cells,
@@ -58,7 +84,57 @@ export function makeSheet(data: string[][], rows: number, cols: number): Sheet {
     clipboard: null,
     undo: [],
     tabStartCol: null,
+    formats: options.formats ?? {},
+    formatting: options.formatting ?? false,
   };
+}
+
+// ---------- formats (Aralin 3) ----------
+
+export const formatKey = (p: Pos) => `${p.r},${p.c}`;
+
+export function formatOf(s: Sheet, p: Pos): CellFormat {
+  return s.formats[formatKey(p)] ?? {};
+}
+
+/** Digits only (with an optional minus and decimals): Excel treats it as a number. */
+export function isNumberText(v: string): boolean {
+  return /^-?\d+(\.\d+)?$/.test(v);
+}
+
+/** A number the sheet treats as a number (not text) in this cell. */
+function isNumberCell(s: Sheet, p: Pos): boolean {
+  return s.formatting && !formatOf(s, p).text && isNumberText(s.cells[p.r][p.c]);
+}
+
+/** What the cell shows, e.g. 1500 with Ctrl+Shift+1 -> "1,500.00". */
+export function displayValue(s: Sheet, p: Pos): string {
+  const v = s.cells[p.r][p.c];
+  if (isNumberCell(s, p) && formatOf(s, p).number2) {
+    return Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return v;
+}
+
+/** Numbers sit on the right of the cell, text on the left (like Excel). */
+export function alignsRight(s: Sheet, p: Pos): boolean {
+  return isNumberCell(s, p);
+}
+
+/** What the formula bar (and F2) shows: text that looks like a number keeps its apostrophe. */
+export function formulaBarValue(s: Sheet, p: Pos): string {
+  const v = s.cells[p.r][p.c];
+  return s.formatting && formatOf(s, p).text && isNumberText(v) ? `'${v}` : v;
+}
+
+/**
+ * What a typed entry becomes, the way Excel stores it:
+ * 'text -> text (apostrophe removed), 00457 -> 457 (a number), anything else as typed.
+ */
+export function excelValue(raw: string): { value: string; text: boolean } {
+  if (raw.startsWith("'")) return { value: raw.slice(1), text: true };
+  if (isNumberText(raw)) return { value: String(Number(raw)), text: false };
+  return { value: raw, text: false };
 }
 
 // ---------- names ----------
@@ -168,6 +244,12 @@ export function clickCell(s: Sheet, p: Pos, extend = false): Sheet {
   return moveTo(base, p, extend);
 }
 
+/** Double-click on a cell: edit it (like F2 there). */
+export function editCell(s: Sheet, p: Pos): Sheet {
+  const at = clickCell(s, p);
+  return { ...at, editing: { value: formulaBarValue(at, p), mode: 'edit' } };
+}
+
 /** Tab / Shift+Tab: move sideways and remember where the row of Tabs started. */
 function tab(s: Sheet, back: boolean): Sheet {
   const start = s.tabStartCol ?? s.active.c;
@@ -188,8 +270,37 @@ export function todayText(now: Date = new Date()): string {
 
 // ---------- editing ----------
 
-function withCells(s: Sheet, cells: string[][]): Sheet {
-  return { ...s, cells, undo: [...s.undo, s.cells].slice(-MAX_UNDO) };
+function withCells(s: Sheet, cells: string[][], formats: Record<string, CellFormat> = s.formats): Sheet {
+  return { ...s, cells, formats, undo: [...s.undo, { cells: s.cells, formats: s.formats }].slice(-MAX_UNDO) };
+}
+
+/** A new formats object with `change` applied to every cell in `cellsToChange`. */
+function withFormats(
+  s: Sheet,
+  cellsToChange: Pos[],
+  change: (f: CellFormat) => CellFormat,
+): Record<string, CellFormat> {
+  const formats = { ...s.formats };
+  for (const p of cellsToChange) formats[formatKey(p)] = change(formats[formatKey(p)] ?? {});
+  return formats;
+}
+
+function selectedCells(s: Sheet): Pos[] {
+  const { top, left, bottom, right } = selectionRange(s);
+  const out: Pos[] = [];
+  for (let r = top; r <= bottom; r++) for (let c = left; c <= right; c++) out.push({ r, c });
+  return out;
+}
+
+/** Ctrl+B: bold the selection (or un-bold it, if the active cell is already bold). */
+function toggleBold(s: Sheet): Sheet {
+  const bold = !formatOf(s, s.active).bold;
+  return withCells(s, s.cells, withFormats(s, selectedCells(s), (f) => ({ ...f, bold })));
+}
+
+/** Ctrl+Shift+1 (number with comma and 2 decimals) or Ctrl+Shift+~ (back to General). */
+function setNumberFormat(s: Sheet, number2: boolean): Sheet {
+  return withCells(s, s.cells, withFormats(s, selectedCells(s), (f) => ({ ...f, number2 })));
 }
 
 function setCell(s: Sheet, p: Pos, value: string): Sheet {
@@ -198,10 +309,13 @@ function setCell(s: Sheet, p: Pos, value: string): Sheet {
   return withCells(s, cells);
 }
 
-/** Save what is being typed into the active cell (and stop editing). */
+/** Save what is being typed into the active cell (and stop editing). With formatting: Excel's number rules. */
 function commit(s: Sheet): Sheet {
   if (!s.editing) return s;
-  return { ...setCell(s, s.active, s.editing.value), editing: null };
+  if (!s.formatting) return { ...setCell(s, s.active, s.editing.value), editing: null };
+  const { value, text } = excelValue(s.editing.value);
+  const cells = s.cells.map((row, r) => (r === s.active.r ? row.map((v, c) => (c === s.active.c ? value : v)) : row));
+  return { ...withCells(s, cells, withFormats(s, [s.active], (f) => ({ ...f, text }))), editing: null };
 }
 
 /** The value typed in the edit box changed (the React input calls this). */
@@ -265,17 +379,19 @@ function fillDown(s: Sheet): Sheet {
 /** Ctrl+Enter while typing: the value goes into EVERY selected cell; the selection stays. */
 function fillSelection(s: Sheet): Sheet {
   if (!s.editing) return s;
-  const value = s.editing.value;
+  const { value, text } = s.formatting ? excelValue(s.editing.value) : { value: s.editing.value, text: false };
   const { top, left, bottom, right } = selectionRange(s);
   const cells = s.cells.map((row, r) =>
     r >= top && r <= bottom ? row.map((v, c) => (c >= left && c <= right ? value : v)) : row,
   );
-  return { ...withCells(s, cells), editing: null };
+  const formats = s.formatting ? withFormats(s, selectedCells(s), (f) => ({ ...f, text })) : s.formats;
+  return { ...withCells(s, cells, formats), editing: null };
 }
 
 function undo(s: Sheet): Sheet {
   if (s.undo.length === 0) return s;
-  return { ...s, cells: s.undo[s.undo.length - 1], undo: s.undo.slice(0, -1), editing: null };
+  const last = s.undo[s.undo.length - 1];
+  return { ...s, cells: last.cells, formats: last.formats, undo: s.undo.slice(0, -1), editing: null };
 }
 
 /** True for a key that types a character (a letter, digit, space, symbol). */
@@ -319,8 +435,7 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   if (key === 'End' && ctrl) return moveTo(s, lastUsed(s), shift);
   if (key === 'Enter' && !ctrl) return enter(s, shift);
   if (key === 'Tab') return tab(s, shift);
-  if (key === 'F2')
-    return { ...s, anchor: s.active, editing: { value: s.cells[s.active.r][s.active.c], mode: 'edit' } };
+  if (key === 'F2') return { ...s, anchor: s.active, editing: { value: formulaBarValue(s, s.active), mode: 'edit' } };
   if (key === 'Delete') return clearSelection(s);
   if (key === 'Backspace') {
     // Like Excel: empties the cell and starts typing in it.
@@ -333,6 +448,12 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
     if (lower === 'z') return undo(s);
     if (lower === 'a') return { ...s, anchor: { r: 0, c: 0 }, active: lastUsed(s) };
     if (lower === 'd') return fillDown(s);
+    if (s.formatting) {
+      if (lower === 'b') return toggleBold(s);
+      // Ctrl+Shift+1: on most keyboards Shift+1 gives "!", so both are accepted.
+      if (shift && (key === '!' || key === '1')) return setNumberFormat(s, true);
+      if (shift && (key === '~' || key === '`')) return setNumberFormat(s, false);
+    }
     // Ctrl+; = today's date, ready to be saved with Enter (Excel's Enter mode).
     if (key === ';') return { ...s, editing: { value: todayText(), mode: 'enter' } };
     return s;

@@ -17,7 +17,7 @@ import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
 import type { LessonContent } from './lessons';
-import { clickCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
+import { clickCell, editCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
 import { solutionFrames, startTask } from './tasks';
 import TaskRecord from './TaskRecord';
 import TipKeys from './TipKeys';
@@ -103,7 +103,7 @@ export default function ExcelLesson({ content, onDone }: { content: LessonConten
   function onCellDoubleClick(p: Pos) {
     if (demo === 'playing') return;
     mouseRef.current = true;
-    setSheet({ ...sheet, active: p, anchor: p, editing: { value: sheet.cells[p.r][p.c], mode: 'edit' } });
+    setSheet(editCell(sheet, p));
   }
 
   /** "Ipakita kung paano": play the solution on the sheet, then put the sheet back for the user. */

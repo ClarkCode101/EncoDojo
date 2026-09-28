@@ -12,10 +12,12 @@ import type { Session } from '../../lib/storage';
 import { JOB_READY_EXCEL } from '../../lib/targets';
 import { LESSON_1, type LessonTopic } from './lesson1';
 import { LESSON_2 } from './lesson2';
+import { LESSON_3 } from './lesson3';
 import type { Sheet } from './sheet';
-import { COLUMN_WIDTHS, COLUMN_WIDTHS_2 } from './sheetLayout';
+import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
 import { TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
+import { TASK_LABEL_3, makeQuiz3, makeTaskSet3 } from './tasks3';
 
 /** What a ready lesson needs: its topics, its sheet + tasks, its quiz, and how to show it. */
 export type LessonContent = {
@@ -49,7 +51,17 @@ export const LESSONS: Lesson[] = [
       labels: TASK_LABEL_2,
     },
   },
-  { level: 3, title: 'Formatting', content: null },
+  {
+    level: 3,
+    title: 'Formatting',
+    content: {
+      topics: LESSON_3,
+      makeSet: makeTaskSet3,
+      makeQuiz: makeQuiz3,
+      columnWidths: COLUMN_WIDTHS_3,
+      labels: TASK_LABEL_3,
+    },
+  },
   { level: 4, title: 'Sort, filter, find & replace', content: null },
   { level: 5, title: 'Formulas (SUM, IF, VLOOKUP)', content: null },
 ];
