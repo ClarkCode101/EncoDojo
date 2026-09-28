@@ -7,14 +7,21 @@
  * opens), so the rest of the app never downloads it.
  */
 import { DetailedCellError, HyperFormula } from 'hyperformula';
+import { isNumberText } from './sheet';
 
-/** What a computed value looks like in a cell (General format), e.g. 2.5, TRUE, #DIV/0!. */
+/**
+ * What a computed value looks like in a cell (General format), e.g. 2.5, TRUE, #DIV/0!.
+ * TEXT that looks like a number (=RIGHT("TN-00457",5) -> 00457) gets an apostrophe in
+ * front, like a number typed as text in Excel, so the view keeps it on the left with
+ * its zeros (see `computedText` in sheet.ts).
+ */
 function show(v: unknown): string {
   if (v === null || v === undefined) return '';
   if (typeof v === 'number') return String(Number(v.toPrecision(12))); // no 0.30000000000000004
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
   if (v instanceof DetailedCellError) return v.value;
-  return String(v);
+  const text = String(v);
+  return isNumberText(text) ? `'${text}` : text;
 }
 
 /**

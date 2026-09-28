@@ -200,6 +200,14 @@ export function isNumberText(v: string): boolean {
   return /^-?\d+(\.\d+)?$/.test(v);
 }
 
+/**
+ * A computed formula value that is TEXT looking like a number: formulaEngine.ts marks it
+ * with an apostrophe ("'00457"). Returns the text without the mark, or null for anything else.
+ */
+export function computedText(v: string): string | null {
+  return v.startsWith("'") && isNumberText(v.slice(1)) ? v.slice(1) : null;
+}
+
 /** A number the sheet treats as a number (not text) in this cell. */
 function isNumberCell(s: Sheet, p: Pos): boolean {
   return s.formatting && !formatOf(s, p).text && isNumberText(s.cells[p.r][p.c]);

@@ -53,5 +53,15 @@ export const COLUMN_WIDTHS_7 = [
   'w-[5.5rem] min-w-[5.5rem]',
 ];
 
+/** Aralin 8: Name (raw), Name, Ref (raw), Ref No., Branch, No. */
+export const COLUMN_WIDTHS_8 = [
+  'w-56 min-w-[14rem]',
+  'w-52 min-w-[13rem]',
+  'w-28 min-w-[7rem]',
+  'w-28 min-w-[7rem]',
+  'w-20 min-w-[5rem]',
+  'w-20 min-w-[5rem]',
+];
+
 /** Aralin 2 adds a Status column (F). */
 export const COLUMN_WIDTHS_2 = [...COLUMN_WIDTHS, 'w-36 min-w-[9rem]'];

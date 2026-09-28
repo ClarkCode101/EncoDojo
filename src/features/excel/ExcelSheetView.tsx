@@ -13,6 +13,7 @@ import {
   alignsRight,
   cellName,
   colLetter,
+  computedText,
   displayValue,
   formatOf,
   formulaBarValue,
@@ -73,9 +74,9 @@ export default function ExcelSheetView({
     if (formatOf(sheet, p).number2 && isNumberText(v)) {
       return Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    return v;
+    return computedText(v) ?? v; // text like 00457 shows without its mark (and stays on the left)
   };
-  /** Numbers (typed or computed) sit on the right of the cell. */
+  /** Numbers (typed or computed) sit on the right of the cell; text like '00457 does not. */
   const rightAligned = (p: Pos): boolean => {
     const raw = sheet.cells[p.r][p.c];
     if (computed && isFormula(raw)) return isNumberText(computed[p.r]?.[p.c] ?? '');
@@ -134,7 +135,10 @@ export default function ExcelSheetView({
         <div aria-hidden="true" className="border-r border-stone-300 px-2 py-1.5 italic text-stone-500">
           fx
         </div>
-        <div aria-label="Formula bar" className="min-w-0 flex-1 truncate px-2 py-1.5 text-stone-900">
+        <div
+          aria-label="Formula bar"
+          className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-pre px-2 py-1.5 text-stone-900"
+        >
           {value}
         </div>
       </div>
@@ -247,7 +251,8 @@ export default function ExcelSheetView({
                         }}
                         onDoubleClick={() => onCellDoubleClick({ r, c })}
                         className={
-                          'relative h-8 max-w-0 cursor-cell truncate whitespace-nowrap border-b border-r border-stone-200 px-2 scroll-ml-12 scroll-mt-[3.75rem] ' +
+                          // whitespace-pre: extra spaces show, like Excel (Aralin 8 cleans them with TRIM).
+                          'relative h-8 max-w-0 cursor-cell overflow-hidden text-ellipsis whitespace-pre border-b border-r border-stone-200 px-2 scroll-ml-12 scroll-mt-[3.75rem] ' +
                           (r === 0
                             ? 'sticky top-7 z-[15] border-b-stone-400 font-sans text-stone-900 '
                             : 'text-stone-900 ') +

@@ -31,6 +31,9 @@ import { CONTENT_6 } from './lesson6Content';
 import { HEADERS_7, NOT_FOUND, makeQuiz7, makeTable7, makeTaskSet7 } from './tasks7';
 import { LESSON_7, TASK_LABEL_7 } from './lesson7';
 import { CONTENT_7 } from './lesson7Content';
+import { HEADERS_8, makeQuiz8, makeTable8, makeTaskSet8, messyName } from './tasks8';
+import { LESSON_8, TASK_LABEL_8 } from './lesson8';
+import { CONTENT_8 } from './lesson8Content';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
@@ -374,6 +377,68 @@ describe('Excel Aralin 7 tasks (VLOOKUP, IFERROR, XLOOKUP)', () => {
     expect(
       set.tasks.xlookupNotFound.check(typeAnswer(set, 'xlookupNotFound', `=XLOOKUP(A${bad},F:F,G:G,"not found")`)),
     ).toBe(true);
+  });
+});
+
+describe('Excel Aralin 8 tasks (TRIM, PROPER, UPPER, LEFT, RIGHT)', () => {
+  it('the messy list: every raw name is messy, refs like "tn-00457"; labels for every task kind', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const table = makeTable8(makeRng(seed));
+      expect(table[0]).toEqual(HEADERS_8);
+      for (const row of table.slice(1)) {
+        const clean = row[0].trim().replace(/ +/g, ' ');
+        const proper = clean.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+        expect(row[0] === proper, `not messy: "${row[0]}"`).toBe(false);
+        expect(clean.length).toBeLessThanOrEqual(21);
+        expect(row[2]).toMatch(/^[A-Za-z][a-z]-\d{5}$/);
+      }
+    }
+    expect(messyName(makeRng(1), 'Ana Reyes')).not.toBe('Ana Reyes');
+    const set = makeTaskSet8(makeRng(1));
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_8).sort());
+    expect(LESSON_8.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_8).sort());
+    expect(CONTENT_8.compute).toBe(computeSheet);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet8(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_8.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz8(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  /** Type a value into the task's start cell and press Enter. */
+  const typeAnswer = (set: ReturnType<typeof makeTaskSet8>, id: string, value: string) => {
+    const s = startTask(set.sheet, set.tasks[id]);
+    return pressKey({ ...s, editing: { value, mode: 'enter' } }, { key: 'Enter' });
+  };
+
+  it('the cleaned name typed by hand, or a formula that only works for this row, is not accepted', () => {
+    const set = makeTaskSet8(makeRng(9));
+    const raw = set.sheet.cells[1][0];
+    const clean = raw.trim().replace(/ +/g, ' ');
+    expect(set.tasks.trim.check(typeAnswer(set, 'trim', clean))).toBe(false);
+    expect(set.tasks.trim.check(typeAnswer(set, 'trim', `=TRIM("${raw}")`))).toBe(false);
+    expect(set.tasks.trim.check(typeAnswer(set, 'trim', '=trim(a2)'))).toBe(true);
+    expect(set.tasks.proper.check(typeAnswer(set, 'proper', '=PROPER(A2)'))).toBe(false); // spaces left
+    expect(set.tasks.right.check(typeAnswer(set, 'right', '=RIGHT(C2,5)'))).toBe(true); // same digits
+    expect(set.tasks.left.check(typeAnswer(set, 'left', '=LEFT(D2,3)'))).toBe(false);
+  });
+
+  it('text that looks like a number (RIGHT -> 00457) is marked as text, like Excel; numbers are not', () => {
+    expect(computeSheet([['=RIGHT("TN-00457",5)', '=5+1', '=UPPER("tn")']])).toEqual([["'00457", '6', 'TN']]);
   });
 });
 
