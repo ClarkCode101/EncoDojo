@@ -20,6 +20,7 @@ import { LESSON_7, TASK_LABEL_7 } from './lesson7';
 import { LESSON_8, TASK_LABEL_8 } from './lesson8';
 import { LESSON_9, TASK_LABEL_9 } from './lesson9';
 import { LESSON_10, TASK_LABEL_10 } from './lesson10';
+import { LESSON_11, TASK_LABEL_11 } from './lesson11';
 import type { ToolName } from './DataTools';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
@@ -159,6 +160,14 @@ export const LESSONS: Lesson[] = [
     labels: TASK_LABEL_10,
     content: null,
     load: () => import('./lesson10Content').then((m) => m.CONTENT_10),
+  },
+  {
+    level: 11,
+    title: 'Petsa',
+    topics: LESSON_11,
+    labels: TASK_LABEL_11,
+    content: null,
+    load: () => import('./lesson11Content').then((m) => m.CONTENT_11),
   },
 ];
 

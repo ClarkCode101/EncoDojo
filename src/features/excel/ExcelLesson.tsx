@@ -26,6 +26,7 @@ import {
   clickCell,
   editCell,
   isTypingKey,
+  cellsForCompute,
   pressKey,
   runCommand,
   typeInCell,
@@ -91,7 +92,11 @@ export default function ExcelLesson({
   const timersRef = useRef<number[]>([]);
   const soundCorrect = useAppData().settings.soundCorrect === true;
   // Formula lessons: the computed values of the cells (HyperFormula), for the view.
-  const computed = useMemo(() => (content.compute ? content.compute(sheet.cells) : null), [content, sheet.cells]);
+  const computed = useMemo(
+    () => (content.compute ? content.compute(cellsForCompute(sheet)) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only the cells and formats matter
+    [content, sheet.cells, sheet.formats],
+  );
 
   const step = steps[index];
   const topic = topics[step.topic];

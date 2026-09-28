@@ -33,6 +33,63 @@ const EXCEL_NAMES = [
   { name: 'FALSE', expression: '=FALSE()' },
 ];
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]; // prettier-ignore
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * Excel's date codes for TEXT (Aralin 11): =TEXT(B2,"mmmm") -> August, "mmm d, yyyy" -> Aug 5, 2026,
+ * "dddd" -> Wednesday. HyperFormula does not know month and day names, so it asks us (its
+ * `stringifyDateTime` option). A format without date codes (like "#,##0.00") returns undefined,
+ * and HyperFormula formats it as a number itself.
+ */
+export function excelDateText(
+  dt: { year: number; month: number; day: number; hours?: number; minutes?: number; seconds?: number },
+  format: string,
+): string | undefined {
+  // Number codes ("0.00", "#,##0.00", "000"): HyperFormula hands us the number as a date, so turn it back.
+  const num = /^([#0,]*0)(?:\.(0+))?$/.exec(format) ?? /^(#,##)(?:\.(0+))?$/.exec(format);
+  if (num && dt.year >= 1900) {
+    const days = (Date.UTC(dt.year, dt.month - 1, dt.day) - Date.UTC(1899, 11, 30)) / 86_400_000;
+    const time = ((dt.hours ?? 0) * 3600 + (dt.minutes ?? 0) * 60 + (dt.seconds ?? 0)) / 86_400;
+    const serial = Math.round((days + time) * 1e6) / 1e6; // 2.3449999 -> 2.345
+    const decimals = num[2]?.length ?? 0;
+    return serial.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+      minimumIntegerDigits: Math.max(1, (num[1].match(/0/g) ?? []).length),
+      useGrouping: num[1].includes(','),
+    });
+  }
+  if (!/[dmy]/i.test(format.replace(/"[^"]*"/g, ''))) return undefined;
+  const weekday = new Date(Date.UTC(dt.year, dt.month - 1, dt.day)).getUTCDay();
+  const codes: Record<string, string> = {
+    yyyy: String(dt.year),
+    yy: pad(dt.year % 100),
+    mmmm: MONTHS[dt.month - 1],
+    mmm: MONTHS[dt.month - 1].slice(0, 3),
+    mm: pad(dt.month),
+    m: String(dt.month),
+    dddd: DAYS[weekday],
+    ddd: DAYS[weekday].slice(0, 3),
+    dd: pad(dt.day),
+    d: String(dt.day),
+  };
+  return format.replace(/"([^"]*)"|yyyy|yy|mmmm|mmm|mm|m|dddd|ddd|dd|d/gi, (code, quoted?: string) =>
+    quoted !== undefined ? quoted : codes[code.toLowerCase()],
+  );
+}
+
+const CONFIG = {
+  licenseKey: 'gpl-v3',
+  // Dates are mm/dd/yyyy in this app (like a Philippine office Excel set to US dates).
+  dateFormats: ['MM/DD/YYYY', 'MM/DD/YY'],
+  stringifyDateTime: excelDateText,
+};
+
 /**
  * True when the cell at `p` shows the same value as the lesson's own `reference` formula would
  * there. The reference is put in an extra column on the same row (these formulas only point at
@@ -44,16 +101,32 @@ export function sameResult(cells: string[][], p: { r: number; c: number }, refer
   return values[p.r][p.c] === values[p.r][width];
 }
 
-/** The value of every cell as shown (formulas computed; other cells as they are). */
+/**
+ * The value of every cell as shown: formulas computed (a date result, like =TODAY() or =B2+30,
+ * as mm/dd/yyyy), other cells as they are. A cell may start with Excel's apostrophe for text
+ * (sheet.ts `cellsForCompute`); it is shown without it.
+ */
 export function computeSheet(cells: string[][]): string[][] {
   const hf = HyperFormula.buildFromArray(
     cells.map((row) => row.map((v) => (v === '' ? null : v))),
-    { licenseKey: 'gpl-v3' },
+    CONFIG,
     EXCEL_NAMES,
   );
   try {
-    const values = hf.getSheetValues(hf.getSheetId(hf.getSheetNames()[0])!);
-    return cells.map((row, r) => row.map((raw, c) => (raw.startsWith('=') ? show(values[r]?.[c]) : raw)));
+    const sheet = hf.getSheetId(hf.getSheetNames()[0])!;
+    const values = hf.getSheetValues(sheet);
+    return cells.map((row, r) =>
+      row.map((raw, c) => {
+        if (!raw.startsWith('=')) return raw.startsWith("'") ? raw.slice(1) : raw;
+        const v = values[r]?.[c];
+        const type = hf.getCellValueDetailedType({ sheet, row: r, col: c });
+        if (typeof v === 'number' && (type === 'NUMBER_DATE' || type === 'NUMBER_DATETIME')) {
+          const d = hf.numberToDate(v) as { year: number; month: number; day: number };
+          return `${pad(d.month)}/${pad(d.day)}/${d.year}`;
+        }
+        return show(v);
+      }),
+    );
   } finally {
     hf.destroy();
   }

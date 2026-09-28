@@ -40,6 +40,10 @@ import { CONTENT_9 } from './lesson9Content';
 import { HEADERS_10, makeQuiz10, makeTable10, makeTaskSet10 } from './tasks10';
 import { LESSON_10, TASK_LABEL_10 } from './lesson10';
 import { CONTENT_10 } from './lesson10Content';
+import { HEADERS_11, makeQuiz11, makeTable11, makeTaskSet11 } from './tasks11';
+import { LESSON_11, TASK_LABEL_11 } from './lesson11';
+import { excelDateText } from './formulaEngine';
+import { alignsRight as alignsRight11, cellsForCompute, todayText } from './sheet';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
@@ -549,6 +553,77 @@ describe('Excel Aralin 10 tasks (Conditional Formatting, COUNTBLANK, COUNTIFS, S
     // Typed in small letters: accepted, saved as the list spells it.
     const typed = pressKey({ ...d, editing: { value: 'paid', mode: 'enter' } }, { key: 'Enter' });
     expect(set.tasks.useDropdown.check(typed)).toBe(true);
+  });
+});
+
+describe('Excel Aralin 11 tasks (dates)', () => {
+  it('the invoice list: one blank Date, Due Dates 30 days later, dd/mm Supplier Dates as TEXT (left)', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const { table, blankRow, supplier } = makeTable11(makeRng(seed));
+      expect(table[0]).toEqual(HEADERS_11);
+      expect(table[blankRow][1]).toBe('');
+      expect(blankRow).toBeGreaterThanOrEqual(3);
+      expect(supplier.some((d) => d.d > 12) && supplier.some((d) => d.d <= 12)).toBe(true);
+    }
+    const set = makeTaskSet11(makeRng(2));
+    const s = set.sheet;
+    expect(alignsRight11(s, { r: 2, c: 1 })).toBe(true); // a real date: right
+    expect(alignsRight11(s, { r: 1, c: 5 })).toBe(false); // the supplier's text date: left
+    expect(cellsForCompute(s)[1][5].startsWith("'")).toBe(true);
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_11).sort());
+    expect(LESSON_11.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_11).sort());
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet11(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_11.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz11(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  /** Type a value into the task's start cell and press Enter. */
+  const typeAnswer = (set: ReturnType<typeof makeTaskSet11>, id: string, value: string) => {
+    const s = startTask(set.sheet, set.tasks[id]);
+    return pressKey({ ...s, editing: { value, mode: 'enter' } }, { key: 'Enter' });
+  };
+
+  it('dd/mm typed for the Date, a typed month name, or a fixed date are not accepted', () => {
+    const set = makeTaskSet11(makeRng(3));
+    const s = startTask(set.sheet, set.tasks.typeDate);
+    const target = /: (\w+) (\d+), (\d+)\./.exec(set.tasks.typeDate.text)!;
+    const month = new Date(`${target[1]} 1, 2000`).getMonth() + 1;
+    const dd = String(target[2]).padStart(2, '0');
+    const mm = String(month).padStart(2, '0');
+    expect(set.tasks.typeDate.check(typeAnswer(set, 'typeDate', `${dd}/${mm}/${target[3]}`))).toBe(dd === mm);
+    expect(set.tasks.typeDate.check(typeAnswer(set, 'typeDate', `${month}/${Number(dd)}/${target[3]}`))).toBe(true);
+    expect(s.cells[s.active.r][1]).toBe('');
+    const monthName = computeSheet(cellsForCompute(typeAnswer(set, 'textMonth', '=TEXT(B2,"mmmm")')))[1][4];
+    expect(set.tasks.textMonth.check(typeAnswer(set, 'textMonth', monthName))).toBe(false);
+    expect(set.tasks.fixDate.check(typeAnswer(set, 'fixDate', '=DATE(2026,1,1)'))).toBe(false);
+    expect(set.tasks.fixDate.check(typeAnswer(set, 'fixDate', '=date(right(f2,4),mid(f2,4,2),left(f2,2))'))).toBe(true);
+  });
+
+  it('formula engine: dates are mm/dd/yyyy; date results show as dates; TEXT knows month and day names', () => {
+    expect(
+      computeSheet([['08/05/2026', '=A1+30', '=A1+30-A1', '=TEXT(A1,"mmm d, yyyy")', '=TEXT(A1,"dddd")', '=TODAY()']]),
+    ).toEqual([['08/05/2026', '09/04/2026', '30', 'Aug 5, 2026', 'Wednesday', todayText()]]);
+    expect(excelDateText({ year: 2026, month: 12, day: 3 }, 'dd/mm/yy "ok"')).toBe('03/12/26 ok');
+    expect(excelDateText({ year: 2026, month: 12, day: 3 }, '#,##0.00')).toBe('46,359.00'); // the date as a number
+    expect(computeSheet([["'05/08/2026", '=ISTEXT(A1)', '=TEXT(1234.5,"#,##0.00")']])).toEqual([
+      ['05/08/2026', 'TRUE', '1,234.50'],
+    ]);
   });
 });
 

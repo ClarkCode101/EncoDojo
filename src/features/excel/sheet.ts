@@ -260,6 +260,35 @@ function isNumberCell(s: Sheet, p: Pos): boolean {
   return s.formatting && !formatOf(s, p).text && isNumberText(s.cells[p.r][p.c]);
 }
 
+/**
+ * A real date the way this app types dates (Aralin 11): mm/dd/yyyy (m/d/yyyy also works),
+ * with a month 1-12 and a day that exists in it. "25/08/2026" (dd/mm) is NOT a date: it
+ * stays text, like in an Excel set to mm/dd/yyyy.
+ */
+export function isDateText(v: string): boolean {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(v);
+  if (!m) return false;
+  const [month, day, year] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  return month >= 1 && month <= 12 && day >= 1 && day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** The days since 01/01/1900 of an mm/dd/yyyy date (to sort dates as dates). */
+function dateNumber(v: string): number {
+  const [m, d, y] = v.split('/').map(Number);
+  return Date.UTC(y, m - 1, d) / 86_400_000;
+}
+
+/**
+ * The cells as the formula engine should read them: a cell formatted as TEXT gets Excel's
+ * apostrophe ('05/08/2026, '00457), so it is not read as a date or a number.
+ */
+export function cellsForCompute(s: Sheet): string[][] {
+  if (!s.formatting) return s.cells;
+  return s.cells.map((row, r) =>
+    row.map((v, c) => (v !== '' && !isFormula(v) && s.formats[formatKey({ r, c })]?.text ? `'${v}` : v)),
+  );
+}
+
 /** What the cell shows, e.g. 1500 with Ctrl+Shift+1 -> "1,500.00". */
 export function displayValue(s: Sheet, p: Pos): string {
   const v = s.cells[p.r][p.c];
@@ -269,15 +298,15 @@ export function displayValue(s: Sheet, p: Pos): string {
   return v;
 }
 
-/** Numbers sit on the right of the cell, text on the left (like Excel). */
+/** Numbers and dates sit on the right of the cell, text on the left (like Excel). */
 export function alignsRight(s: Sheet, p: Pos): boolean {
-  return isNumberCell(s, p);
+  return isNumberCell(s, p) || (s.formatting && !formatOf(s, p).text && isDateText(s.cells[p.r][p.c]));
 }
 
-/** What the formula bar (and F2) shows: text that looks like a number keeps its apostrophe. */
+/** What the formula bar (and F2) shows: text that looks like a number or a date keeps its apostrophe. */
 export function formulaBarValue(s: Sheet, p: Pos): string {
   const v = s.cells[p.r][p.c];
-  return s.formatting && formatOf(s, p).text && isNumberText(v) ? `'${v}` : v;
+  return s.formatting && formatOf(s, p).text && (isNumberText(v) || isDateText(v)) ? `'${v}` : v;
 }
 
 /**
@@ -547,7 +576,7 @@ function copySelection(s: Sheet): Sheet {
     clipboard: block(s.cells),
     clipboardFrom: { r: top, c: left },
     // What the copied cells SHOW right now (for Paste Values).
-    clipboardValues: block(s.compute ? s.compute(s.cells) : s.cells),
+    clipboardValues: block(s.compute ? s.compute(cellsForCompute(s)) : s.cells),
   };
 }
 
@@ -845,6 +874,7 @@ export function columnValues(s: Sheet, col: number): string[] {
 function compareValues(a: string, b: string): number {
   if (a === '' || b === '') return a === b ? 0 : a === '' ? 1 : -1;
   if (isNumberText(a) && isNumberText(b)) return Number(a) - Number(b);
+  if (isDateText(a) && isDateText(b)) return dateNumber(a) - dateNumber(b);
   return a.localeCompare(b, undefined, { sensitivity: 'base' });
 }
 

@@ -32,6 +32,7 @@ import {
   formatKey,
   isFormula,
   isHidden,
+  isDateText,
   isNumberText,
   isSelected,
   lastUsed,
@@ -94,7 +95,10 @@ export default function ExcelSheetView({
   /** Numbers (typed or computed) sit on the right of the cell; text like '00457 does not. */
   const rightAligned = (p: Pos): boolean => {
     const raw = sheet.cells[p.r][p.c];
-    if (computed && isFormula(raw)) return isNumberText(computed[p.r]?.[p.c] ?? '');
+    if (computed && isFormula(raw)) {
+      const v = computed[p.r]?.[p.c] ?? '';
+      return isNumberText(v) || isDateText(v); // a date result (=TODAY(), =B2+30) is a number too
+    }
     return alignsRight(sheet, p);
   };
   const hasTools = tools === true || (Array.isArray(tools) && tools.length > 0);

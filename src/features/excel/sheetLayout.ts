@@ -78,5 +78,16 @@ export const COLUMN_WIDTHS_10 = [
   'w-24 min-w-[6rem]',
 ];
 
+/** Aralin 11: Invoice No., Date, Due Date, Age, Month, Supplier Date, Fixed Date. */
+export const COLUMN_WIDTHS_11 = [
+  'w-28 min-w-[7rem]',
+  'w-28 min-w-[7rem]',
+  'w-28 min-w-[7rem]',
+  'w-16 min-w-[4rem]',
+  'w-28 min-w-[7rem]',
+  'w-32 min-w-[8rem]',
+  'w-28 min-w-[7rem]',
+];
+
 /** Aralin 2 adds a Status column (F). */
 export const COLUMN_WIDTHS_2 = [...COLUMN_WIDTHS, 'w-36 min-w-[9rem]'];
