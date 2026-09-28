@@ -7,7 +7,6 @@
  * It does NOT save anything; it builds a Session and hands it to `onFinish`.
  */
 import { useRef, useState, type ReactNode } from 'react';
-import { Button } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import { correctTick } from '../../lib/sound';
 import type { Session } from '../../lib/storage';
@@ -15,9 +14,21 @@ import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
 import { buildExcelSession, type TaskResult } from './scoreExcel';
-import { clickCell, editCell, isTypingKey, pressKey, runCommand, typeInCell, type KeyPress, type Pos, type Sheet, type SheetCommand } from './sheet';
+import {
+  clickCell,
+  editCell,
+  isTypingKey,
+  pressKey,
+  runCommand,
+  typeInCell,
+  type KeyPress,
+  type Pos,
+  type Sheet,
+  type SheetCommand,
+} from './sheet';
 import type { LessonContent } from './lessons';
 import { QUIZ_TASKS, startTask } from './tasks';
+import LessonLayout from './LessonLayout';
 import TaskRecord from './TaskRecord';
 import TipKeys from './TipKeys';
 
@@ -25,12 +36,16 @@ type Feedback = { n: number; text: ReactNode; good: boolean } | null;
 
 export default function ExcelQuiz({
   level,
+  title,
   content,
   onFinish,
+  onExit,
 }: {
   level: number;
+  title: string;
   content: LessonContent;
   onFinish: (session: Session) => void;
+  onExit: () => void;
 }) {
   const [quiz] = useState(() => content.makeQuiz(makeRng(randomSeed())));
   const [sheet, setSheet] = useState<Sheet>(() => startTask(quiz.sheet, quiz.tasks[0]));
@@ -125,40 +140,62 @@ export default function ExcelQuiz({
   }
 
   return (
-    <div className="flex min-h-0 flex-col">
-      <div className="mb-3 shrink-0 rounded-r-lg border-l-4 border-belt-400 bg-white px-5 py-3">
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-stone-600">
+    <LessonLayout
+      eyebrow={`Pagsusulit, Aralin ${level}`}
+      title={title}
+      onBack={onExit}
+      panel={
+        <>
+          {/* Progress: one dot per question. */}
+          <div>
+            <div className="mb-1.5 text-sm font-semibold text-stone-700">
               Tanong {index + 1} sa {QUIZ_TASKS}
             </div>
-            <p className="text-lg font-bold text-stone-900">{task.text}</p>
-            {task.record && <TaskRecord record={task.record} />}
+            <div className="flex gap-1" aria-hidden="true">
+              {Array.from({ length: QUIZ_TASKS }, (_, i) => (
+                <div key={i} className={'h-1.5 flex-1 rounded-full ' + (i <= index ? 'bg-belt-400' : 'bg-stone-300')} />
+              ))}
+            </div>
+            <p className="mt-2 text-sm text-stone-600">Walang hint at walang oras. Pasado kapag 5 ang tama.</p>
           </div>
-          <Button variant="secondary" onClick={() => endTask(sheet, false)}>
-            Laktawan
-          </Button>
-        </div>
-        <p role="status" className="mt-1 min-h-[1.5rem] text-sm font-semibold">
-          {feedback && (
-            <span className={feedback.good ? 'text-green-800' : 'text-amber-800'}>
-              {feedback.good ? '✓' : '•'} Tanong {feedback.n}: {feedback.text}
-            </span>
-          )}
-        </p>
-      </div>
 
-      <ExcelSheetView
-        sheet={sheet}
-        columnWidths={content.columnWidths}
-        tools={content.tools}
-        taskKey={index}
-        onCommand={onCommand}
-        onKey={onKey}
-        onEditChange={(v) => setSheet(typeInCell(sheet, v))}
-        onCellClick={onCellClick}
-        onCellDoubleClick={onCellDoubleClick}
-      />
-    </div>
+          <section aria-label="Gawin" className="rounded-r-lg border-l-4 border-belt-400 bg-white px-4 py-3">
+            <div className="text-sm font-bold text-stone-600">Gawin</div>
+            <p className="font-bold text-stone-900">{task.text}</p>
+            {task.record && <TaskRecord record={task.record} />}
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => endTask(sheet, false)}
+                className="rounded text-sm text-stone-600 underline decoration-dotted underline-offset-2 hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
+              >
+                Laktawan
+              </button>
+            </div>
+          </section>
+
+          <p role="status" className="min-h-[1.5rem] text-sm font-semibold">
+            {feedback && (
+              <span className={feedback.good ? 'text-green-800' : 'text-amber-800'}>
+                {feedback.good ? '✓' : '•'} Tanong {feedback.n}: {feedback.text}
+              </span>
+            )}
+          </p>
+        </>
+      }
+      sheet={
+        <ExcelSheetView
+          sheet={sheet}
+          columnWidths={content.columnWidths}
+          tools={content.tools}
+          taskKey={index}
+          onCommand={onCommand}
+          onKey={onKey}
+          onEditChange={(v) => setSheet(typeInCell(sheet, v))}
+          onCellClick={onCellClick}
+          onCellDoubleClick={onCellDoubleClick}
+        />
+      }
+    />
   );
 }

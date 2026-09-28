@@ -1,25 +1,26 @@
 /**
  * Excel, a LEARNING TRACK ("Matuto", owner's decision 2026-09-27): not part
  * of the Assessment or the belt, and NO timer. Screens:
- * 1. list: the lessons (ready ones can be started; "Pasado na" once passed);
- * 2. lesson: Alamin + Subukan per topic (ExcelLesson);
+ * 1. list: the lessons, ONE clear button each ("Simulan" / "Ulitin"); the
+ *    topics and the Pagsusulit are folded under "Mga bahagi at pagsusulit"
+ *    (owner's choice, 2026-09-28: the list had too many things to click);
+ * 2. lesson: the guide on the left, the sheet on the right (ExcelLesson);
  * 3. lessonDone: "Tapos na ang aralin", then the Pagsusulit;
  * 4. quiz: the Pagsusulit (ExcelQuiz), saved when finished;
  * 5. result: the Pagsusulit result (ExcelResults).
- * The Pagsusulit can also be started directly from the list ("May alam na ako").
  */
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { ResultSummary } from '../../components/ResultPieces';
 import { ArrowRightIcon, ExcelIcon } from '../../components/icons';
 import { PracticeFrame } from '../../components/Practice';
-import { Button, PageHeader, Section } from '../../components/ui';
+import { Button, PageHeader } from '../../components/ui';
 import { listNumber } from '../../lib/listNumber';
 import type { Session } from '../../lib/storage';
 import { saveSession, useAppData } from '../../lib/useAppData';
 import ExcelLesson from './ExcelLesson';
 import ExcelQuiz from './ExcelQuiz';
 import ExcelResults from './ExcelResults';
-import { LESSONS, lessonByLevel, passedLessons } from './lessons';
+import { LESSONS, lessonByLevel, passedLessons, type Lesson } from './lessons';
 import { QUIZ_PASS, QUIZ_TASKS } from './tasks';
 
 /** Every screen except the list belongs to one lesson (`level`). */
@@ -30,23 +31,6 @@ type Screen =
   | { name: 'quiz'; level: number }
   | { name: 'result'; session: Session };
 
-/** The small header of the lesson and quiz screens. */
-function Header({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
-      <h1 className="flex items-center gap-3 text-2xl font-bold text-stone-900">
-        <span className="hidden text-brand-700 sm:inline-flex">
-          <ExcelIcon className="h-6 w-6" />
-        </span>
-        {title}
-      </h1>
-      <Button variant="secondary" onClick={onBack}>
-        ‹ Mga aralin
-      </Button>
-    </header>
-  );
-}
-
 export default function ExcelPage() {
   const passed = passedLessons(useAppData().sessions);
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
@@ -55,28 +39,30 @@ export default function ExcelPage() {
     setAttempt((n) => n + 1);
     setScreen(s);
   };
+  const toList = () => go({ name: 'list' });
 
   if (screen.name === 'lesson' || screen.name === 'quiz') {
     const lesson = lessonByLevel(screen.level);
     if (!lesson.content) return null;
     return (
       <PracticeFrame>
-        <Header
-          title={screen.name === 'lesson' ? `Aralin ${lesson.level}: ${lesson.title}` : `Pagsusulit: ${lesson.title}`}
-          onBack={() => go({ name: 'list' })}
-        />
         {screen.name === 'lesson' ? (
           <ExcelLesson
             key={attempt}
+            level={lesson.level}
+            title={lesson.title}
             content={lesson.content}
             startTopic={screen.topic ?? 0}
             onDone={() => go({ name: 'lessonDone', level: lesson.level })}
+            onExit={toList}
           />
         ) : (
           <ExcelQuiz
             key={attempt}
             level={lesson.level}
+            title={lesson.title}
             content={lesson.content}
+            onExit={toList}
             onFinish={(session) => {
               // A learning result is always saved (it can be deleted from the list on Home).
               saveSession(session);
@@ -95,7 +81,7 @@ export default function ExcelPage() {
         session={screen.session}
         onRetryQuiz={() => go({ name: 'quiz', level })}
         onLesson={() => go({ name: 'lesson', level })}
-        onList={() => go({ name: 'list' })}
+        onList={toList}
       />
     );
   }
@@ -111,7 +97,7 @@ export default function ExcelPage() {
         />
         <ResultSummary
           ready
-          headline="Nasubukan mo na ang lahat ng shortcut sa araling ito."
+          headline="Nasubukan mo na ang lahat ng itinuro sa araling ito."
           message={`Handa ka na ba sa pagsusulit? ${QUIZ_TASKS} tanong, walang hint at walang oras. Pasado kapag ${QUIZ_PASS} ang tama.`}
         >
           <Button size="lg" autoFocus onClick={() => go({ name: 'quiz', level: lesson.level })}>
@@ -120,130 +106,115 @@ export default function ExcelPage() {
           <Button size="lg" variant="secondary" onClick={() => go({ name: 'lesson', level: lesson.level })}>
             Ulitin ang aralin
           </Button>
+          <Button size="lg" variant="secondary" onClick={toList}>
+            Mga aralin
+          </Button>
         </ResultSummary>
       </div>
     );
   }
 
-  // The list of lessons
+  // The list of lessons. The first lesson not passed yet is the suggested one (Enter starts it).
+  const suggested = (LESSONS.find((l) => l.content && !passed.has(l.level)) ?? LESSONS[0]).level;
   return (
     <div>
       <PageHeader
         icon={<ExcelIcon className="h-8 w-8" />}
         title="Excel"
-        description="Matuto ng Excel, isang aralin sa isang pagkakataon. Walang oras, puwedeng ulitin."
+        description="Matuto ng Excel, isang aralin sa isang pagkakataon. Walang oras, at puwedeng ulitin kahit kailan."
       />
 
-      <Section title="Mga aralin" className="mb-10">
-        <ol className="-mt-4">
-          {LESSONS.map((l) => {
-            const ready = l.content !== null;
-            // The first lesson not passed yet gets the focus (Enter starts it).
-            const suggested = l.level === (LESSONS.find((x) => x.content && !passed.has(x.level)) ?? LESSONS[0]).level;
-            return (
-              <LessonRow
-                key={l.level}
-                n={l.level}
-                title={l.title}
-                ready={ready}
-                passed={passed.has(l.level)}
-                topics={l.content?.topics.map((t) => t.title) ?? []}
-                onTopic={(topic) => go({ name: 'lesson', level: l.level, topic })}
-              >
-                {ready && (
-                  <>
-                    <Button
-                      autoFocus={suggested}
-                      variant={suggested ? 'primary' : 'secondary'}
-                      onClick={() => go({ name: 'lesson', level: l.level })}
-                    >
-                      {passed.has(l.level) ? 'Ulitin ang aralin' : 'Simulan ang aralin'}
-                    </Button>
-                    <Button variant="secondary" onClick={() => go({ name: 'quiz', level: l.level })}>
-                      Pagsusulit
-                    </Button>
-                  </>
-                )}
-              </LessonRow>
-            );
-          })}
-        </ol>
-      </Section>
+      <ol className="border-t-2 border-stone-800">
+        {LESSONS.map((l) => (
+          <LessonRow
+            key={l.level}
+            lesson={l}
+            passed={passed.has(l.level)}
+            suggested={l.level === suggested}
+            onStart={(topic) => go({ name: 'lesson', level: l.level, topic })}
+            onQuiz={() => go({ name: 'quiz', level: l.level })}
+          />
+        ))}
+      </ol>
 
-      <Section title="Paano ito gumagana">
-        <ul className="list-disc space-y-1 pl-6 text-lg text-stone-800">
-          <li>
-            <strong>Alamin</strong>: maikling paliwanag at ang mga key. <strong>Subukan</strong>: gawin ito sa sheet.
-            May hint at &quot;Ipakita kung paano&quot; kapag nahirapan.
-          </li>
-          <li>
-            <strong>Pagsusulit</strong> sa dulo: {QUIZ_TASKS} tanong, walang hint. Pasado kapag {QUIZ_PASS} ang tama.
-            Kung may alam ka na, puwede kang dumiretso sa pagsusulit.
-          </li>
-          <li>Para matuto lang ito. Hindi kasama sa Assessment at sa belt.</li>
-        </ul>
-      </Section>
+      <p className="mt-4 text-stone-600">
+        Bawat aralin: maikling paliwanag, gagawin mo sa sheet (may tulong kapag nahirapan), tapos maikling pagsusulit.
+        Para matuto lang ito, hindi kasama sa Assessment at sa belt.
+      </p>
     </div>
   );
 }
 
+/** One lesson: number, title, a small "Pasado" mark, one main button; topics and quiz folded below. */
 function LessonRow({
-  n,
-  title,
-  ready,
+  lesson,
   passed,
-  topics,
-  onTopic,
-  children,
+  suggested,
+  onStart,
+  onQuiz,
 }: {
-  n: number;
-  title: string;
-  ready: boolean;
+  lesson: Lesson;
   passed: boolean;
-  /** The titles of the lesson's topics (empty when not ready). */
-  topics: string[];
-  /** Start the lesson at this topic. */
-  onTopic: (topic: number) => void;
-  children: ReactNode;
+  suggested: boolean;
+  /** Start the lesson (at a topic, if given). */
+  onStart: (topic?: number) => void;
+  onQuiz: () => void;
 }) {
+  const ready = lesson.content !== null;
   return (
-    <li className="grid grid-cols-[2.5rem_1fr] items-center gap-x-4 gap-y-2 border-b border-stone-300 py-4 sm:grid-cols-[2.5rem_1fr_auto]">
-      <span aria-hidden="true" className="font-display text-2xl font-semibold tabular-nums text-stone-400">
-        {listNumber(n)}
-      </span>
-      <span className="min-w-0">
-        <span className={'block text-lg font-bold ' + (ready ? 'text-stone-900' : 'text-stone-500')}>
-          <span className="sr-only">Aralin {n}: </span>
-          {title}
+    <li className="border-b border-stone-300 py-4">
+      <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4">
+        <span aria-hidden="true" className="font-display text-2xl font-semibold tabular-nums text-stone-400">
+          {listNumber(lesson.level)}
         </span>
-        <span className="block text-stone-600">
-          {!ready ? (
-            'Parating pa'
-          ) : passed ? (
-            <span className="font-semibold text-green-800">Pasado na, puwedeng ulitin</span>
-          ) : (
-            'Hindi pa nasusubukan ang pagsusulit'
+        <span className="min-w-0">
+          <span className={'text-lg font-bold ' + (ready ? 'text-stone-900' : 'text-stone-500')}>
+            <span className="sr-only">Aralin {lesson.level}: </span>
+            {lesson.title}
+          </span>
+          {passed && (
+            <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-sm font-semibold text-green-800">
+              Pasado
+            </span>
           )}
+          {!ready && <span className="ml-2 text-sm text-stone-500">parating pa</span>}
         </span>
-      </span>
-      {ready && <span className="col-start-2 flex flex-wrap gap-2 sm:col-start-auto">{children}</span>}
-      {/* The topics: go straight to one (no need to go through the ones before it). */}
-      {topics.length > 0 && (
-        <span className="col-start-2 sm:col-span-2">
-          <span className="sr-only">Mga bahagi ng Aralin {n}:</span>
-          <span className="flex flex-wrap gap-x-1 gap-y-1">
-            {topics.map((t, i) => (
+        {ready && (
+          <Button autoFocus={suggested} variant={suggested ? 'primary' : 'secondary'} onClick={() => onStart()}>
+            {passed ? 'Ulitin' : 'Simulan'}
+          </Button>
+        )}
+      </div>
+
+      {/* Folded: go straight to one topic, or straight to the Pagsusulit ("may alam na ako"). */}
+      {lesson.content && (
+        <details className="group col-start-2 ml-14 mt-1">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded text-sm text-brand-700 hover:text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden">
+            <span aria-hidden="true" className="inline-block transition-transform group-open:rotate-90">
+              ›
+            </span>
+            Mga bahagi at pagsusulit
+          </summary>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {lesson.content.topics.map((t, i) => (
               <button
-                key={t}
+                key={t.title}
                 type="button"
-                onClick={() => onTopic(i)}
-                className="rounded px-1.5 py-0.5 text-sm text-brand-700 underline decoration-dotted underline-offset-2 hover:bg-brand-50 hover:text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
+                onClick={() => onStart(i)}
+                className="rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800 hover:border-stone-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
               >
-                <span className="font-display tabular-nums text-stone-500">{i + 1}</span> {t}
+                <span className="font-display tabular-nums text-stone-500">{i + 1}</span> {t.title}
               </button>
             ))}
-          </span>
-        </span>
+            <button
+              type="button"
+              onClick={onQuiz}
+              className="rounded-full border border-belt-400 bg-belt-50 px-3 py-1 text-sm font-semibold text-stone-900 hover:bg-belt-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
+            >
+              Pagsusulit
+            </button>
+          </div>
+        </details>
       )}
     </li>
   );

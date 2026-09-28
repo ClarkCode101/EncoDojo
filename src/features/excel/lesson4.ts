@@ -10,7 +10,7 @@ export const LESSON_4: LessonTopic[] = [
     title: 'Hanapin (Find)',
     body: [
       'Sa mahabang listahan, huwag nang hanapin isa-isa. Ang Find ang maghahanap para sa iyo.',
-      'Ctrl + F, i-type ang hinahanap, tapos Enter. Pupunta ang cell sa nakita; Enter ulit para sa susunod.',
+      'I-type ang hinahanap, tapos Enter. Pupunta ang cell sa nakita; Enter ulit para sa susunod.',
     ],
     keys: [{ keys: 'Ctrl + F', what: 'Find (hanapin)' }],
     tasks: ['find'],
