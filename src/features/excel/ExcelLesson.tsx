@@ -28,6 +28,7 @@ import {
   isTypingKey,
   cellsForCompute,
   pressKey,
+  tabCells,
   runCommand,
   typeInCell,
   type KeyPress,
@@ -93,9 +94,9 @@ export default function ExcelLesson({
   const soundCorrect = useAppData().settings.soundCorrect === true;
   // Formula lessons: the computed values of the cells (HyperFormula), for the view.
   const computed = useMemo(
-    () => (content.compute ? content.compute(cellsForCompute(sheet)) : null),
+    () => (content.compute ? content.compute(cellsForCompute(sheet), tabCells(sheet)) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the cells and formats matter
-    [content, sheet.cells, sheet.formats],
+    [content, sheet.cells, sheet.formats, sheet.tabs],
   );
 
   const step = steps[index];

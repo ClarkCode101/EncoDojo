@@ -22,8 +22,9 @@ import { LESSON_9, TASK_LABEL_9 } from './lesson9';
 import { LESSON_10, TASK_LABEL_10 } from './lesson10';
 import { LESSON_11, TASK_LABEL_11 } from './lesson11';
 import { LESSON_12, TASK_LABEL_12 } from './lesson12';
+import { LESSON_13, TASK_LABEL_13 } from './lesson13';
 import type { ToolName } from './DataTools';
-import type { Sheet } from './sheet';
+import type { Sheet, TabCells } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
 import { TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
@@ -47,7 +48,7 @@ export type LessonContent = {
 };
 
 /** Computes the formulas of the sheet (only the formula lessons have it; see formulaEngine.ts). */
-export type ComputeSheet = (cells: string[][]) => string[][];
+export type ComputeSheet = (cells: string[][], tabs?: TabCells) => string[][];
 
 /**
  * A lesson in the list. `topics` and `labels` are always here (the list shows
@@ -177,6 +178,14 @@ export const LESSONS: Lesson[] = [
     labels: TASK_LABEL_12,
     content: null,
     load: () => import('./lesson12Content').then((m) => m.CONTENT_12),
+  },
+  {
+    level: 13,
+    title: 'Maraming tab',
+    topics: LESSON_13,
+    labels: TASK_LABEL_13,
+    content: null,
+    load: () => import('./lesson13Content').then((m) => m.CONTENT_13),
   },
 ];
 

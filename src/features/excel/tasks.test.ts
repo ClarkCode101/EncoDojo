@@ -45,6 +45,9 @@ import { LESSON_11, TASK_LABEL_11 } from './lesson11';
 import { HEADERS_12, makeQuiz12, makeTable12, makeTaskSet12 } from './tasks12';
 import { LESSON_12, TASK_LABEL_12 } from './lesson12';
 import { CONTENT_12 } from './lesson12Content';
+import { REPORT, TAB_NAMES, makeData13, makeQuiz13, makeTaskSet13 } from './tasks13';
+import { LESSON_13, TASK_LABEL_13 } from './lesson13';
+import { makeSheet as makeSheet13, makeWorkbook, switchTab, tabCells } from './sheet';
 import { excelDateText } from './formulaEngine';
 import { alignsRight as alignsRight11, cellsForCompute, todayText } from './sheet';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
@@ -673,6 +676,75 @@ describe('Excel Aralin 12 tasks (rows and columns)', () => {
     expect(set.tasks.deleteRow.check(cleared)).toBe(false);
     const f = startTask(set.sheet, set.tasks.freeze);
     expect(set.tasks.freeze.check(runCommand(f, { kind: 'freeze', rows: 1, cols: 0 }))).toBe(false);
+  });
+});
+
+describe('Excel Aralin 13 tasks (tabs)', () => {
+  it('the workbook: Orders, Prices, Sheet3; every order code is in the price list', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const { orders, prices } = makeData13(makeRng(seed));
+      for (const o of orders) expect(prices.some((p) => p[0] === o[1])).toBe(true);
+    }
+    const set = makeTaskSet13(makeRng(1));
+    expect(set.sheet.tabs?.names).toEqual(TAB_NAMES);
+    expect(set.sheet.tabs?.index).toBe(0);
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_13).sort());
+    expect(LESSON_13.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_13).sort());
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet13(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_13.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz13(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('a typed total, or a list without $ (copied down), is not accepted; lowercase tab names are fixed', () => {
+    const set = makeTaskSet13(makeRng(2));
+    const typeAnswer = (id: string, value: string) => {
+      const s = startTask(set.sheet, set.tasks[id]);
+      return pressKey({ ...s, editing: { value, mode: 'enter' } }, { key: 'Enter' });
+    };
+    const last = set.tasks.refTab.tip.match(/C(\d+)\)/)![1];
+    const right = typeAnswer('refTab', `=sum(orders!c2:c${last})`);
+    expect(right.cells[1][1]).toBe(`=SUM(Orders!C2:C${last})`);
+    expect(set.tasks.refTab.check(right)).toBe(true);
+    const total = computeSheet(cellsForCompute(right), tabCells(right))[1][1];
+    expect(set.tasks.refTab.check(typeAnswer('refTab', total))).toBe(false);
+    const L = set.tasks.vlookupTab.tip.match(/\$C\$(\d+)/)![1];
+    expect(set.tasks.vlookupTab.check(typeAnswer('vlookupTab', `=VLOOKUP(B2,Prices!A2:C${L},2,FALSE)`))).toBe(false);
+    expect(set.tasks.vlookupTab.check(typeAnswer('vlookupTab', `=VLOOKUP(B2,Prices!$A$2:$C$${L},2,FALSE)`))).toBe(true);
+    expect(REPORT).toBe('Summary');
+  });
+
+  it('switchTab keeps each tab as it was left (cursor, cells), and the clipboard goes along', () => {
+    const one = makeSheet13([['a'], ['b']], 4, 2);
+    const two = makeSheet13([['x']], 4, 2);
+    let w = makeWorkbook([
+      { name: 'One', sheet: one },
+      { name: 'Two', sheet: two },
+    ]);
+    w = pressKey(pressKey(w, { key: 'ArrowDown' }), { key: 'c', ctrl: true }); // copy A2 ("b") on One
+    w = pressKey(w, { key: 'PageDown', ctrl: true, shift: true });
+    expect(w.tabs?.index).toBe(1);
+    w = pressKey(pressKey(w, { key: 'ArrowDown' }), { key: 'v', ctrl: true });
+    expect(w.cells[1][0]).toBe('b');
+    w = switchTab(w, 0);
+    expect(w.active).toEqual({ r: 1, c: 0 });
+    expect(switchTab(w, 5).tabs?.index).toBe(1); // clamped
+    expect(runCommand(w, { kind: 'renameTab', index: 1, name: 'one' }).alert).toMatch(/Hindi puwede/);
   });
 });
 

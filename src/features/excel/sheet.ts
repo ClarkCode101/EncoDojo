@@ -83,7 +83,7 @@ export type Sheet = {
    * Formula lessons: computes the formulas (formulaEngine.ts `computeSheet`), so a copy can
    * remember the values for Paste Values. Not set = formulas are not computed (copied as typed).
    */
-  compute?: (cells: string[][]) => string[][];
+  compute?: (cells: string[][], tabs?: TabCells) => string[][];
   /** Earlier versions of the cells and formats for Ctrl+Z (newest last). */
   undo: Snapshot[];
   /** Cell formats by "row,col" (only used when `formatting` is on). */
@@ -110,7 +110,17 @@ export type Sheet = {
   freeze: { rows: number; cols: number };
   /** Column widths (Tailwind classes) kept with the sheet, so inserting a column moves them too (Aralin 12). */
   colWidths?: string[];
+  /**
+   * Several sheets (tabs) in one workbook (Aralin 13). This Sheet is the ACTIVE tab; the other
+   * tabs are kept whole in `stored` (the active one's place is null) and swapped in by `switchTab`.
+   */
+  tabs?: Tabs;
 };
+
+export type Tabs = { names: string[]; index: number; stored: (Sheet | null)[] };
+
+/** The other tabs' cells, for formulas like =SUM(Orders!C2:C9) (Aralin 13). */
+export type TabCells = { active: string; others: { name: string; cells: string[][] }[] };
 
 /** The data tools of Aralin 4 (from the toolbar, the dialogs, or their shortcuts). */
 export type SheetCommand =
@@ -130,6 +140,10 @@ export type SheetCommand =
   | { kind: 'pick'; value: string }
   /** Freeze Panes (Aralin 12): this many rows at the top and columns at the left stay in view. */
   | { kind: 'freeze'; rows: number; cols: number }
+  /** Go to another tab (a click on it, Aralin 13). */
+  | { kind: 'tab'; index: number }
+  /** Rename a tab (double-click on it). */
+  | { kind: 'renameTab'; index: number; name: string }
   /** Text to Columns (Aralin 9): split the selected column at `delimiter`, the parts go from `dest` to the right. */
   | { kind: 'textToColumns'; delimiter: string; dest: Pos }
   /** Opening a dialog: nothing changes in the sheet (counted as one key by the lessons). */
@@ -221,7 +235,7 @@ export function makeSheet(
   options: {
     formatting?: boolean;
     formats?: Record<string, CellFormat>;
-    compute?: (cells: string[][]) => string[][];
+    compute?: (cells: string[][], tabs?: TabCells) => string[][];
     freeze?: { rows: number; cols: number };
     colWidths?: string[];
   } = {},
@@ -563,7 +577,8 @@ function commit(s: Sheet): Sheet {
   // A dropdown cell keeps the list's own spelling ("paid" -> "Paid").
   const typed = listMatch(s, s.active, s.editing.value) ?? s.editing.value;
   if (!s.formatting) return { ...setCell(s, s.active, typed), editing: null };
-  const { value, text } = excelValue(typed);
+  const { value: saved, text } = excelValue(typed);
+  const value = tabNamesAsNamed(s, saved);
   const cells = s.cells.map((row, r) => (r === s.active.r ? row.map((v, c) => (c === s.active.c ? value : v)) : row));
   return {
     ...withCells(
@@ -603,7 +618,7 @@ function copySelection(s: Sheet): Sheet {
     clipboard: block(s.cells),
     clipboardFrom: { r: top, c: left },
     // What the copied cells SHOW right now (for Paste Values).
-    clipboardValues: block(s.compute ? s.compute(cellsForCompute(s)) : s.cells),
+    clipboardValues: block(s.compute ? s.compute(cellsForCompute(s), tabCells(s)) : s.cells),
   };
 }
 
@@ -855,6 +870,10 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   }
   if (ctrl) {
     const lower = key.toLowerCase();
+    // Next / previous tab: Excel's Ctrl+PgDn / Ctrl+PgUp; in a browser Ctrl+Shift+PgDn / PgUp (like Google Sheets).
+    if ((key === 'PageDown' || key === 'PageUp') && s.tabs) {
+      return switchTab(s, s.tabs.index + (key === 'PageDown' ? 1 : -1));
+    }
     if (lower === 'c') return copySelection(s);
     if (lower === 'v') return shift ? pasteValues(s) : paste(s);
     if (lower === 'e') return flashFill(s);
@@ -1024,6 +1043,10 @@ export function runCommand(s: Sheet, cmd: SheetCommand): Sheet {
       // A new list replaces the lists it overlaps (like Excel's "apply to the selected cells").
       return withRules(base, { lists: [...base.lists.filter((l) => !overlaps(l.range, range)), { range, list }] });
     }
+    case 'tab':
+      return switchTab(base, cmd.index);
+    case 'renameTab':
+      return renameTab(base, cmd.index, cmd.name);
     case 'freeze':
       return { ...base, freeze: { rows: Math.max(0, cmd.rows), cols: Math.max(0, cmd.cols) } };
     case 'pick': {
@@ -1114,7 +1137,8 @@ export function adjustRefs(formula: string, axis: 'row' | 'col', at: number, del
       i % 2 === 1
         ? part
         : part.replace(
-            /(^|[^A-Za-z0-9_$.])(\$?[A-Z]{1,3}\$?\d+)(?::(\$?[A-Z]{1,3}\$?\d+))?(?![A-Za-z0-9_(])/g,
+            // Not after "!": a reference to ANOTHER tab (Prices!A2) does not move with this tab's rows.
+            /(^|[^A-Za-z0-9_$.!])(\$?[A-Z]{1,3}\$?\d+)(?::(\$?[A-Z]{1,3}\$?\d+))?(?![A-Za-z0-9_(])/g,
             (_m, before: string, a: string, b?: string) => {
               const start = parse(a);
               if (!b) {
@@ -1247,3 +1271,68 @@ function hideColumns(s: Sheet, hide: boolean): Sheet {
 
 /** True when a column is hidden (Ctrl+0). */
 export const isColHidden = (s: Sheet, c: number) => s.hiddenCols.includes(c);
+
+// ---------- tabs: several sheets in one workbook (Aralin 13) ----------
+
+/** A workbook: these sheets as tabs, with tab `index` active. */
+export function makeWorkbook(tabs: { name: string; sheet: Sheet }[], index = 0): Sheet {
+  const stored = tabs.map((t, i) => (i === index ? null : t.sheet));
+  return { ...tabs[index].sheet, tabs: { names: tabs.map((t) => t.name), index, stored } };
+}
+
+/**
+ * Go to tab `i` (clamped): the active tab is stored as it is (its cells, cursor, undo), and tab
+ * `i` comes back as it was left. The clipboard goes along (copy on one tab, paste on another).
+ */
+export function switchTab(s: Sheet, i: number): Sheet {
+  if (!s.tabs) return s;
+  const to = Math.max(0, Math.min(s.tabs.names.length - 1, i));
+  if (to === s.tabs.index) return s;
+  const stored = [...s.tabs.stored];
+  // The stored tab keeps everything except `tabs` (only the active sheet carries the tab list).
+  stored[s.tabs.index] = { ...s, tabs: undefined, editing: null, alert: null };
+  const next = stored[to]!;
+  stored[to] = null;
+  return {
+    ...next,
+    clipboard: s.clipboard,
+    clipboardFrom: s.clipboardFrom,
+    clipboardValues: s.clipboardValues,
+    tabs: { ...s.tabs, index: to, stored },
+  };
+}
+
+/** Rename tab `i` (Excel's rules, simplified: not empty, at most 31 letters, no other tab with that name). */
+function renameTab(s: Sheet, i: number, name: string): Sheet {
+  if (!s.tabs) return s;
+  const clean = name.trim();
+  const taken = s.tabs.names.some((n, j) => j !== i && n.toLowerCase() === clean.toLowerCase());
+  if (!clean || clean.length > 31 || /[\\/?*[\]:']/.test(clean) || taken) {
+    return {
+      ...s,
+      alert: `Hindi puwede ang pangalang "${name}". Iba sa ibang tab, hindi blangko, walang / \\ ? * [ ] : '.`,
+    };
+  }
+  const names = s.tabs.names.map((n, j) => (j === i ? clean : n));
+  return { ...s, tabs: { ...s.tabs, names } };
+}
+
+/** The tabs for the formula engine: the active tab's name and the other tabs' cells. */
+export function tabCells(s: Sheet): TabCells | undefined {
+  if (!s.tabs) return undefined;
+  const { names, index, stored } = s.tabs;
+  return {
+    active: names[index],
+    others: stored.flatMap((t, i) => (t ? [{ name: names[i], cells: cellsForCompute(t) }] : [])),
+  };
+}
+
+/** A formula keeps the tabs' own spelling: =SUM(ORDERS!C2:C9) -> =SUM(Orders!C2:C9) (the rest is in capitals). */
+function tabNamesAsNamed(s: Sheet, value: string): string {
+  if (!s.tabs || !isFormula(value)) return value;
+  return s.tabs.names.reduce(
+    (v, name) =>
+      v.replace(new RegExp(`(^|[^A-Za-z0-9_])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}!`, 'gi'), `$1${name}!`),
+    value,
+  );
+}

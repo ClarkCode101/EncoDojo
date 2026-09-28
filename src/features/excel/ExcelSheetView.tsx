@@ -45,6 +45,7 @@ import {
   type Pos,
   type Sheet,
   type SheetCommand,
+  type Tabs,
 } from './sheet';
 
 /** Keys the edit box passes to the sheet (the rest type text). */
@@ -452,6 +453,7 @@ export default function ExcelSheetView({
           </tbody>
         </table>
       </div>
+      {sheet.tabs && <TabBar tabs={sheet.tabs} onCommand={command} />}
     </div>
   );
 }
@@ -468,4 +470,76 @@ function ToolDialog({
   onDone: (message: string) => void;
 }) {
   return kind === 'cond' ? <CondFormatDialog {...props} /> : <ValidationDialog {...props} />;
+}
+
+/**
+ * The sheet tabs under the grid, like Excel's (Aralin 13): a click goes to a tab, a double-click
+ * renames it (Enter or a click elsewhere saves, Esc cancels). The keyboard: Ctrl+Shift+PgDn / PgUp.
+ */
+function TabBar({ tabs, onCommand }: { tabs: Tabs; onCommand: (cmd: SheetCommand) => void }) {
+  const [renaming, setRenaming] = useState<number | null>(null);
+  const [draft, setDraft] = useState('');
+  const save = (i: number) => {
+    if (draft.trim() !== tabs.names[i]) onCommand({ kind: 'renameTab', index: i, name: draft });
+    setRenaming(null);
+    focusSheet();
+  };
+  return (
+    <div
+      role="tablist"
+      aria-label="Mga sheet (tab)"
+      className="flex shrink-0 items-end gap-0.5 border-t border-stone-300 bg-stone-100 px-2 pt-1"
+    >
+      {tabs.names.map((name, i) =>
+        renaming === i ? (
+          <form
+            key={i}
+            onSubmit={(e) => {
+              e.preventDefault();
+              save(i);
+            }}
+          >
+            <input
+              autoFocus
+              aria-label="Bagong pangalan ng tab"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => save(i)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  setRenaming(null);
+                  focusSheet();
+                }
+              }}
+              onFocus={(e) => e.target.select()}
+              className="w-32 rounded-t border border-b-0 border-green-700 bg-white px-2 py-1 font-sans text-sm outline-none"
+            />
+          </form>
+        ) : (
+          <button
+            key={i}
+            type="button"
+            role="tab"
+            aria-selected={i === tabs.index}
+            title="I-double-click para palitan ang pangalan"
+            onMouseDown={(e) => e.preventDefault()} // keep the keyboard on the sheet
+            onClick={() => onCommand({ kind: 'tab', index: i })}
+            onDoubleClick={() => {
+              setDraft(name);
+              setRenaming(i);
+            }}
+            className={
+              'rounded-t border border-b-0 px-3 py-1 font-sans text-sm ' +
+              (i === tabs.index
+                ? 'border-stone-400 bg-white font-bold text-green-800 shadow-[inset_0_-2px_0_#15803d]'
+                : 'border-transparent text-stone-600 hover:bg-stone-200')
+            }
+          >
+            {name}
+          </button>
+        ),
+      )}
+    </div>
+  );
 }

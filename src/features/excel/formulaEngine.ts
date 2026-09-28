@@ -7,7 +7,7 @@
  * opens), so the rest of the app never downloads it.
  */
 import { DetailedCellError, HyperFormula } from 'hyperformula';
-import { isNumberText } from './sheet';
+import { isNumberText, type TabCells } from './sheet';
 
 /**
  * What a computed value looks like in a cell (General format), e.g. 2.5, TRUE, #DIV/0!.
@@ -95,25 +95,41 @@ const CONFIG = {
  * there. The reference is put in an extra column on the same row (these formulas only point at
  * other cells, so its place does not matter), so one computation gives both answers.
  */
-export function sameResult(cells: string[][], p: { r: number; c: number }, reference: string): boolean {
+export function sameResult(
+  cells: string[][],
+  p: { r: number; c: number },
+  reference: string,
+  tabs?: TabCells,
+): boolean {
   const width = cells[0].length;
-  const values = computeSheet(cells.map((row, r) => [...row, r === p.r ? reference : '']));
+  const values = computeSheet(
+    cells.map((row, r) => [...row, r === p.r ? reference : '']),
+    tabs,
+  );
   return values[p.r][p.c] === values[p.r][width];
 }
+
+const forEngine = (cells: string[][]) => cells.map((row) => row.map((v) => (v === '' ? null : v)));
 
 /**
  * The value of every cell as shown: formulas computed (a date result, like =TODAY() or =B2+30,
  * as mm/dd/yyyy), other cells as they are. A cell may start with Excel's apostrophe for text
- * (sheet.ts `cellsForCompute`); it is shown without it.
+ * (sheet.ts `cellsForCompute`); it is shown without it. With `tabs` (Aralin 13) the other
+ * tabs are there too, so =SUM(Orders!C2:C9) works; `cells` is the active tab.
  */
-export function computeSheet(cells: string[][]): string[][] {
-  const hf = HyperFormula.buildFromArray(
-    cells.map((row) => row.map((v) => (v === '' ? null : v))),
-    CONFIG,
-    EXCEL_NAMES,
-  );
+export function computeSheet(cells: string[][], tabs?: TabCells): string[][] {
+  const hf = tabs
+    ? HyperFormula.buildFromSheets(
+        Object.fromEntries([
+          [tabs.active, forEngine(cells)],
+          ...tabs.others.map((t) => [t.name, forEngine(t.cells)] as const),
+        ]),
+        CONFIG,
+        EXCEL_NAMES,
+      )
+    : HyperFormula.buildFromArray(forEngine(cells), CONFIG, EXCEL_NAMES);
   try {
-    const sheet = hf.getSheetId(hf.getSheetNames()[0])!;
+    const sheet = hf.getSheetId(tabs ? tabs.active : hf.getSheetNames()[0])!;
     const values = hf.getSheetValues(sheet);
     return cells.map((row, r) =>
       row.map((raw, c) => {
