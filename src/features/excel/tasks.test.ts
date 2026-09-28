@@ -21,6 +21,10 @@ import { HEADERS_3, TASK_LABEL_3, makeQuiz3, makeTaskSet3 } from './tasks3';
 import { LESSON_3 } from './lesson3';
 import { LESSON_4 } from './lesson4';
 import { HEADERS_4, TASK_LABEL_4, makeQuiz4, makeTaskSet4 } from './tasks4';
+import { HEADERS_5, makeQuiz5, makeTaskSet5 } from './tasks5';
+import { LESSON_5, TASK_LABEL_5 } from './lesson5';
+import { CONTENT_5 } from './lesson5Content';
+import { computeSheet } from './formulaEngine';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
@@ -171,6 +175,53 @@ describe('Excel Aralin 4 tasks', () => {
       expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
       runAll(quiz.sheet, quiz.tasks, seed);
     }
+  });
+});
+
+describe('Excel Aralin 5 tasks (formulas, with HyperFormula)', () => {
+  it('the order list: Amount empty, a Total row, a Summary block; labels for every task kind', () => {
+    const set = makeTaskSet5(makeRng(1));
+    expect(set.sheet.cells[0]).toEqual([...HEADERS_5, '']);
+    expect(set.sheet.cells[1][3]).toBe('');
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_5).sort());
+    expect(LESSON_5.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_5).sort());
+    expect(CONTENT_5.compute).toBe(computeSheet);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet5(makeRng(seed));
+      runAll(set.sheet, LESSON_5.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz5(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('a typed number is not accepted: it must be a formula', () => {
+    const set = makeTaskSet5(makeRng(3));
+    const task = set.tasks.firstFormula;
+    const s = startTask(set.sheet, task);
+    const answer = String(Number(s.cells[1][1]) * Number(s.cells[1][2]));
+    const typed = pressKey({ ...s, editing: { value: answer, mode: 'enter' } }, { key: 'Enter' });
+    expect(task.check(typed)).toBe(false);
+  });
+
+  it('computeSheet: formulas like Excel, errors, and a missing ")" closed on save', () => {
+    expect(computeSheet([['2', '3', '=A1*B1', '=sum(a1:b1)', '=1/0', '=AVE(A1)', 'text']])).toEqual([
+      ['2', '3', '6', '5', '#DIV/0!', '#NAME?', 'text'],
+    ]);
+    const set = makeTaskSet5(makeRng(4));
+    const s = pressKey(
+      { ...set.sheet, active: { r: 1, c: 3 }, anchor: { r: 1, c: 3 }, editing: { value: '=SUM(B2:B3', mode: 'enter' } },
+      { key: 'Enter' },
+    );
+    expect(s.cells[1][3]).toBe('=SUM(B2:B3)');
   });
 });
 

@@ -6,6 +6,7 @@ import {
   countMatches,
   isHidden,
   runCommand,
+  shiftFormula,
   cellName,
   clickCell,
   colLetter,
@@ -371,5 +372,66 @@ describe('data tools (Aralin 4)', () => {
     const s = runCommand(t, { kind: 'removeDuplicates' });
     expect(col(s, 0)).toEqual(['Maria', 'juan', 'Pedro', '']);
     expect(runCommand(s, { kind: 'removeDuplicates' })).toBe(s); // nothing left to remove
+  });
+});
+
+describe('formulas (Aralin 5)', () => {
+  it('shiftFormula moves references like Excel; $ keeps a part; quotes and functions are left alone', () => {
+    expect(shiftFormula('=B2*C2', 1, 0)).toBe('=B3*C3');
+    expect(shiftFormula('=SUM(D2:D9)', 0, 1)).toBe('=SUM(E2:E9)');
+    expect(shiftFormula('=B2*$C$1', 3, 0)).toBe('=B5*$C$1');
+    expect(shiftFormula('=A$1+$A1', 2, 2)).toBe('=C$1+$A3');
+    expect(shiftFormula('=IF(B2>5,"B2 ok","no")', 1, 0)).toBe('=IF(B3>5,"B2 ok","no")');
+    expect(shiftFormula('=LOG10(A2)', 1, 0)).toBe('=LOG10(A3)');
+    expect(shiftFormula('=A1', -1, 0)).toBe('=#REF!');
+    expect(shiftFormula('plain text A1', 1, 0)).toBe('plain text A1');
+  });
+
+  const sheet = () =>
+    makeSheet(
+      [
+        ['Qty', 'Price', 'Amount'],
+        ['2', '10', '=A2*B2'],
+        ['3', '20', ''],
+        ['4', '30', ''],
+      ],
+      8,
+      4,
+      { formatting: true },
+    );
+
+  it('Ctrl+D copies a formula down with its references moved', () => {
+    const s = press(sheet(), 'ArrowDown', 'ArrowRight', 'ArrowRight', shift('ArrowDown'), shift('ArrowDown'), ctrl('d'));
+    expect(s.cells.slice(1, 4).map((r) => r[2])).toEqual(['=A2*B2', '=A3*B3', '=A4*B4']);
+  });
+
+  it('Ctrl+C / Ctrl+V moves the references by the distance of the paste', () => {
+    const s = press(sheet(), 'ArrowDown', 'ArrowRight', 'ArrowRight', ctrl('c'), 'ArrowDown', 'ArrowDown', ctrl('v'));
+    expect(s.cells[3][2]).toBe('=A4*B4');
+  });
+
+  it('Ctrl+Enter puts the formula in every selected cell, each relative to its row', () => {
+    // Note: in this sheet the active cell is the MOVING end of the selection (C4 here); in Excel it stays at the
+    // start. The formula is written for the active cell and moved for the others.
+    let s = press(sheet(), 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', shift('ArrowDown'));
+    s = press(typeInCell(press(s, '='), '=A4*B4'), ctrl('Enter'));
+    expect(s.cells.slice(2, 4).map((r) => r[2])).toEqual(['=A3*B3', '=A4*B4']);
+  });
+
+  it('Alt+= (AutoSum) writes =SUM of the numbers above, ready for Enter', () => {
+    let s = press(sheet(), 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown', { key: '=', alt: true }); // A5
+    expect(s.editing?.value).toBe('=SUM(A2:A4)');
+    s = press(s, 'Enter');
+    expect(s.cells[4][0]).toBe('=SUM(A2:A4)');
+    // Formulas above count too (they are numbers once computed).
+    const t = press(runCommand(sheet(), { kind: 'open' }), 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', { key: '=', alt: true });
+    expect(t.editing?.value).toBe('=SUM(C2:C2)');
+  });
+
+  it('a typed formula is kept as text (the lesson computes it); F2 shows it', () => {
+    let s = press(typeInCell(press(sheet(), 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', '='), '=A3*B3'), 'Enter');
+    expect(s.cells[2][2]).toBe('=A3*B3');
+    s = press(s, 'ArrowUp', 'F2');
+    expect(s.editing?.value).toBe('=A3*B3');
   });
 });

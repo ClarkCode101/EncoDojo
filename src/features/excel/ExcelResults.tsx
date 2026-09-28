@@ -125,7 +125,7 @@ export default function ExcelResults({
         </div>
       </Section>
 
-      <ExcelMistakesCard mistakes={session.mistakes} labels={lesson.content?.labels ?? {}} />
+      <ExcelMistakesCard mistakes={session.mistakes} labels={lesson.labels} />
     </div>
   );
 }

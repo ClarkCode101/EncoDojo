@@ -90,6 +90,8 @@ export default function ExcelLesson({
   const startSheetRef = useRef<Sheet>(sheet);
   const timersRef = useRef<number[]>([]);
   const soundCorrect = useAppData().settings.soundCorrect === true;
+  // Formula lessons: the computed values of the cells (HyperFormula), for the view.
+  const computed = useMemo(() => (content.compute ? content.compute(sheet.cells) : null), [content, sheet.cells]);
 
   const step = steps[index];
   const topic = topics[step.topic];
@@ -320,6 +322,7 @@ export default function ExcelLesson({
           columnWidths={content.columnWidths}
           tools={content.tools}
           taskKey={index}
+          computed={computed}
           onKey={onKey}
           onCommand={onCommand}
           onEditChange={(v) => setSheet(typeInCell(sheet, v))}

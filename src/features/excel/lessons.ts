@@ -14,6 +14,7 @@ import { LESSON_1, type LessonTopic } from './lesson1';
 import { LESSON_2 } from './lesson2';
 import { LESSON_3 } from './lesson3';
 import { LESSON_4 } from './lesson4';
+import { LESSON_5, TASK_LABEL_5 } from './lesson5';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
@@ -33,20 +34,42 @@ export type LessonContent = {
   labels: Record<string, string>;
   /** Show the Data toolbar and dialogs (Aralin 4+). */
   tools?: boolean;
+  /** Formula lessons: computes the formulas for the view and the checks. */
+  compute?: ComputeSheet;
 };
 
-export type Lesson = { level: number; title: string; content: LessonContent | null };
+/** Computes the formulas of the sheet (only the formula lessons have it; see formulaEngine.ts). */
+export type ComputeSheet = (cells: string[][]) => string[][];
+
+/**
+ * A lesson in the list. `topics` and `labels` are always here (the list shows
+ * the topics); the content is either here already, or loaded with `load`
+ * (the formula lessons, so HyperFormula is only downloaded when needed).
+ * `topics: null` = parating pa.
+ */
+export type Lesson = {
+  level: number;
+  title: string;
+  topics: LessonTopic[] | null;
+  labels: Record<string, string>;
+  content: LessonContent | null;
+  load?: () => Promise<LessonContent>;
+};
 
 /** The lessons, in the suggested order (never locked). `content: null` = parating pa. */
 export const LESSONS: Lesson[] = [
   {
     level: 1,
     title: 'Navigation at shortcuts',
+    topics: LESSON_1,
+    labels: TASK_LABEL,
     content: { topics: LESSON_1, makeSet: makeTaskSet, makeQuiz, columnWidths: COLUMN_WIDTHS, labels: TASK_LABEL },
   },
   {
     level: 2,
     title: 'Pag-encode ng data',
+    topics: LESSON_2,
+    labels: TASK_LABEL_2,
     content: {
       topics: LESSON_2,
       makeSet: makeTaskSet2,
@@ -58,6 +81,8 @@ export const LESSONS: Lesson[] = [
   {
     level: 3,
     title: 'Formatting',
+    topics: LESSON_3,
+    labels: TASK_LABEL_3,
     content: {
       topics: LESSON_3,
       makeSet: makeTaskSet3,
@@ -69,6 +94,8 @@ export const LESSONS: Lesson[] = [
   {
     level: 4,
     title: 'Sort, filter, find & replace',
+    topics: LESSON_4,
+    labels: TASK_LABEL_4,
     content: {
       topics: LESSON_4,
       makeSet: makeTaskSet4,
@@ -78,10 +105,21 @@ export const LESSONS: Lesson[] = [
       tools: true,
     },
   },
-  { level: 5, title: 'Formulas (SUM, IF, VLOOKUP)', content: null },
+  {
+    level: 5,
+    title: 'Unang formulas',
+    topics: LESSON_5,
+    labels: TASK_LABEL_5,
+    content: null,
+    // HyperFormula comes with this lesson only.
+    load: () => import('./lesson5Content').then((m) => m.CONTENT_5),
+  },
+  { level: 6, title: 'IF, COUNTIF at SUMIF', topics: null, labels: {}, content: null },
+  { level: 7, title: 'VLOOKUP', topics: null, labels: {}, content: null },
+  { level: 8, title: 'Paglinis ng text (TRIM, PROPER)', topics: null, labels: {}, content: null },
 ];
 
-export const readyLessons = () => LESSONS.filter((l) => l.content !== null);
+export const readyLessons = () => LESSONS.filter((l) => l.topics !== null);
 export const lessonByLevel = (level: number): Lesson => LESSONS.find((l) => l.level === level) ?? LESSONS[0];
 
 /**

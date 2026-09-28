@@ -24,7 +24,11 @@
  *   by the arrows), find (next match), replace all, remove duplicate rows.
  *   They run through `runCommand` (the toolbar and dialogs of the view call
  *   it); Ctrl+Z undoes them.
- * No formulas yet: those come later with HyperFormula (owner approval needed).
+ * - Formulas (Aralin 5): a cell that starts with "=" is a formula; the sheet
+ *   keeps the formula text and the lesson computes it with HyperFormula
+ *   (formulaEngine.ts, loaded only for the formula lessons). Here: copying a
+ *   formula (Ctrl+D, Ctrl+V, Ctrl+Enter) moves its cell references like Excel
+ *   (`shiftFormula`, $ keeps a part fixed), and Alt+= is AutoSum.
  */
 
 export type Pos = { r: number; c: number };
@@ -54,6 +58,8 @@ export type Sheet = {
    */
   editing: { value: string; mode: 'enter' | 'edit' } | null;
   clipboard: string[][] | null;
+  /** Where the copied block came from (formulas move their references by the distance to the paste). */
+  clipboardFrom: Pos | null;
   /** Earlier versions of the cells and formats for Ctrl+Z (newest last). */
   undo: Snapshot[];
   /** Cell formats by "row,col" (only used when `formatting` is on). */
@@ -80,11 +86,80 @@ export type SheetCommand =
   | { kind: 'open' };
 
 /** A key press as the sheet sees it. */
-export type KeyPress = { key: string; ctrl?: boolean; shift?: boolean };
+export type KeyPress = { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean };
 
 /** A browser key event -> KeyPress (Cmd counts as Ctrl on a Mac). */
-export function toKeyPress(e: { key: string; ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }): KeyPress {
-  return { key: e.key, ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey };
+export function toKeyPress(e: {
+  key: string;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+  altKey?: boolean;
+}): KeyPress {
+  return { key: e.key, ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey ?? false };
+}
+
+// ---------- formulas (Aralin 5) ----------
+
+export const isFormula = (v: string) => v.startsWith('=');
+
+/** Column letters -> index: "A" -> 0, "AA" -> 26. */
+function colIndex(letters: string): number {
+  return [...letters].reduce((n, ch) => n * 26 + (ch.charCodeAt(0) - 64), 0) - 1;
+}
+
+/**
+ * The formula as it would be after copying it `dr` rows down and `dc` columns
+ * right, like Excel: =B2*C2 copied one row down -> =B3*C3. A part with $ stays
+ * ($A$1 never moves, A$1 keeps its row). Text in quotes is left alone.
+ * A reference pushed off the sheet becomes #REF!.
+ */
+export function shiftFormula(formula: string, dr: number, dc: number): string {
+  if (!isFormula(formula) || (dr === 0 && dc === 0)) return formula;
+  return formula
+    .split(/("[^"]*")/)
+    .map((part, i) =>
+      i % 2 === 1
+        ? part
+        : part.replace(
+            /(^|[^A-Za-z0-9_$.])(\$?)([A-Z]{1,3})(\$?)(\d+)(?![A-Za-z0-9_(])/g,
+            (_m, before: string, colAbs: string, col: string, rowAbs: string, row: string) => {
+              const c = colAbs ? colIndex(col) : colIndex(col) + dc;
+              const r = rowAbs ? Number(row) : Number(row) + dr;
+              if (c < 0 || r < 1) return `${before}#REF!`;
+              return `${before}${colAbs}${colLetter(c)}${rowAbs}${r}`;
+            },
+          ),
+    )
+    .join('');
+}
+
+/** A value copied from `from` to `to`: formulas move their references, anything else stays. */
+function copiedValue(v: string, from: Pos, to: Pos): string {
+  return isFormula(v) ? shiftFormula(v, to.r - from.r, to.c - from.c) : v;
+}
+
+/**
+ * Alt+= (AutoSum): =SUM of the numbers right above the active cell (or, if
+ * none, right to its left), ready to be saved with Enter.
+ */
+function autoSum(s: Sheet): Sheet {
+  const { r, c } = s.active;
+  const numeric = (p: Pos) => {
+    const v = s.cells[p.r]?.[p.c] ?? '';
+    return isNumberText(v) || isFormula(v);
+  };
+  let top = r;
+  while (top - 1 >= 0 && numeric({ r: top - 1, c })) top--;
+  let formula: string;
+  if (top < r) {
+    formula = `=SUM(${colLetter(c)}${top + 1}:${colLetter(c)}${r})`;
+  } else {
+    let left = c;
+    while (left - 1 >= 0 && numeric({ r, c: left - 1 })) left--;
+    formula = left < c ? `=SUM(${colLetter(left)}${r + 1}:${colLetter(c - 1)}${r + 1})` : '=SUM()';
+  }
+  return { ...s, anchor: s.active, editing: { value: formula, mode: 'enter' } };
 }
 
 const MAX_UNDO = 50;
@@ -102,6 +177,7 @@ export function makeSheet(
     anchor: { r: 0, c: 0 },
     editing: null,
     clipboard: null,
+    clipboardFrom: null,
     undo: [],
     tabStartCol: null,
     formats: options.formats ?? {},
@@ -155,6 +231,11 @@ export function formulaBarValue(s: Sheet, p: Pos): string {
  */
 export function excelValue(raw: string): { value: string; text: boolean } {
   if (raw.startsWith("'")) return { value: raw.slice(1), text: true };
+  if (isFormula(raw)) {
+    // Like Excel: a formula missing its closing parentheses gets them, =SUM(A1:A3 -> =SUM(A1:A3)
+    const missing = (raw.match(/\(/g)?.length ?? 0) - (raw.match(/\)/g)?.length ?? 0);
+    return { value: missing > 0 ? raw + ')'.repeat(missing) : raw, text: false };
+  }
   if (isNumberText(raw)) return { value: String(Number(raw)), text: false };
   return { value: raw, text: false };
 }
@@ -363,7 +444,7 @@ function clearSelection(s: Sheet): Sheet {
 function copySelection(s: Sheet): Sheet {
   const { top, left, bottom, right } = selectionRange(s);
   const clip = s.cells.slice(top, bottom + 1).map((row) => row.slice(left, right + 1));
-  return { ...s, clipboard: clip };
+  return { ...s, clipboard: clip, clipboardFrom: { r: top, c: left } };
 }
 
 /** Paste at the active cell (top-left of the pasted block); the pasted block becomes the selection. */
@@ -375,7 +456,9 @@ function paste(s: Sheet): Sheet {
     row.map((v, c) => {
       const cr = r - r0;
       const cc = c - c0;
-      return cr >= 0 && cc >= 0 && cr < clip.length && cc < clip[0].length ? clip[cr][cc] : v;
+      if (!(cr >= 0 && cc >= 0 && cr < clip.length && cc < clip[0].length)) return v;
+      const from = s.clipboardFrom ?? { r: r0, c: c0 };
+      return copiedValue(clip[cr][cc], { r: from.r + cr, c: from.c + cc }, { r, c });
     }),
   );
   const end = clampPos(s, { r: r0 + clip.length - 1, c: c0 + clip[0].length - 1 });
@@ -392,7 +475,9 @@ function fillDown(s: Sheet): Sheet {
   if (source < 0) return s;
   const from = top === bottom ? top : top + 1;
   const cells = s.cells.map((row, r) =>
-    r >= from && r <= bottom ? row.map((v, c) => (c >= left && c <= right ? s.cells[source][c] : v)) : row,
+    r >= from && r <= bottom
+      ? row.map((v, c) => (c >= left && c <= right ? copiedValue(s.cells[source][c], { r: source, c }, { r, c }) : v))
+      : row,
   );
   const changed = cells.some((row, r) => row.some((v, c) => v !== s.cells[r][c]));
   return changed ? withCells(s, cells) : s;
@@ -404,7 +489,9 @@ function fillSelection(s: Sheet): Sheet {
   const { value, text } = s.formatting ? excelValue(s.editing.value) : { value: s.editing.value, text: false };
   const { top, left, bottom, right } = selectionRange(s);
   const cells = s.cells.map((row, r) =>
-    r >= top && r <= bottom ? row.map((v, c) => (c >= left && c <= right ? value : v)) : row,
+    r >= top && r <= bottom
+      ? row.map((v, c) => (c >= left && c <= right ? copiedValue(value, s.active, { r, c }) : v))
+      : row,
   );
   const formats = s.formatting ? withFormats(s, selectedCells(s), (f) => ({ ...f, text })) : s.formats;
   return { ...withCells(s, cells, formats), editing: null };
@@ -485,6 +572,7 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
     if (key === ';') return { ...s, editing: { value: todayText(), mode: 'enter' } };
     return s;
   }
+  if (k.alt && key === '=') return autoSum(s);
   if (isTypingKey(k)) {
     // Typing replaces the cell's value (Excel's Enter mode). The selection stays, for Ctrl+Enter.
     return { ...s, editing: { value: key, mode: 'enter' } };

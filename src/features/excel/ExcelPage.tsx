@@ -9,7 +9,7 @@
  * 4. quiz: the Pagsusulit (ExcelQuiz), saved when finished;
  * 5. result: the Pagsusulit result (ExcelResults).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ResultSummary } from '../../components/ResultPieces';
 import { ArrowRightIcon, ExcelIcon } from '../../components/icons';
 import { PracticeFrame } from '../../components/Practice';
@@ -20,7 +20,7 @@ import { saveSession, useAppData } from '../../lib/useAppData';
 import ExcelLesson from './ExcelLesson';
 import ExcelQuiz from './ExcelQuiz';
 import ExcelResults from './ExcelResults';
-import { LESSONS, lessonByLevel, passedLessons, type Lesson } from './lessons';
+import { LESSONS, lessonByLevel, passedLessons, type Lesson, type LessonContent } from './lessons';
 import { QUIZ_PASS, QUIZ_TASKS } from './tasks';
 
 /** Every screen except the list belongs to one lesson (`level`). */
@@ -31,6 +31,26 @@ type Screen =
   | { name: 'quiz'; level: number }
   | { name: 'result'; session: Session };
 
+/**
+ * The content of a lesson: right away, or loaded first (the formula lessons
+ * bring HyperFormula, so it is only downloaded when such a lesson opens).
+ */
+function useLessonContent(lesson: Lesson | null): LessonContent | null {
+  const [loaded, setLoaded] = useState<{ level: number; content: LessonContent } | null>(null);
+  useEffect(() => {
+    if (!lesson || lesson.content || !lesson.load) return;
+    let alive = true;
+    lesson.load().then((content) => {
+      if (alive) setLoaded({ level: lesson.level, content });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [lesson]);
+  if (!lesson) return null;
+  return lesson.content ?? (loaded?.level === lesson.level ? loaded.content : null);
+}
+
 export default function ExcelPage() {
   const passed = passedLessons(useAppData().sessions);
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
@@ -40,10 +60,18 @@ export default function ExcelPage() {
     setScreen(s);
   };
   const toList = () => go({ name: 'list' });
+  const openLesson = screen.name === 'lesson' || screen.name === 'quiz' ? lessonByLevel(screen.level) : null;
+  const content = useLessonContent(openLesson);
 
   if (screen.name === 'lesson' || screen.name === 'quiz') {
     const lesson = lessonByLevel(screen.level);
-    if (!lesson.content) return null;
+    if (!content) {
+      return (
+        <p role="status" className="py-10 text-lg text-stone-700">
+          Sandali lang, inihahanda ang aralin…
+        </p>
+      );
+    }
     return (
       <PracticeFrame>
         {screen.name === 'lesson' ? (
@@ -51,7 +79,7 @@ export default function ExcelPage() {
             key={attempt}
             level={lesson.level}
             title={lesson.title}
-            content={lesson.content}
+            content={content}
             startTopic={screen.topic ?? 0}
             onDone={() => go({ name: 'lessonDone', level: lesson.level })}
             onExit={toList}
@@ -61,7 +89,7 @@ export default function ExcelPage() {
             key={attempt}
             level={lesson.level}
             title={lesson.title}
-            content={lesson.content}
+            content={content}
             onExit={toList}
             onFinish={(session) => {
               // A learning result is always saved (it can be deleted from the list on Home).
@@ -115,7 +143,7 @@ export default function ExcelPage() {
   }
 
   // The list of lessons. The first lesson not passed yet is the suggested one (Enter starts it).
-  const suggested = (LESSONS.find((l) => l.content && !passed.has(l.level)) ?? LESSONS[0]).level;
+  const suggested = (LESSONS.find((l) => l.topics && !passed.has(l.level)) ?? LESSONS[0]).level;
   return (
     <div>
       <PageHeader
@@ -160,7 +188,7 @@ function LessonRow({
   onStart: (topic?: number) => void;
   onQuiz: () => void;
 }) {
-  const ready = lesson.content !== null;
+  const ready = lesson.topics !== null;
   return (
     <li className="border-b border-stone-300 py-4">
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4">
@@ -187,7 +215,7 @@ function LessonRow({
       </div>
 
       {/* Folded: go straight to one topic, or straight to the Pagsusulit ("may alam na ako"). */}
-      {lesson.content && (
+      {lesson.topics && (
         <details className="group col-start-2 ml-14 mt-1">
           <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded text-sm text-brand-700 hover:text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden">
             <span aria-hidden="true" className="inline-block transition-transform group-open:rotate-90">
@@ -196,7 +224,7 @@ function LessonRow({
             Mga bahagi at pagsusulit
           </summary>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {lesson.content.topics.map((t, i) => (
+            {lesson.topics.map((t, i) => (
               <button
                 key={t.title}
                 type="button"

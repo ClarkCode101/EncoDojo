@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // HyperFormula (the Excel formula engine) is one big file on purpose: it is only loaded when a
+    // formula lesson opens (features/excel/lesson5Content.ts), so no other page waits for it.
+    chunkSizeWarningLimit: 900,
+  },
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],

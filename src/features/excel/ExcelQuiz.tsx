@@ -6,7 +6,7 @@
  *
  * It does NOT save anything; it builds a Session and hands it to `onFinish`.
  */
-import { useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { makeRng, randomSeed } from '../../lib/random';
 import { correctTick } from '../../lib/sound';
 import type { Session } from '../../lib/storage';
@@ -59,6 +59,8 @@ export default function ExcelQuiz({
   const taskStartRef = useRef(Date.now());
   const finishedRef = useRef(false);
   const soundCorrect = useAppData().settings.soundCorrect === true;
+  // Formula lessons: the computed values of the cells (HyperFormula), for the view.
+  const computed = useMemo(() => (content.compute ? content.compute(sheet.cells) : null), [content, sheet.cells]);
 
   const task = quiz.tasks[index];
 
@@ -189,6 +191,7 @@ export default function ExcelQuiz({
           columnWidths={content.columnWidths}
           tools={content.tools}
           taskKey={index}
+          computed={computed}
           onCommand={onCommand}
           onKey={onKey}
           onEditChange={(v) => setSheet(typeInCell(sheet, v))}

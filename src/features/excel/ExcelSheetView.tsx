@@ -16,7 +16,9 @@ import {
   displayValue,
   formatOf,
   formulaBarValue,
+  isFormula,
   isHidden,
+  isNumberText,
   isSelected,
   lastUsed,
   selectionRange,
@@ -44,6 +46,7 @@ export default function ExcelSheetView({
   tools = false,
   onCommand,
   taskKey,
+  computed,
 }: {
   sheet: Sheet;
   /** Tailwind width classes, one per column. */
@@ -59,7 +62,25 @@ export default function ExcelSheetView({
   onCommand?: (cmd: SheetCommand) => void;
   /** Changes when a new task starts: open dialogs close and the toolbar message clears. */
   taskKey?: string | number;
+  /** Formula lessons: the computed value of every cell (formula cells show this, the formula bar shows the formula). */
+  computed?: string[][] | null;
 }) {
+  /** What a cell shows: a formula's result (with the cell's number format), or the value itself. */
+  const shown = (p: Pos): string => {
+    const raw = sheet.cells[p.r][p.c];
+    if (!computed || !isFormula(raw)) return displayValue(sheet, p);
+    const v = computed[p.r]?.[p.c] ?? '';
+    if (formatOf(sheet, p).number2 && isNumberText(v)) {
+      return Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return v;
+  };
+  /** Numbers (typed or computed) sit on the right of the cell. */
+  const rightAligned = (p: Pos): boolean => {
+    const raw = sheet.cells[p.r][p.c];
+    if (computed && isFormula(raw)) return isNumberText(computed[p.r]?.[p.c] ?? '');
+    return alignsRight(sheet, p);
+  };
   const [dialog, setDialog] = useState<Dialog>(null);
   const [toolMessage, setToolMessage] = useState<string | null>(null);
   // A new task starts with no dialog open (like closing it after finishing).
@@ -233,7 +254,7 @@ export default function ExcelSheetView({
                           // Aralin 1-2: the header row is always bold. With formatting (Aralin 3+), bold comes
                           // only from Ctrl+B, and numbers sit on the right, like Excel.
                           ((sheet.formatting ? formatOf(sheet, { r, c }).bold : r === 0) ? 'font-bold ' : '') +
-                          (alignsRight(sheet, { r, c }) ? 'text-right ' : '') +
+                          (rightAligned({ r, c }) ? 'text-right ' : '') +
                           (selected && !active ? 'bg-green-50 ' : r === 0 ? 'bg-stone-50 ' : '') +
                           (active ? 'outline outline-2 -outline-offset-2 outline-green-700' : '')
                         }
@@ -260,7 +281,7 @@ export default function ExcelSheetView({
                             className="absolute inset-0 w-full bg-white px-2 font-mono text-[0.95rem] outline outline-2 -outline-offset-2 outline-green-700"
                           />
                         ) : (
-                          displayValue(sheet, { r, c })
+                          shown({ r, c })
                         )}
                         {tools && sheet.filterOn && r === 0 && c < tableCols && (
                           <button
