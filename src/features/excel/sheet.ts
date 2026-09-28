@@ -19,6 +19,11 @@
  *   (00457 -> 457, like Excel) unless typed with an apostrophe ('00457 stays
  *   text); numbers sit on the right, text on the left; Ctrl+Shift+1 = number
  *   with comma and 2 decimals; Ctrl+B = bold; Ctrl+Z undoes formats too.
+ * - Data tools (Aralin 4): sort the table by the active column, filter
+ *   (Ctrl+Shift+L, then pick the values of a column; hidden rows are skipped
+ *   by the arrows), find (next match), replace all, remove duplicate rows.
+ *   They run through `runCommand` (the toolbar and dialogs of the view call
+ *   it); Ctrl+Z undoes them.
  * No formulas yet: those come later with HyperFormula (owner approval needed).
  */
 
@@ -57,7 +62,22 @@ export type Sheet = {
   formatting: boolean;
   /** The column where a row of Tabs started (Enter goes back to it), or null. */
   tabStartCol: number | null;
+  /** The filter arrows are on (Ctrl+Shift+L). */
+  filterOn: boolean;
+  /** Only rows whose value in `col` is one of `values` are shown (null = all rows shown). */
+  filter: { col: number; values: string[] } | null;
 };
+
+/** The data tools of Aralin 4 (from the toolbar, the dialogs, or their shortcuts). */
+export type SheetCommand =
+  | { kind: 'sort'; asc: boolean }
+  | { kind: 'toggleFilter' }
+  | { kind: 'setFilter'; col: number; values: string[] | null }
+  | { kind: 'find'; text: string }
+  | { kind: 'replaceAll'; find: string; replace: string }
+  | { kind: 'removeDuplicates' }
+  /** Opening a dialog: nothing changes in the sheet (counted as one key by the lessons). */
+  | { kind: 'open' };
 
 /** A key press as the sheet sees it. */
 export type KeyPress = { key: string; ctrl?: boolean; shift?: boolean };
@@ -86,6 +106,8 @@ export function makeSheet(
     tabStartCol: null,
     formats: options.formats ?? {},
     formatting: options.formatting ?? false,
+    filterOn: false,
+    filter: null,
   };
 }
 
@@ -428,7 +450,11 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   // ----- not editing -----
   if (ARROWS[key]) {
     const [dr, dc] = ARROWS[key];
-    const target = ctrl ? ctrlJump(s, s.active, dr, dc) : { r: s.active.r + dr, c: s.active.c + dc };
+    let target = ctrl ? ctrlJump(s, s.active, dr, dc) : { r: s.active.r + dr, c: s.active.c + dc };
+    // Rows hidden by a filter are skipped, like Excel.
+    while (!ctrl && dr !== 0 && isHidden(s, target.r) && inside(s, { r: target.r + dr, c: target.c })) {
+      target = { r: target.r + dr, c: target.c };
+    }
     return moveTo(s, target, shift);
   }
   if (key === 'Home') return moveTo(s, ctrl ? { r: 0, c: 0 } : { r: s.active.r, c: 0 }, shift);
@@ -448,6 +474,7 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
     if (lower === 'z') return undo(s);
     if (lower === 'a') return { ...s, anchor: { r: 0, c: 0 }, active: lastUsed(s) };
     if (lower === 'd') return fillDown(s);
+    if (lower === 'l' && shift) return runCommand(s, { kind: 'toggleFilter' });
     if (s.formatting) {
       if (lower === 'b') return toggleBold(s);
       // Ctrl+Shift+1: on most keyboards Shift+1 gives "!", so both are accepted.
@@ -468,4 +495,129 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
 /** True when `pressKey` did something with this key (so the browser's default should be stopped). */
 export function handled(before: Sheet, after: Sheet): boolean {
   return before !== after;
+}
+
+// ---------- data tools (Aralin 4) ----------
+
+/** The last row with any data (the table is rows 1..this; row 0 is the header). */
+function lastDataRow(s: Sheet): number {
+  return lastUsed(s).r;
+}
+
+/** True when a filter hides this row (the header row is never hidden). */
+export function isHidden(s: Sheet, r: number): boolean {
+  if (!s.filter || r <= 0 || r > lastDataRow(s)) return false;
+  return !s.filter.values.includes(s.cells[r][s.filter.col]);
+}
+
+/** The different values of a column (for the filter list), sorted. */
+export function columnValues(s: Sheet, col: number): string[] {
+  const values = new Set<string>();
+  for (let r = 1; r <= lastDataRow(s); r++) values.add(s.cells[r][col]);
+  return [...values].sort((a, b) => a.localeCompare(b));
+}
+
+/** Compare two cell values like Excel: numbers as numbers, text A-Z (ignoring case). Empty cells last. */
+function compareValues(a: string, b: string): number {
+  if (a === '' || b === '') return a === b ? 0 : a === '' ? 1 : -1;
+  if (isNumberText(a) && isNumberText(b)) return Number(a) - Number(b);
+  return a.localeCompare(b, undefined, { sensitivity: 'base' });
+}
+
+/** Rows 1..last sorted by the active column (the header stays on top). */
+function sortRows(s: Sheet, asc: boolean): Sheet {
+  const last = lastDataRow(s);
+  const col = s.active.c;
+  const body = s.cells.slice(1, last + 1);
+  // Empty cells stay at the bottom either way (like Excel).
+  const sorted = [...body].sort((x, y) => {
+    const a = x[col];
+    const b = y[col];
+    if (a === '' || b === '') return compareValues(a, b);
+    return asc ? compareValues(a, b) : compareValues(b, a);
+  });
+  return withCells(s, [s.cells[0], ...sorted, ...s.cells.slice(last + 1)]);
+}
+
+const escapeRegExp = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** How many times `find` appears in all the cells (not case-sensitive, like Excel's default). */
+export function countMatches(s: Sheet, find: string): number {
+  if (!find) return 0;
+  const re = new RegExp(escapeRegExp(find), 'gi');
+  return s.cells.reduce((n, row) => n + row.reduce((m, v) => m + (v.match(re)?.length ?? 0), 0), 0);
+}
+
+/** The next cell (after the active one, row by row) that contains `text`; hidden rows are skipped. */
+function findNext(s: Sheet, text: string): Sheet {
+  if (!text) return s;
+  const needle = text.toLowerCase();
+  const rowsN = rows(s);
+  const colsN = cols(s);
+  const total = rowsN * colsN;
+  const start = s.active.r * colsN + s.active.c;
+  for (let i = 1; i <= total; i++) {
+    const at = (start + i) % total;
+    const p = { r: Math.floor(at / colsN), c: at % colsN };
+    if (!isHidden(s, p.r) && s.cells[p.r][p.c].toLowerCase().includes(needle)) return moveTo(s, p);
+  }
+  return s;
+}
+
+function replaceAll(s: Sheet, find: string, replace: string): Sheet {
+  if (!find || countMatches(s, find) === 0) return s;
+  const re = new RegExp(escapeRegExp(find), 'gi');
+  return withCells(
+    s,
+    s.cells.map((row) => row.map((v) => v.replace(re, () => replace))),
+  );
+}
+
+/** Remove rows that are exactly the same as an earlier row (the first one stays); the rest move up. */
+function removeDuplicateRows(s: Sheet): Sheet {
+  const last = lastDataRow(s);
+  const seen = new Set<string>();
+  const kept: string[][] = [];
+  for (let r = 1; r <= last; r++) {
+    const k = JSON.stringify(s.cells[r]);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    kept.push(s.cells[r]);
+  }
+  if (kept.length === last) return s;
+  const empty = () => Array.from({ length: cols(s) }, () => '');
+  const removed = last - kept.length;
+  const cells = [s.cells[0], ...kept, ...Array.from({ length: removed }, empty), ...s.cells.slice(last + 1)];
+  return { ...withCells(s, cells), active: { r: 0, c: 0 }, anchor: { r: 0, c: 0 } };
+}
+
+/** How many duplicate rows Remove Duplicates would take away (for its message). */
+export function countDuplicates(s: Sheet): number {
+  const last = lastDataRow(s);
+  return last - new Set(s.cells.slice(1, last + 1).map((row) => JSON.stringify(row))).size;
+}
+
+/** Run a data tool. Returns the same sheet when nothing changes. */
+export function runCommand(s: Sheet, cmd: SheetCommand): Sheet {
+  const base = s.editing ? commit(s) : s;
+  switch (cmd.kind) {
+    case 'sort':
+      return sortRows(base, cmd.asc);
+    case 'toggleFilter':
+      return { ...base, filterOn: !base.filterOn, filter: null };
+    case 'setFilter': {
+      const all = cmd.values === null || cmd.values.length === columnValues(base, cmd.col).length;
+      const next: Sheet = { ...base, filterOn: true, filter: all ? null : { col: cmd.col, values: cmd.values! } };
+      // The active cell never stays on a hidden row.
+      return isHidden(next, next.active.r) ? moveTo(next, { r: 0, c: next.active.c }) : next;
+    }
+    case 'find':
+      return findNext(base, cmd.text);
+    case 'replaceAll':
+      return replaceAll(base, cmd.find, cmd.replace);
+    case 'removeDuplicates':
+      return removeDuplicateRows(base);
+    case 'open':
+      return base;
+  }
 }

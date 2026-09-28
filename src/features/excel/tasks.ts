@@ -16,7 +16,18 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { addMistake } from '../qc/qcItems';
 import { digits, nameParts } from '../typing/generatePassage';
-import { cellName, makeSheet, pressKey, selectionName, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
+import {
+  cellName,
+  makeSheet,
+  pressKey,
+  runCommand,
+  selectionName,
+  typeInCell,
+  type KeyPress,
+  type Pos,
+  type Sheet,
+  type SheetCommand,
+} from './sheet';
 
 export const HEADERS = ['Ref No.', 'Customer', 'Branch', 'Date', 'Amount'];
 /** Columns of the table (0-based): A..E */
@@ -48,8 +59,8 @@ export const TASK_LABEL: Record<string, string> = {
 
 export type TaskId = keyof typeof TASK_LABEL;
 
-/** One step of a solution: press a key, or type text into the cell being edited. */
-export type SolutionStep = { press: KeyPress } | { type: string };
+/** One step of a solution: press a key, type text into the cell being edited, or use a data tool (Aralin 4). */
+export type SolutionStep = { press: KeyPress } | { type: string } | { command: SheetCommand };
 
 export type ExcelTask = {
   /** The task kind (Aralin 1: a TaskId; other lessons have their own). */
@@ -315,7 +326,12 @@ export function solutionFrames(s: Sheet, task: ExcelTask): Sheet[] {
   const frames: Sheet[] = [];
   let cur = s;
   for (const step of task.solution) {
-    cur = 'press' in step ? pressKey(cur, step.press) : typeInCell(cur, step.type);
+    cur =
+      'press' in step
+        ? pressKey(cur, step.press)
+        : 'type' in step
+          ? typeInCell(cur, step.type)
+          : runCommand(cur, step.command);
     frames.push(cur);
   }
   return frames;

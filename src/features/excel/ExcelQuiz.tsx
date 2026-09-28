@@ -15,7 +15,7 @@ import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
 import { buildExcelSession, type TaskResult } from './scoreExcel';
-import { clickCell, editCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
+import { clickCell, editCell, isTypingKey, pressKey, runCommand, typeInCell, type KeyPress, type Pos, type Sheet, type SheetCommand } from './sheet';
 import type { LessonContent } from './lessons';
 import { QUIZ_TASKS, startTask } from './tasks';
 import TaskRecord from './TaskRecord';
@@ -108,6 +108,12 @@ export default function ExcelQuiz({
     return true;
   }
 
+  /** A data tool (Aralin 4): counts as one key, never as the mouse. */
+  function onCommand(cmd: SheetCommand) {
+    keysRef.current += 1;
+    update(runCommand(sheet, cmd));
+  }
+
   function onCellClick(p: Pos, shift: boolean) {
     mouseRef.current = true;
     update(clickCell(sheet, p, shift));
@@ -145,6 +151,9 @@ export default function ExcelQuiz({
       <ExcelSheetView
         sheet={sheet}
         columnWidths={content.columnWidths}
+        tools={content.tools}
+        taskKey={index}
+        onCommand={onCommand}
         onKey={onKey}
         onEditChange={(v) => setSheet(typeInCell(sheet, v))}
         onCellClick={onCellClick}

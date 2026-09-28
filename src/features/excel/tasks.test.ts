@@ -19,12 +19,14 @@ import {
 import { HEADERS_2, TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
 import { HEADERS_3, TASK_LABEL_3, makeQuiz3, makeTaskSet3 } from './tasks3';
 import { LESSON_3 } from './lesson3';
-import { alignsRight, displayValue, formatOf } from './sheet';
+import { LESSON_4 } from './lesson4';
+import { HEADERS_4, TASK_LABEL_4, makeQuiz4, makeTaskSet4 } from './tasks4';
+import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
 function solve(s: Sheet, task: ExcelTask): { sheet: Sheet; keys: number } {
   const frames = solutionFrames(s, task);
-  const keys = task.solution.filter((step) => 'press' in step && !isTypingKey(step.press)).length;
+  const keys = task.solution.filter((step) => ('press' in step && !isTypingKey(step.press)) || 'command' in step).length;
   return { sheet: frames[frames.length - 1], keys };
 }
 
@@ -142,6 +144,33 @@ describe('Excel Aralin 3 tasks', () => {
     const value = /: (00\d{3})\./.exec(task.text)![1];
     s = pressKey({ ...s, editing: { value, mode: 'enter' } }, { key: 'Enter' });
     expect(task.check(s)).toBe(false);
+  });
+});
+
+describe('Excel Aralin 4 tasks', () => {
+  it('a long sales log with misspelled "Cty" and doubled rows; every task kind has a label', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const set = makeTaskSet4(makeRng(seed));
+      expect(set.sheet.cells[0].slice(0, 5)).toEqual(HEADERS_4);
+      expect(countMatches(set.sheet, 'Cty')).toBe(4);
+      expect(countDuplicates(set.sheet)).toBe(3);
+    }
+    expect(LESSON_4.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_4).sort());
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const set = makeTaskSet4(makeRng(seed));
+      runAll(set.sheet, LESSON_4.flatMap((t) => t.tasks.map((id) => set.tasks[id])), seed);
+    }
+  });
+
+  it('the Pagsusulit: 6 of the 7 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const quiz = makeQuiz4(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
   });
 });
 

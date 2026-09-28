@@ -17,7 +17,7 @@ import { useAppData } from '../../lib/useAppData';
 import ExcelSheetView from './ExcelSheetView';
 import { focusSheet } from './focusSheet';
 import type { LessonContent } from './lessons';
-import { clickCell, editCell, isTypingKey, pressKey, typeInCell, type KeyPress, type Pos, type Sheet } from './sheet';
+import { clickCell, editCell, isTypingKey, pressKey, runCommand, typeInCell, type KeyPress, type Pos, type Sheet, type SheetCommand } from './sheet';
 import { solutionFrames, startTask } from './tasks';
 import TaskRecord from './TaskRecord';
 import TipKeys from './TipKeys';
@@ -92,6 +92,13 @@ export default function ExcelLesson({ content, onDone }: { content: LessonConten
     if (!isTypingKey(k)) keysRef.current += 1;
     update(next);
     return true;
+  }
+
+  /** A data tool (Aralin 4): counts as one key, never as the mouse. */
+  function onCommand(cmd: SheetCommand) {
+    if (demo === 'playing') return;
+    keysRef.current += 1;
+    update(runCommand(sheet, cmd));
   }
 
   function onCellClick(p: Pos, shift: boolean) {
@@ -239,6 +246,9 @@ export default function ExcelLesson({ content, onDone }: { content: LessonConten
       <ExcelSheetView
         sheet={sheet}
         columnWidths={content.columnWidths}
+        tools={content.tools}
+        taskKey={index}
+        onCommand={onCommand}
         onKey={onKey}
         onEditChange={(v) => setSheet(typeInCell(sheet, v))}
         onCellClick={onCellClick}

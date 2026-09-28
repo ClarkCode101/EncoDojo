@@ -13,11 +13,13 @@ import { JOB_READY_EXCEL } from '../../lib/targets';
 import { LESSON_1, type LessonTopic } from './lesson1';
 import { LESSON_2 } from './lesson2';
 import { LESSON_3 } from './lesson3';
+import { LESSON_4 } from './lesson4';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
 import { TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
 import { TASK_LABEL_3, makeQuiz3, makeTaskSet3 } from './tasks3';
+import { TASK_LABEL_4, makeQuiz4, makeTaskSet4 } from './tasks4';
 
 /** What a ready lesson needs: its topics, its sheet + tasks, its quiz, and how to show it. */
 export type LessonContent = {
@@ -29,6 +31,8 @@ export type LessonContent = {
   columnWidths: string[];
   /** Short names of the task kinds (results table). */
   labels: Record<string, string>;
+  /** Show the Data toolbar and dialogs (Aralin 4+). */
+  tools?: boolean;
 };
 
 export type Lesson = { level: number; title: string; content: LessonContent | null };
@@ -62,7 +66,18 @@ export const LESSONS: Lesson[] = [
       labels: TASK_LABEL_3,
     },
   },
-  { level: 4, title: 'Sort, filter, find & replace', content: null },
+  {
+    level: 4,
+    title: 'Sort, filter, find & replace',
+    content: {
+      topics: LESSON_4,
+      makeSet: makeTaskSet4,
+      makeQuiz: makeQuiz4,
+      columnWidths: COLUMN_WIDTHS,
+      labels: TASK_LABEL_4,
+      tools: true,
+    },
+  },
   { level: 5, title: 'Formulas (SUM, IF, VLOOKUP)', content: null },
 ];
 

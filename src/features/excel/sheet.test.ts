@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   alignsRight,
+  columnValues,
+  countDuplicates,
+  countMatches,
+  isHidden,
+  runCommand,
   cellName,
   clickCell,
   colLetter,
@@ -305,5 +310,66 @@ describe('formatting (Aralin 3)', () => {
     expect(s.cells[0][0]).toBe('00457');
     const up = press(s, 'ArrowUp');
     expect(press(up, ctrl('b'))).toBe(up); // Ctrl+B does nothing there
+  });
+});
+
+describe('data tools (Aralin 4)', () => {
+  const table = () =>
+    makeSheet(
+      [
+        ['Name', 'Branch', 'Amount'],
+        ['Maria', 'Lipa Cty', '900'],
+        ['juan', 'Cebu City', '1200'],
+        ['Pedro', 'Lipa Cty', '85'],
+        ['juan', 'Cebu City', '1200'],
+      ],
+      8,
+      3,
+    );
+  const col = (s: Sheet, c: number) => s.cells.slice(1, 5).map((r) => r[c]);
+
+  it('sort A to Z by the active column (ignoring case), header stays; Z to A by numbers', () => {
+    let s = runCommand(table(), { kind: 'sort', asc: true });
+    expect(s.cells[0][0]).toBe('Name');
+    expect(col(s, 0)).toEqual(['juan', 'juan', 'Maria', 'Pedro']);
+    s = runCommand(press(s, 'ArrowRight', 'ArrowRight'), { kind: 'sort', asc: false });
+    expect(col(s, 2)).toEqual(['1200', '1200', '900', '85']); // numbers, not text ("85" > "1200" as text)
+    expect(col(press(s, ctrl('z')), 0)).toEqual(['juan', 'juan', 'Maria', 'Pedro']); // undo = back to the A-Z sort
+  });
+
+  it('filter: only the chosen values show; arrows skip hidden rows; Ctrl+Shift+L turns it off', () => {
+    let s = runCommand(table(), { kind: 'setFilter', col: 1, values: ['Lipa Cty'] });
+    expect([1, 2, 3, 4].map((r) => isHidden(s, r))).toEqual([false, true, false, true]);
+    expect(columnValues(s, 1)).toEqual(['Cebu City', 'Lipa Cty']);
+    s = press(s, 'ArrowDown', 'ArrowDown');
+    expect(at(s)).toBe('A4'); // row 3 is hidden
+    s = press(s, ctrl('l', true));
+    expect(s.filter).toBeNull();
+    expect(s.filterOn).toBe(false);
+  });
+
+  it('find goes to the next cell that contains the text (not case-sensitive), wrapping around', () => {
+    let s = runCommand(table(), { kind: 'find', text: 'JUAN' });
+    expect(at(s)).toBe('A3');
+    s = runCommand(s, { kind: 'find', text: 'juan' });
+    expect(at(s)).toBe('A5');
+    expect(at(runCommand(s, { kind: 'find', text: 'juan' }))).toBe('A3');
+    expect(runCommand(s, { kind: 'find', text: 'wala' })).toBe(s);
+  });
+
+  it('replace all changes every match (one undo step) and counts them', () => {
+    const t = table();
+    expect(countMatches(t, 'cty')).toBe(2);
+    const s = runCommand(t, { kind: 'replaceAll', find: 'Cty', replace: 'City' });
+    expect(col(s, 1)).toEqual(['Lipa City', 'Cebu City', 'Lipa City', 'Cebu City']);
+    expect(col(press(s, ctrl('z')), 1)[0]).toBe('Lipa Cty');
+  });
+
+  it('remove duplicates keeps the first of each identical row; the rest move up', () => {
+    const t = table();
+    expect(countDuplicates(t)).toBe(1);
+    const s = runCommand(t, { kind: 'removeDuplicates' });
+    expect(col(s, 0)).toEqual(['Maria', 'juan', 'Pedro', '']);
+    expect(runCommand(s, { kind: 'removeDuplicates' })).toBe(s); // nothing left to remove
   });
 });
