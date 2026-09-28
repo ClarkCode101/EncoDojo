@@ -34,6 +34,9 @@ import { CONTENT_7 } from './lesson7Content';
 import { HEADERS_8, makeQuiz8, makeTable8, makeTaskSet8, messyName } from './tasks8';
 import { LESSON_8, TASK_LABEL_8 } from './lesson8';
 import { CONTENT_8 } from './lesson8Content';
+import { HEADERS_9, makePeople9, makeQuiz9, makeTaskSet9 } from './tasks9';
+import { LESSON_9, TASK_LABEL_9 } from './lesson9';
+import { CONTENT_9 } from './lesson9Content';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
@@ -439,6 +442,56 @@ describe('Excel Aralin 8 tasks (TRIM, PROPER, UPPER, LEFT, RIGHT)', () => {
 
   it('text that looks like a number (RIGHT -> 00457) is marked as text, like Excel; numbers are not', () => {
     expect(computeSheet([['=RIGHT("TN-00457",5)', '=5+1', '=UPPER("tn")']])).toEqual([["'00457", '6', 'TN']]);
+  });
+});
+
+describe('Excel Aralin 9 tasks (Flash Fill, Text to Columns, &, Paste Values)', () => {
+  it('the employee list: "Last, First" names that fit; labels for every task kind', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const people = makePeople9(makeRng(seed));
+      expect(people.length).toBeGreaterThanOrEqual(8);
+      for (const p of people) expect(`${p.last}, ${p.first}`.length).toBeLessThanOrEqual(22);
+      expect(new Set(people.map((p) => `${p.last}, ${p.first}`)).size).toBe(people.length);
+    }
+    const set = makeTaskSet9(makeRng(1));
+    expect(set.sheet.cells[0]).toEqual(HEADERS_9);
+    expect(set.sheet.compute).toBe(computeSheet);
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_9).sort());
+    expect(LESSON_9.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_9).sort());
+    expect(CONTENT_9.tools).toBe(true);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet9(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_9.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz9(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  it('a Name Tag typed by hand is not accepted; a normal paste keeps the formulas (not done)', () => {
+    const set = makeTaskSet9(makeRng(4));
+    const s = startTask(set.sheet, set.tasks.join);
+    const typed = pressKey(
+      { ...s, editing: { value: `${s.cells[1][2]} ${s.cells[1][1]}`, mode: 'enter' } },
+      { key: 'Enter' },
+    );
+    expect(set.tasks.join.check(typed)).toBe(false);
+    let p = startTask(set.sheet, set.tasks.pasteValues);
+    p = pressKey(pressKey(p, { key: 'ArrowDown', ctrl: true, shift: true }), { key: 'c', ctrl: true });
+    expect(set.tasks.pasteValues.check(pressKey(p, { key: 'v', ctrl: true }))).toBe(false);
+    expect(set.tasks.pasteValues.check(pressKey(p, { key: 'v', ctrl: true, shift: true }))).toBe(true);
   });
 });
 

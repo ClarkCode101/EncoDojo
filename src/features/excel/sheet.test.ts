@@ -8,6 +8,7 @@ import {
   runCommand,
   shiftFormula,
   cellName,
+  parseCellName,
   clickCell,
   colLetter,
   ctrlJump,
@@ -472,5 +473,91 @@ describe('formulas (Aralin 5)', () => {
     expect(s.cells[1][2]).toBe('=IF(A2>1,"Met","below")');
     s = press(s, 'ArrowUp', shift('ArrowDown'), ctrl('d'));
     expect(s.cells[2][2]).toBe('=IF(A3>1,"Met","below")');
+  });
+});
+
+describe('Paste Values, Flash Fill, Text to Columns (Aralin 9)', () => {
+  // A tiny "computer": =B2&" "&A2 style joins only, enough for these tests.
+  const compute = (cells: string[][]) =>
+    cells.map((row) =>
+      row.map((v) => {
+        const m = /^=([A-Z])(\d+)&" "&([A-Z])(\d+)$/.exec(v);
+        if (!m) return v;
+        const get = (col: string, r: string) => cells[Number(r) - 1][col.charCodeAt(0) - 65];
+        return `${get(m[1], m[2])} ${get(m[3], m[4])}`;
+      }),
+    );
+  const names = () =>
+    makeSheet(
+      [
+        ['Full Name', 'Last', 'First', 'Tag'],
+        ['Dela Cruz, Juan Paolo', '', '', ''],
+        ['Santos, Maria', '', '', ''],
+        ['Reyes, Ana Liza', '', '', ''],
+      ],
+      8,
+      4,
+      { formatting: true, compute },
+    );
+
+  it('Flash Fill (Ctrl+E) learns from one typed example and fills the rest of the column', () => {
+    let s = press(names(), 'ArrowDown', 'ArrowRight', 'D');
+    s = press(typeInCell(s, 'Dela Cruz'), 'Enter', ctrl('e'));
+    expect(s.cells.slice(1, 4).map((r) => r[1])).toEqual(['Dela Cruz', 'Santos', 'Reyes']);
+    s = press(s, 'ArrowUp', 'ArrowRight', 'J'); // from the row below the example, back up to row 2
+    s = press(typeInCell(s, 'Juan Paolo'), 'Enter', ctrl('e'));
+    expect(s.cells.slice(1, 4).map((r) => r[2])).toEqual(['Juan Paolo', 'Maria', 'Ana Liza']);
+    // Reordered and in capitals: "JUAN PAOLO DELA CRUZ" from "Dela Cruz, Juan Paolo".
+    s = press(s, 'ArrowUp', 'ArrowRight', 'J'); // from the row below the example, back up to row 2
+    s = press(typeInCell(s, 'JUAN PAOLO DELA CRUZ'), 'Enter', ctrl('e'));
+    expect(s.cells[2][3]).toBe('MARIA SANTOS');
+    // Undo takes the whole fill back.
+    expect(press(s, ctrl('z')).cells[2][3]).toBe('');
+  });
+
+  it('Flash Fill does nothing without an example, or when no rule gives the example', () => {
+    const s = press(names(), 'ArrowDown', 'ArrowRight');
+    expect(press(s, ctrl('e'))).toBe(s);
+    const t = press(typeInCell(press(s, 'x'), 'xyz'), 'Enter');
+    expect(press(t, ctrl('e'))).toBe(t);
+  });
+
+  it('Paste Values (Ctrl+Shift+V) pastes what the formulas SHOW, at the top of the selection', () => {
+    let s = names();
+    s = {
+      ...s,
+      cells: s.cells.map((row, r) => (r >= 1 && r <= 3 ? [row[0], 'L' + r, 'F' + r, `=C${r + 1}&" "&B${r + 1}`] : row)),
+    };
+    s = press(
+      s,
+      'ArrowDown',
+      'ArrowRight',
+      'ArrowRight',
+      'ArrowRight',
+      shift('ArrowDown'),
+      shift('ArrowDown'),
+      ctrl('c'),
+    );
+    s = press(s, ctrl('v', true));
+    expect(s.cells.slice(1, 4).map((r) => r[3])).toEqual(['F1 L1', 'F2 L2', 'F3 L3']);
+    // A normal paste on the same selection keeps the formulas (and starts at the top, D2).
+    const t = press(s, ctrl('z'), ctrl('v'));
+    expect(t.cells[1][3]).toBe('=C2&" "&B2');
+  });
+
+  it('Text to Columns splits the selection at the delimiter into the Destination (spaces stay, like Excel)', () => {
+    let s = press(names(), 'ArrowDown', shift('ArrowDown'), shift('ArrowDown'));
+    s = runCommand(s, { kind: 'textToColumns', delimiter: ',', dest: { r: 1, c: 1 } });
+    expect(s.cells.slice(1, 4).map((r) => [r[0], r[1], r[2]])).toEqual([
+      ['Dela Cruz, Juan Paolo', 'Dela Cruz', ' Juan Paolo'],
+      ['Santos, Maria', 'Santos', ' Maria'],
+      ['Reyes, Ana Liza', 'Reyes', ' Ana Liza'],
+    ]);
+    // Excel's default Destination is the first selected cell: the original is replaced.
+    const t = runCommand(press(names(), 'ArrowDown'), { kind: 'textToColumns', delimiter: ',', dest: { r: 1, c: 0 } });
+    expect(t.cells[1].slice(0, 2)).toEqual(['Dela Cruz', ' Juan Paolo']);
+    expect(parseCellName('=$B$2')).toEqual({ r: 1, c: 1 });
+    expect(parseCellName('b12')).toEqual({ r: 11, c: 1 });
+    expect(parseCellName('hello')).toBeNull();
   });
 });

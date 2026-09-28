@@ -60,6 +60,13 @@ export type Sheet = {
   clipboard: string[][] | null;
   /** Where the copied block came from (formulas move their references by the distance to the paste). */
   clipboardFrom: Pos | null;
+  /** The copied block as SHOWN (formulas computed), for Paste Values (Ctrl+Shift+V, Aralin 9). */
+  clipboardValues: string[][] | null;
+  /**
+   * Formula lessons: computes the formulas (formulaEngine.ts `computeSheet`), so a copy can
+   * remember the values for Paste Values. Not set = formulas are not computed (copied as typed).
+   */
+  compute?: (cells: string[][]) => string[][];
   /** Earlier versions of the cells and formats for Ctrl+Z (newest last). */
   undo: Snapshot[];
   /** Cell formats by "row,col" (only used when `formatting` is on). */
@@ -82,6 +89,8 @@ export type SheetCommand =
   | { kind: 'find'; text: string }
   | { kind: 'replaceAll'; find: string; replace: string }
   | { kind: 'removeDuplicates' }
+  /** Text to Columns (Aralin 9): split the selected column at `delimiter`, the parts go from `dest` to the right. */
+  | { kind: 'textToColumns'; delimiter: string; dest: Pos }
   /** Opening a dialog: nothing changes in the sheet (counted as one key by the lessons). */
   | { kind: 'open' };
 
@@ -168,7 +177,11 @@ export function makeSheet(
   data: string[][],
   rows: number,
   cols: number,
-  options: { formatting?: boolean; formats?: Record<string, CellFormat> } = {},
+  options: {
+    formatting?: boolean;
+    formats?: Record<string, CellFormat>;
+    compute?: (cells: string[][]) => string[][];
+  } = {},
 ): Sheet {
   const cells = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => data[r]?.[c] ?? ''));
   return {
@@ -178,6 +191,8 @@ export function makeSheet(
     editing: null,
     clipboard: null,
     clipboardFrom: null,
+    clipboardValues: null,
+    ...(options.compute ? { compute: options.compute } : {}),
     undo: [],
     tabStartCol: null,
     formats: options.formats ?? {},
@@ -270,6 +285,13 @@ export function colLetter(c: number): string {
 /** {r: 2, c: 1} -> "B3" */
 export function cellName(p: Pos): string {
   return `${colLetter(p.c)}${p.r + 1}`;
+}
+
+/** "B2", "$B$2" or "=$B$2" -> { r: 1, c: 1 }; anything else -> null. */
+export function parseCellName(name: string): Pos | null {
+  const m = /^=?\$?([A-Za-z]{1,3})\$?(\d+)$/.exec(name.trim());
+  if (!m || Number(m[2]) < 1) return null;
+  return { r: Number(m[2]) - 1, c: colIndex(m[1].toUpperCase()) };
 }
 
 /** The selected rectangle (top-left and bottom-right). */
@@ -471,15 +493,24 @@ function clearSelection(s: Sheet): Sheet {
 
 function copySelection(s: Sheet): Sheet {
   const { top, left, bottom, right } = selectionRange(s);
-  const clip = s.cells.slice(top, bottom + 1).map((row) => row.slice(left, right + 1));
-  return { ...s, clipboard: clip, clipboardFrom: { r: top, c: left } };
+  const block = (cells: string[][]) => cells.slice(top, bottom + 1).map((row) => row.slice(left, right + 1));
+  return {
+    ...s,
+    clipboard: block(s.cells),
+    clipboardFrom: { r: top, c: left },
+    // What the copied cells SHOW right now (for Paste Values).
+    clipboardValues: block(s.compute ? s.compute(s.cells) : s.cells),
+  };
 }
 
-/** Paste at the active cell (top-left of the pasted block); the pasted block becomes the selection. */
+/**
+ * Paste at the top-left cell of the selection (like Excel: select D2:D9 and paste = it starts at D2);
+ * the pasted block becomes the selection.
+ */
 function paste(s: Sheet): Sheet {
   const clip = s.clipboard;
   if (!clip) return s;
-  const { r: r0, c: c0 } = s.active;
+  const { top: r0, left: c0 } = selectionRange(s);
   const cells = s.cells.map((row, r) =>
     row.map((v, c) => {
       const cr = r - r0;
@@ -491,6 +522,117 @@ function paste(s: Sheet): Sheet {
   );
   const end = clampPos(s, { r: r0 + clip.length - 1, c: c0 + clip[0].length - 1 });
   return { ...withCells(s, cells), active: { r: r0, c: c0 }, anchor: end };
+}
+
+/**
+ * Ctrl+Shift+V, Paste Values (Aralin 9): like paste, but formulas become the values they
+ * showed when copied (=C2&" "&B2 -> Juan Dela Cruz). Text like 00457 stays text.
+ */
+function pasteValues(s: Sheet): Sheet {
+  const clip = s.clipboardValues;
+  if (!clip) return s;
+  const { top: r0, left: c0 } = selectionRange(s);
+  const pasted: Pos[] = [];
+  const textCells: Pos[] = [];
+  const cells = s.cells.map((row, r) =>
+    row.map((v, c) => {
+      const cr = r - r0;
+      const cc = c - c0;
+      if (!(cr >= 0 && cc >= 0 && cr < clip.length && cc < clip[0].length)) return v;
+      const shown = clip[cr][cc];
+      const text = computedText(shown);
+      (text !== null ? textCells : pasted).push({ r, c });
+      return text ?? shown;
+    }),
+  );
+  const formats = s.formatting
+    ? withFormats({ ...s, formats: withFormats(s, pasted, (f) => ({ ...f, text: false })) }, textCells, (f) => ({
+        ...f,
+        text: true,
+      }))
+    : s.formats;
+  const end = clampPos(s, { r: r0 + clip.length - 1, c: c0 + clip[0].length - 1 });
+  return { ...withCells(s, cells, formats), active: { r: r0, c: c0 }, anchor: end };
+}
+
+// ---------- Flash Fill and Text to Columns (Aralin 9) ----------
+
+/** Capital first letter of every word, like Excel's PROPER. */
+const properCase = (t: string) =>
+  t.toLowerCase().replace(/(^|[^a-z])([a-z])/g, (_m, a: string, b: string) => a + b.toUpperCase());
+
+/** The pieces Flash Fill can take from one cell: "Dela Cruz, Juan" -> "Dela Cruz", "Juan", "Juan Dela Cruz", ... */
+const FLASH_PIECES: ((v: string) => string | null)[] = [
+  (v) => v,
+  // Parts around a comma (Last, First).
+  (v) => (v.includes(',') ? v.split(',')[0].trim() : null),
+  (v) => (v.includes(',') ? v.split(',').slice(1).join(',').trim() : null),
+  (v) => (v.includes(',') ? `${v.split(',').slice(1).join(',').trim()} ${v.split(',')[0].trim()}` : null),
+  // Words.
+  (v) => (v.trim().includes(' ') ? v.trim().split(/\s+/)[0] : null),
+  (v) => (v.trim().includes(' ') ? v.trim().split(/\s+/).slice(-1)[0] : null),
+  (v) => (v.trim().includes(' ') ? v.trim().split(/\s+/).slice(0, -1).join(' ') : null),
+  (v) => (v.trim().includes(' ') ? v.trim().split(/\s+/).slice(1).join(' ') : null),
+  // Parts around a dash (TN-00457).
+  (v) => (v.includes('-') ? v.split('-')[0].trim() : null),
+  (v) => (v.includes('-') ? v.split('-').slice(-1)[0].trim() : null),
+];
+const FLASH_CASES: ((t: string) => string)[] = [(t) => t, (t) => t.toUpperCase(), (t) => t.toLowerCase(), properCase];
+
+/**
+ * Ctrl+E, Flash Fill: the typed examples in the active column (rows above, or the active cell)
+ * show the pattern; the empty cells of that column in the table are filled the same way.
+ * It looks for ONE rule (a piece of one other cell of the row, in some capitals) that gives
+ * every example; columns on the left are tried first, nearest first. No rule = nothing happens.
+ */
+function flashFill(s: Sheet): Sheet {
+  const col = s.active.c;
+  const last = lastDataRow(s);
+  const rowsIdx = Array.from({ length: last }, (_, i) => i + 1);
+  const examples = rowsIdx.filter((r) => s.cells[r][col] !== '');
+  const targets = rowsIdx.filter((r) => s.cells[r][col] === '');
+  if (examples.length === 0 || targets.length === 0) return s;
+  const others = Array.from({ length: cols(s) }, (_, c) => c)
+    .filter((c) => c !== col)
+    .sort((a, b) => (a < col === b < col ? Math.abs(a - col) - Math.abs(b - col) : a < col ? -1 : 1));
+  for (const src of others) {
+    for (const piece of FLASH_PIECES) {
+      for (const change of FLASH_CASES) {
+        const rule = (r: number) => {
+          const v = s.cells[r][src];
+          const p = v === '' || isFormula(v) ? null : piece(v);
+          return p === null || p === '' ? null : change(p);
+        };
+        if (!examples.every((r) => rule(r) === s.cells[r][col])) continue;
+        const cells = s.cells.map((row, r) =>
+          targets.includes(r) && rule(r) !== null ? row.map((v, c) => (c === col ? rule(r)! : v)) : row,
+        );
+        return withCells(s, cells);
+      }
+    }
+  }
+  return s;
+}
+
+/**
+ * Text to Columns: every selected cell of the first selected column is split at `delimiter`;
+ * the parts go into the cells from `dest` to the right (row by row). Like Excel, spaces next to
+ * the delimiter stay (" Juan") and number-looking parts become numbers (00457 -> 457).
+ */
+function textToColumns(s: Sheet, delimiter: string, dest: Pos): Sheet {
+  if (!delimiter) return s;
+  const { top, left, bottom } = selectionRange(s);
+  const cells = s.cells.map((row) => [...row]);
+  for (let r = top; r <= bottom; r++) {
+    const value = s.cells[r][left];
+    if (value === '' || isFormula(value)) continue;
+    value.split(delimiter).forEach((part, k) => {
+      const p = { r: dest.r + (r - top), c: dest.c + k };
+      if (inside(s, p)) cells[p.r][p.c] = s.formatting ? excelValue(part).value : part;
+    });
+  }
+  const changed = cells.some((row, r) => row.some((v, c) => v !== s.cells[r][c]));
+  return changed ? withCells(s, cells) : s;
 }
 
 /**
@@ -552,6 +694,8 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
     if (key === 'Escape') return { ...s, editing: null };
     if (key === 'Enter' && ctrl) return fillSelection(s);
     if (key === ';' && ctrl) return { ...s, editing: { ...s.editing, value: s.editing.value + todayText() } };
+    // Ctrl+E right after typing the example: save it, then Flash Fill.
+    if (key.toLowerCase() === 'e' && ctrl) return flashFill(commit(s));
     if (key === 'Enter') return enter(commit(s), shift);
     if (key === 'Tab') return tab(commit(s), shift);
     if (s.editing.mode === 'enter' && ARROWS[key]) {
@@ -585,7 +729,8 @@ export function pressKey(s: Sheet, k: KeyPress): Sheet {
   if (ctrl) {
     const lower = key.toLowerCase();
     if (lower === 'c') return copySelection(s);
-    if (lower === 'v') return paste(s);
+    if (lower === 'v') return shift ? pasteValues(s) : paste(s);
+    if (lower === 'e') return flashFill(s);
     if (lower === 'z') return undo(s);
     if (lower === 'a') return { ...s, anchor: { r: 0, c: 0 }, active: lastUsed(s) };
     if (lower === 'd') return fillDown(s);
@@ -733,6 +878,8 @@ export function runCommand(s: Sheet, cmd: SheetCommand): Sheet {
       return replaceAll(base, cmd.find, cmd.replace);
     case 'removeDuplicates':
       return removeDuplicateRows(base);
+    case 'textToColumns':
+      return textToColumns(base, cmd.delimiter, cmd.dest);
     case 'open':
       return base;
   }

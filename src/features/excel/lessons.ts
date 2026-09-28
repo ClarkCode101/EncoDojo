@@ -18,6 +18,7 @@ import { LESSON_5, TASK_LABEL_5 } from './lesson5';
 import { LESSON_6, TASK_LABEL_6 } from './lesson6';
 import { LESSON_7, TASK_LABEL_7 } from './lesson7';
 import { LESSON_8, TASK_LABEL_8 } from './lesson8';
+import { LESSON_9, TASK_LABEL_9 } from './lesson9';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
@@ -140,6 +141,14 @@ export const LESSONS: Lesson[] = [
     labels: TASK_LABEL_8,
     content: null,
     load: () => import('./lesson8Content').then((m) => m.CONTENT_8),
+  },
+  {
+    level: 9,
+    title: 'Pagdugtong at paghiwalay',
+    topics: LESSON_9,
+    labels: TASK_LABEL_9,
+    content: null,
+    load: () => import('./lesson9Content').then((m) => m.CONTENT_9),
   },
 ];
 

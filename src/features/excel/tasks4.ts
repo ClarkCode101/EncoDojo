@@ -65,7 +65,13 @@ export function makeTable4(rng: Rng): Table4 {
   const records: string[][] = [];
   for (let i = 0; i < count; i++) {
     const n = nameParts(rng);
-    records.push([`SL-2026-${digits(rng, 5)}`, `${n.given} ${n.surname}`, pick(rng, branchList), date(rng), amount(rng)]);
+    records.push([
+      `SL-2026-${digits(rng, 5)}`,
+      `${n.given} ${n.surname}`,
+      pick(rng, branchList),
+      date(rng),
+      amount(rng),
+    ]);
   }
   const order = shuffle(
     rng,
@@ -129,7 +135,8 @@ function allTasks4(t: Table4): Record<string, ExcelTask> {
       solution: [cmd({ kind: 'sort', asc: true })],
       start: { r: 1, c: COL.customer },
       prepare: noFilter,
-      check: (s) => !s.editing && sortedBy(s, COL.customer, (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
+      check: (s) =>
+        !s.editing && sortedBy(s, COL.customer, (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
       maxKeys: 2,
     },
     {
@@ -156,7 +163,10 @@ function allTasks4(t: Table4): Record<string, ExcelTask> {
       start: { r: 0, c: COL.branch },
       prepare: noFilter,
       check: (s) =>
-        !s.editing && s.filter?.col === COL.branch && s.filter.values.length === 1 && s.filter.values[0] === t.cleanBranch,
+        !s.editing &&
+        s.filter?.col === COL.branch &&
+        s.filter.values.length === 1 &&
+        s.filter.values[0] === t.cleanBranch,
       maxKeys: 4,
     },
     {

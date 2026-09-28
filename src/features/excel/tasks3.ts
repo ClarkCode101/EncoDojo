@@ -45,7 +45,9 @@ export function makeTable3(rng: Rng): string[][] {
   return rows;
 }
 
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({ press: { key: k, ...mods } });
+const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
+  press: { key: k, ...mods },
+});
 /** Type a value into the active cell: its first character starts the edit, then the rest. */
 const typeValue = (value: string): SolutionStep[] => [key(value[0]), { type: value }];
 

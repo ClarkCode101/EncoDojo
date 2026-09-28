@@ -7,7 +7,7 @@
  * filter arrows in the header, and hides the rows a filter hides.
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { DedupeDialog, FilterPopup, FindReplaceDialog, Toolbar, type Dialog } from './DataTools';
+import { DedupeDialog, FilterPopup, FindReplaceDialog, TextToColumnsDialog, Toolbar, type Dialog } from './DataTools';
 import { focusSheet } from './focusSheet';
 import {
   alignsRight,
@@ -34,6 +34,7 @@ import {
 function editKeyForSheet(e: KeyboardEvent, mode: 'enter' | 'edit'): boolean {
   if (['Enter', 'Tab', 'Escape', 'F2'].includes(e.key)) return true;
   if ((e.ctrlKey || e.metaKey) && e.key === ';') return true; // today's date
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') return true; // Flash Fill (not the browser's search)
   return mode === 'enter' && e.key.startsWith('Arrow');
 }
 
@@ -164,6 +165,17 @@ export default function ExcelSheetView({
           }}
         />
       )}
+      {tools && dialog === 'split' && (
+        <TextToColumnsDialog
+          sheet={sheet}
+          onCommand={command}
+          onClose={close}
+          onDone={(m) => {
+            close();
+            setToolMessage(m);
+          }}
+        />
+      )}
       {tools && dialog && typeof dialog === 'object' && (
         <FilterPopup key={dialog.filterCol} sheet={sheet} col={dialog.filterCol} onCommand={command} onClose={close} />
       )}
@@ -198,7 +210,9 @@ export default function ExcelSheetView({
               return;
             }
           }
-          if (onKey(toKeyPress(e))) e.preventDefault();
+          const used = onKey(toKeyPress(e));
+          // Excel's Ctrl+E (Flash Fill) is the browser's search bar: never let it through, even when nothing fills.
+          if (used || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e')) e.preventDefault();
         }}
         className="min-h-0 flex-1 overflow-auto outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-200"
       >

@@ -10,9 +10,18 @@
  */
 import { useState, type ReactNode } from 'react';
 import { EnTl } from '../../components/ui';
-import { columnValues, countDuplicates, countMatches, type Sheet, type SheetCommand } from './sheet';
+import {
+  cellName,
+  columnValues,
+  countDuplicates,
+  countMatches,
+  parseCellName,
+  selectionRange,
+  type Sheet,
+  type SheetCommand,
+} from './sheet';
 
-export type Dialog = null | 'find' | 'replace' | 'dedupe' | { filterCol: number };
+export type Dialog = null | 'find' | 'replace' | 'dedupe' | 'split' | { filterCol: number };
 
 const toolBtn =
   'rounded border border-stone-300 bg-white px-2.5 py-1 text-sm font-semibold text-stone-800 hover:border-stone-500 hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600';
@@ -49,6 +58,7 @@ export function Toolbar({
       {button('Find', () => onOpen('find'))}
       {button('Replace', () => onOpen('replace'))}
       {button('Remove Duplicates', () => onOpen('dedupe'))}
+      {button('Text to Columns', () => onOpen('split'))}
       {message && (
         <span role="status" className="ml-2 text-sm font-semibold text-green-800">
           {message}
@@ -179,6 +189,97 @@ export function DedupeDialog({
           <EnTl en="Cancel" tl="Huwag na" />
         </button>
       </div>
+    </Box>
+  );
+}
+
+const DELIMITERS = [
+  { label: 'Comma ( , )', value: ',' },
+  { label: 'Space', value: ' ' },
+  { label: 'Dash ( - )', value: '-' },
+];
+
+/**
+ * Text to Columns (Aralin 9), Excel's wizard in one box: the delimiter and the Destination
+ * (Excel's default is the first selected cell, so the parts replace the original).
+ */
+export function TextToColumnsDialog({
+  sheet,
+  onCommand,
+  onClose,
+  onDone,
+}: {
+  sheet: Sheet;
+  onCommand: (cmd: SheetCommand) => void;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const { top, left, bottom } = selectionRange(sheet);
+  const [delimiter, setDelimiter] = useState(',');
+  const [dest, setDest] = useState(`$${cellName({ r: top, c: left })}`.replace(/(\d+)$/, '$$$1'));
+  const [error, setError] = useState('');
+
+  function finish() {
+    const p = parseCellName(dest);
+    if (!p || p.r >= sheet.cells.length || p.c >= sheet.cells[0].length) {
+      setError('Hindi kilalang cell. Halimbawa: B2');
+      return;
+    }
+    onCommand({ kind: 'textToColumns', delimiter, dest: p });
+    onDone(`Nahati ang ${bottom - top + 1} cell.`);
+  }
+
+  return (
+    <Box title="Convert Text to Columns" onClose={onClose}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          finish();
+        }}
+      >
+        <fieldset>
+          <legend className="text-sm font-semibold text-stone-800">Delimiter (pangharang)</legend>
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+            {DELIMITERS.map((d, i) => (
+              <label key={d.value} className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="radio"
+                  name="delimiter"
+                  autoFocus={i === 0}
+                  checked={delimiter === d.value}
+                  onChange={() => setDelimiter(d.value)}
+                  className="h-4 w-4 accent-brand-700"
+                />
+                {d.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <label className="mt-3 block text-sm font-semibold text-stone-800">
+          Destination (saan ilalagay)
+          <input
+            value={dest}
+            onChange={(e) => {
+              setDest(e.target.value);
+              setError('');
+            }}
+            className={field}
+          />
+        </label>
+        {error && (
+          <p role="alert" className="mt-1 text-sm font-semibold text-red-700">
+            {error}
+          </p>
+        )}
+        <div className="mt-3 flex gap-2">
+          <button type="submit" className={primary}>
+            <EnTl en="Finish" tl="Tapusin" />
+          </button>
+          <button type="button" onClick={onClose} className={toolBtn}>
+            <EnTl en="Cancel" tl="Huwag na" />
+          </button>
+        </div>
+      </form>
     </Box>
   );
 }

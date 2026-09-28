@@ -60,9 +60,14 @@ function allTasks5(table: string[][]): Record<string, ExcelTask> {
   const amountFormula = (r: number) => `=B${r + 1}*C${r + 1}`;
   const last = n + 1; // Excel row number of the last item
   const at = (r: number, c: number): Pos => ({ r, c });
-  const allAmounts = (s: Sheet) => setCells(s, itemRows.map((r) => [at(r, COL.amount), amountFormula(r)] as [Pos, string]));
+  const allAmounts = (s: Sheet) =>
+    setCells(
+      s,
+      itemRows.map((r) => [at(r, COL.amount), amountFormula(r)] as [Pos, string]),
+    );
   const computedAt = (s: Sheet, p: Pos) => computeSheet(s.cells)[p.r][p.c];
-  const formulaWith = (s: Sheet, p: Pos, word: string) => isFormula(s.cells[p.r][p.c]) && s.cells[p.r][p.c].toUpperCase().includes(word);
+  const formulaWith = (s: Sheet, p: Pos, word: string) =>
+    isFormula(s.cells[p.r][p.c]) && s.cells[p.r][p.c].toUpperCase().includes(word);
 
   const tasks: ExcelTask[] = [
     {
@@ -95,7 +100,9 @@ function allTasks5(table: string[][]): Record<string, ExcelTask> {
       check: (s) => {
         if (s.editing) return false;
         const values = computeSheet(s.cells);
-        return itemRows.every((r) => isFormula(s.cells[r][COL.amount]) && near(values[r][COL.amount], qty(r) * price(r)));
+        return itemRows.every(
+          (r) => isFormula(s.cells[r][COL.amount]) && near(values[r][COL.amount], qty(r) * price(r)),
+        );
       },
       maxKeys: n + 1,
     },
@@ -152,8 +159,7 @@ function allTasks5(table: string[][]): Record<string, ExcelTask> {
       solution: typeFormula(`=COUNT(B2:B${last})`),
       start: at(3, COL.value),
       prepare: (s) => setCells(s, [[at(3, COL.value), '']]),
-      check: (s) =>
-        !s.editing && formulaWith(s, at(3, COL.value), 'COUNT') && near(computedAt(s, at(3, COL.value)), n),
+      check: (s) => !s.editing && formulaWith(s, at(3, COL.value), 'COUNT') && near(computedAt(s, at(3, COL.value)), n),
       maxKeys: 1,
     },
   ];
