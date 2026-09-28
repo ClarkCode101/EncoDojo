@@ -264,10 +264,19 @@ describe('data entry (Aralin 2)', () => {
 
 describe('formatting (Aralin 3)', () => {
   const fmt = () =>
-    makeSheet([['Emp No.', 'Rate'], ['00457', '610'], ['00458', '645.5']], 6, 3, {
-      formatting: true,
-      formats: { '1,0': { text: true }, '2,0': { text: true } },
-    });
+    makeSheet(
+      [
+        ['Emp No.', 'Rate'],
+        ['00457', '610'],
+        ['00458', '645.5'],
+      ],
+      6,
+      3,
+      {
+        formatting: true,
+        formats: { '1,0': { text: true }, '2,0': { text: true } },
+      },
+    );
 
   it('digits typed without an apostrophe become a number (the zeros go), with one they stay text', () => {
     let s = press(fmt(), 'ArrowDown', 'ArrowDown', 'ArrowDown'); // A4
@@ -288,7 +297,13 @@ describe('formatting (Aralin 3)', () => {
   });
 
   it('Ctrl+Shift+1 shows comma and 2 decimals; Ctrl+Shift+~ goes back to General', () => {
-    let s = press(fmt(), 'ArrowDown', 'ArrowRight', { key: 'ArrowDown', ctrl: true, shift: true }, { key: '!', ctrl: true, shift: true });
+    let s = press(
+      fmt(),
+      'ArrowDown',
+      'ArrowRight',
+      { key: 'ArrowDown', ctrl: true, shift: true },
+      { key: '!', ctrl: true, shift: true },
+    );
     expect(displayValue(s, { r: 1, c: 1 })).toBe('610.00');
     expect(displayValue(s, { r: 2, c: 1 })).toBe('645.50');
     s = press(typeInCell(press(s, 'ArrowDown', '1'), '1500'), 'Enter');
@@ -401,7 +416,15 @@ describe('formulas (Aralin 5)', () => {
     );
 
   it('Ctrl+D copies a formula down with its references moved', () => {
-    const s = press(sheet(), 'ArrowDown', 'ArrowRight', 'ArrowRight', shift('ArrowDown'), shift('ArrowDown'), ctrl('d'));
+    const s = press(
+      sheet(),
+      'ArrowDown',
+      'ArrowRight',
+      'ArrowRight',
+      shift('ArrowDown'),
+      shift('ArrowDown'),
+      ctrl('d'),
+    );
     expect(s.cells.slice(1, 4).map((r) => r[2])).toEqual(['=A2*B2', '=A3*B3', '=A4*B4']);
   });
 
@@ -424,14 +447,30 @@ describe('formulas (Aralin 5)', () => {
     s = press(s, 'Enter');
     expect(s.cells[4][0]).toBe('=SUM(A2:A4)');
     // Formulas above count too (they are numbers once computed).
-    const t = press(runCommand(sheet(), { kind: 'open' }), 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', { key: '=', alt: true });
+    const t = press(runCommand(sheet(), { kind: 'open' }), 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', {
+      key: '=',
+      alt: true,
+    });
     expect(t.editing?.value).toBe('=SUM(C2:C2)');
   });
 
   it('a typed formula is kept as text (the lesson computes it); F2 shows it', () => {
-    let s = press(typeInCell(press(sheet(), 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', '='), '=A3*B3'), 'Enter');
+    let s = press(
+      typeInCell(press(sheet(), 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', '='), '=A3*B3'),
+      'Enter',
+    );
     expect(s.cells[2][2]).toBe('=A3*B3');
     s = press(s, 'ArrowUp', 'F2');
     expect(s.editing?.value).toBe('=A3*B3');
+  });
+
+  it('like Excel, a saved formula is in capitals (so copying moves it), except text in quotes', () => {
+    let s = press(
+      typeInCell(press(sheet(), 'ArrowDown', 'ArrowRight', 'ArrowRight', '='), '=if(a2>1,"Met","below")'),
+      'Enter',
+    );
+    expect(s.cells[1][2]).toBe('=IF(A2>1,"Met","below")');
+    s = press(s, 'ArrowUp', shift('ArrowDown'), ctrl('d'));
+    expect(s.cells[2][2]).toBe('=IF(A3>1,"Met","below")');
   });
 });

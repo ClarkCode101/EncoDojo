@@ -232,9 +232,14 @@ export function formulaBarValue(s: Sheet, p: Pos): string {
 export function excelValue(raw: string): { value: string; text: boolean } {
   if (raw.startsWith("'")) return { value: raw.slice(1), text: true };
   if (isFormula(raw)) {
-    // Like Excel: a formula missing its closing parentheses gets them, =SUM(A1:A3 -> =SUM(A1:A3)
-    const missing = (raw.match(/\(/g)?.length ?? 0) - (raw.match(/\)/g)?.length ?? 0);
-    return { value: missing > 0 ? raw + ')'.repeat(missing) : raw, text: false };
+    // Like Excel: names and cell references in capitals (=sum(b2:b9) -> =SUM(B2:B9), so copying
+    // moves them), but text in quotes kept as typed; missing closing parentheses are added.
+    const upper = raw
+      .split(/("[^"]*")/)
+      .map((part, i) => (i % 2 === 1 ? part : part.toUpperCase()))
+      .join('');
+    const missing = (upper.match(/\(/g)?.length ?? 0) - (upper.match(/\)/g)?.length ?? 0);
+    return { value: missing > 0 ? upper + ')'.repeat(missing) : upper, text: false };
   }
   if (isNumberText(raw)) return { value: String(Number(raw)), text: false };
   return { value: raw, text: false };
@@ -398,12 +403,20 @@ function selectedCells(s: Sheet): Pos[] {
 /** Ctrl+B: bold the selection (or un-bold it, if the active cell is already bold). */
 function toggleBold(s: Sheet): Sheet {
   const bold = !formatOf(s, s.active).bold;
-  return withCells(s, s.cells, withFormats(s, selectedCells(s), (f) => ({ ...f, bold })));
+  return withCells(
+    s,
+    s.cells,
+    withFormats(s, selectedCells(s), (f) => ({ ...f, bold })),
+  );
 }
 
 /** Ctrl+Shift+1 (number with comma and 2 decimals) or Ctrl+Shift+~ (back to General). */
 function setNumberFormat(s: Sheet, number2: boolean): Sheet {
-  return withCells(s, s.cells, withFormats(s, selectedCells(s), (f) => ({ ...f, number2 })));
+  return withCells(
+    s,
+    s.cells,
+    withFormats(s, selectedCells(s), (f) => ({ ...f, number2 })),
+  );
 }
 
 function setCell(s: Sheet, p: Pos, value: string): Sheet {
@@ -418,7 +431,14 @@ function commit(s: Sheet): Sheet {
   if (!s.formatting) return { ...setCell(s, s.active, s.editing.value), editing: null };
   const { value, text } = excelValue(s.editing.value);
   const cells = s.cells.map((row, r) => (r === s.active.r ? row.map((v, c) => (c === s.active.c ? value : v)) : row));
-  return { ...withCells(s, cells, withFormats(s, [s.active], (f) => ({ ...f, text }))), editing: null };
+  return {
+    ...withCells(
+      s,
+      cells,
+      withFormats(s, [s.active], (f) => ({ ...f, text })),
+    ),
+    editing: null,
+  };
 }
 
 /** The value typed in the edit box changed (the React input calls this). */

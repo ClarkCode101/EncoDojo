@@ -28,6 +28,9 @@ import { computeSheet } from './formulaEngine';
 import { HEADERS_6, QUOTA, makeQuiz6, makeTable6, makeTaskSet6 } from './tasks6';
 import { LESSON_6, TASK_LABEL_6 } from './lesson6';
 import { CONTENT_6 } from './lesson6Content';
+import { HEADERS_7, NOT_FOUND, makeQuiz7, makeTable7, makeTaskSet7 } from './tasks7';
+import { LESSON_7, TASK_LABEL_7 } from './lesson7';
+import { CONTENT_7 } from './lesson7Content';
 import { alignsRight, countDuplicates, countMatches, displayValue, formatOf } from './sheet';
 
 /** Do a task with its own solution: the final sheet and the command keys it took. */
@@ -308,6 +311,69 @@ describe('Excel Aralin 6 tasks (IF, COUNTIF, SUMIF)', () => {
       false,
     );
     expect(set.tasks.sumifCell.check(typeAnswer(set, 'sumifCell', `=SUMIF(B2:B${last},F5,C2:C${last})`))).toBe(true);
+  });
+});
+
+describe('Excel Aralin 7 tasks (VLOOKUP, IFERROR, XLOOKUP)', () => {
+  it('orders + price list: every code is in the list except the one on badRow (row 4 or lower)', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const { table, list, badRow } = makeTable7(makeRng(seed));
+      expect(table[0]).toEqual(HEADERS_7);
+      expect(badRow).toBeGreaterThanOrEqual(3);
+      table.slice(1).forEach((row, i) => expect(list.has(row[0]), `row ${i + 1}`).toBe(i + 1 !== badRow));
+      // The list on the sheet (F:H) is the same as `list`.
+      const onSheet = table.slice(1).filter((row) => row[5] !== '');
+      expect(onSheet.map((row) => [row[5], [row[6], row[7]]])).toEqual([...list.entries()]);
+    }
+    const set = makeTaskSet7(makeRng(1));
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_7).sort());
+    expect(LESSON_7.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_7).sort());
+    expect(CONTENT_7.compute).toBe(computeSheet);
+  });
+
+  it('the lesson order: every task starts not done and is done by its solution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const set = makeTaskSet7(makeRng(seed));
+      runAll(
+        set.sheet,
+        LESSON_7.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        seed,
+      );
+    }
+  });
+
+  it('the Pagsusulit: all 6 kinds, doable in any order', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const quiz = makeQuiz7(makeRng(seed));
+      expect(quiz.tasks).toHaveLength(QUIZ_TASKS);
+      runAll(quiz.sheet, quiz.tasks, seed);
+    }
+  });
+
+  /** Type a formula into the task's start cell and press Enter. */
+  const typeAnswer = (set: ReturnType<typeof makeTaskSet7>, id: string, value: string) => {
+    const s = startTask(set.sheet, set.tasks[id]);
+    return pressKey({ ...s, editing: { value, mode: 'enter' } }, { key: 'Enter' });
+  };
+
+  it('the price formula must be copy-safe: without $ it is not accepted; lowercase is', () => {
+    const set = makeTaskSet7(makeRng(7));
+    const L = set.sheet.cells.filter((row, r) => r > 0 && row[5] !== '').length + 1;
+    const task = set.tasks.vlookupPrice;
+    expect(task.check(typeAnswer(set, 'vlookupPrice', `=VLOOKUP(A2,F2:H${L},3,FALSE)`))).toBe(false);
+    expect(task.check(typeAnswer(set, 'vlookupPrice', `=vlookup(a2,$f$2:$h$${L},3,false)`))).toBe(true);
+    expect(task.check(typeAnswer(set, 'vlookupPrice', `=VLOOKUP(A2,$F$2:$H$${L},3,0)`))).toBe(true);
+  });
+
+  it('"Not found" typed in, or a lookup of a fixed code, is not accepted', () => {
+    const set = makeTaskSet7(makeRng(8));
+    const s = startTask(set.sheet, set.tasks.iferror);
+    const bad = s.active.r + 1;
+    expect(set.tasks.iferror.check(typeAnswer(set, 'iferror', `=IFERROR(#N/A,"${NOT_FOUND}")`))).toBe(false);
+    expect(set.tasks.xlookupNotFound.check(typeAnswer(set, 'xlookupNotFound', `="${NOT_FOUND}"`))).toBe(false);
+    expect(
+      set.tasks.xlookupNotFound.check(typeAnswer(set, 'xlookupNotFound', `=XLOOKUP(A${bad},F:F,G:G,"not found")`)),
+    ).toBe(true);
   });
 });
 

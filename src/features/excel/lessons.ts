@@ -16,6 +16,7 @@ import { LESSON_3 } from './lesson3';
 import { LESSON_4 } from './lesson4';
 import { LESSON_5, TASK_LABEL_5 } from './lesson5';
 import { LESSON_6, TASK_LABEL_6 } from './lesson6';
+import { LESSON_7, TASK_LABEL_7 } from './lesson7';
 import type { Sheet } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
 import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
@@ -123,7 +124,14 @@ export const LESSONS: Lesson[] = [
     content: null,
     load: () => import('./lesson6Content').then((m) => m.CONTENT_6),
   },
-  { level: 7, title: 'VLOOKUP', topics: null, labels: {}, content: null },
+  {
+    level: 7,
+    title: 'VLOOKUP',
+    topics: LESSON_7,
+    labels: TASK_LABEL_7,
+    content: null,
+    load: () => import('./lesson7Content').then((m) => m.CONTENT_7),
+  },
   { level: 8, title: 'Paglinis ng text (TRIM, PROPER)', topics: null, labels: {}, content: null },
 ];
 

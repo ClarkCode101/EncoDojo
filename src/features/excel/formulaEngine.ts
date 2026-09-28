@@ -17,11 +17,21 @@ function show(v: unknown): string {
   return String(v);
 }
 
+/**
+ * In Excel, TRUE and FALSE can be typed bare (=VLOOKUP(B2,F2:H9,2,FALSE)). HyperFormula
+ * only knows TRUE() and FALSE() and shows #NAME? otherwise, so we name them.
+ */
+const EXCEL_NAMES = [
+  { name: 'TRUE', expression: '=TRUE()' },
+  { name: 'FALSE', expression: '=FALSE()' },
+];
+
 /** The value of every cell as shown (formulas computed; other cells as they are). */
 export function computeSheet(cells: string[][]): string[][] {
   const hf = HyperFormula.buildFromArray(
     cells.map((row) => row.map((v) => (v === '' ? null : v))),
     { licenseKey: 'gpl-v3' },
+    EXCEL_NAMES,
   );
   try {
     const values = hf.getSheetValues(hf.getSheetId(hf.getSheetNames()[0])!);

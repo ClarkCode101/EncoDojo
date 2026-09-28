@@ -41,5 +41,17 @@ export const COLUMN_WIDTHS_6 = [
   'w-[5.5rem] min-w-[5.5rem]',
 ];
 
+/** Aralin 7: the orders (Code, Qty, Item, Price), a narrow gap, and the Price List (Code, Item, Price). */
+export const COLUMN_WIDTHS_7 = [
+  'w-[5.5rem] min-w-[5.5rem]',
+  'w-14 min-w-[3.5rem]',
+  'w-40 min-w-[10rem]',
+  'w-[5.5rem] min-w-[5.5rem]',
+  'w-4 min-w-[1rem]',
+  'w-[5.5rem] min-w-[5.5rem]',
+  'w-40 min-w-[10rem]',
+  'w-[5.5rem] min-w-[5.5rem]',
+];
+
 /** Aralin 2 adds a Status column (F). */
 export const COLUMN_WIDTHS_2 = [...COLUMN_WIDTHS, 'w-36 min-w-[9rem]'];
