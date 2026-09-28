@@ -48,7 +48,10 @@ export const LESSON_5: LessonTopic[] = [
       'Ang =SUM(D2:D9) ay ang kabuuan ng D2 hanggang D9. Ang tutuldok (:) ay "hanggang".',
       'Mas mabilis: Alt + = (AutoSum). Kusang isusulat ang =SUM ng mga numero sa itaas. Enter lang.',
     ],
-    keys: [{ keys: 'Alt + =', what: 'AutoSum, tapos Enter' }],
+    keys: [
+      { keys: '=SUM(...)', what: 'kabuuan' },
+      { keys: 'Alt + =', what: 'AutoSum, tapos Enter' },
+    ],
     tasks: ['autoSum'],
   },
   {
@@ -60,6 +63,7 @@ export const LESSON_5: LessonTopic[] = [
     keys: [
       { keys: '=AVERAGE(...)', what: 'karaniwan' },
       { keys: '=MAX(...)', what: 'pinakamalaki' },
+      { keys: '=MIN(...)', what: 'pinakamaliit' },
       { keys: '=COUNT(...)', what: 'ilan ang may numero' },
     ],
     tasks: ['average', 'max', 'count'],

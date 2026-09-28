@@ -12,6 +12,7 @@ const CopyTest = lazy(() => import('../features/copy/CopyPage'));
 const DocumentEncoding = lazy(() => import('../features/encoding/EncodingPage'));
 const QcCheck = lazy(() => import('../features/qc/QcPage'));
 const ExcelPractice = lazy(() => import('../features/excel/ExcelPage'));
+const Kodigo = lazy(() => import('../features/excel/KodigoPage'));
 const Settings = lazy(() => import('../features/settings/SettingsPage'));
 
 function NotFound() {
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="encoding" element={<DocumentEncoding />} />
           <Route path="qc" element={<QcCheck />} />
           <Route path="excel" element={<ExcelPractice />} />
+          <Route path="excel/kodigo" element={<Kodigo />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Route>

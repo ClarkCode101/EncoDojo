@@ -12,7 +12,8 @@ import type { Session } from '../../lib/storage';
 import { nextFocus } from '../dashboard/coach';
 import { currentStreak } from '../dashboard/stats';
 
-export type SenseiPlace = 'home' | 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'excel' | 'assessment' | 'settings';
+export type SenseiPlace =
+  'home' | 'typing' | 'numpad' | 'copy' | 'encoding' | 'qc' | 'excel' | 'assessment' | 'settings';
 
 export function placeFromPath(path: string): SenseiPlace {
   const first = path.split('/')[1] ?? '';
@@ -55,6 +56,7 @@ export const TIPS: Record<SenseiPlace, string[]> = {
     'Ctrl + ↓ ang pinakamabilis na paraan papunta sa dulo ng mahabang listahan.',
     'Kapag nagkamali ka sa sheet, Ctrl + Z agad. Walang masisira.',
     'F2 para ayusin ang laman ng cell nang hindi binubura lahat.',
+    'Nakalimutan ang isang shortcut? Buksan ang Kodigo: nandoon lahat ng natutunan mo, at puwede itong i-print.',
   ],
   assessment: [
     'Huminga muna nang malalim. Parang practice lang ito.',
@@ -75,7 +77,8 @@ export const CHEERS: string[] = [
 ];
 
 /** The backup reminder (progress lives only in this browser). */
-export const BACKUP_LINE = 'Matagal ka nang walang backup. Pumunta sa Settings at i-download ang backup para hindi mawala ang progress mo.';
+export const BACKUP_LINE =
+  'Matagal ka nang walang backup. Pumunta sa Settings at i-download ang backup para hindi mawala ang progress mo.';
 
 /** The Settings choices Sensei looks at. */
 export type SenseiSettings = { dailyGoal?: number; lastBackupAt?: string };
@@ -83,11 +86,7 @@ export type SenseiSettings = { dailyGoal?: number; lastBackupAt?: string };
 export const WELCOME = 'Maligayang pagdating sa dojo! Simulan natin sa Typing Practice.';
 
 /** Lines about the user's own results (empty for a brand-new user). */
-export function personalLines(
-  sessions: Session[],
-  today: Date = new Date(),
-  settings: SenseiSettings = {},
-): string[] {
+export function personalLines(sessions: Session[], today: Date = new Date(), settings: SenseiSettings = {}): string[] {
   if (sessions.length === 0) return [];
   const lines: string[] = [];
   const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions, today));

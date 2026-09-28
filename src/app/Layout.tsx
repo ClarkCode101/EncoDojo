@@ -98,7 +98,7 @@ export default function Layout() {
           className={
             // No width animation on purpose (owner's request): the labels and cards switch at once anyway,
             // so an animated width only showed squeezed, half-drawn states. An instant switch looks cleaner.
-            'bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden ' +
+            'bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden print:hidden ' +
             (collapsed ? 'md:w-20' : 'md:w-64')
           }
         >
@@ -109,7 +109,9 @@ export default function Layout() {
             }
           >
             <Logo className="h-12 w-12 shrink-0" />
-            <div className={'font-display text-2xl font-bold leading-tight ' + (collapsed ? 'md:sr-only' : '')}>EncoDojo</div>
+            <div className={'font-display text-2xl font-bold leading-tight ' + (collapsed ? 'md:sr-only' : '')}>
+              EncoDojo
+            </div>
             <button
               type="button"
               onClick={() => updateSettings({ sidebarCollapsed: !collapsed })}
@@ -130,7 +132,10 @@ export default function Layout() {
           <nav id="main-nav" aria-label="Main" className="px-3 pb-4">
             <div className="flex flex-wrap gap-1 md:block">
               {groups.map((group, i) => (
-                <div key={i} className="md:mb-4 md:[@media(min-height:721px)_and_(max-height:900px)]:mb-2 md:[@media(max-height:720px)]:mb-1">
+                <div
+                  key={i}
+                  className="md:mb-4 md:[@media(min-height:721px)_and_(max-height:900px)]:mb-2 md:[@media(max-height:720px)]:mb-1"
+                >
                   {group.heading &&
                     (collapsed ? (
                       // Collapsed: a thin line instead of the heading.
@@ -169,7 +174,7 @@ export default function Layout() {
         </aside>
       )}
 
-      <main id="main" className={`min-w-0 flex-1 px-4 py-6 md:px-10 ${senseiRoom}`}>
+      <main id="main" className={`min-w-0 flex-1 px-4 py-6 md:px-10 print:p-0 ${senseiRoom}`}>
         {/* Wider page when the sidebar is collapsed: that is the point of collapsing it. */}
         <div className={'mx-auto max-w-5xl ' + (collapsed || focus ? 'md:max-w-7xl' : '')}>
           <Suspense fallback={<p className="text-lg text-stone-700">Naglo-load…</p>}>
@@ -178,7 +183,9 @@ export default function Layout() {
         </div>
       </main>
 
-      <Sensei />
+      <div className="print:hidden">
+        <Sensei />
+      </div>
     </div>
   );
 }

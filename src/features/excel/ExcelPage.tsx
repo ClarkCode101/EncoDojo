@@ -10,10 +10,11 @@
  * 5. result: the Pagsusulit result (ExcelResults).
  */
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ResultSummary } from '../../components/ResultPieces';
 import { ArrowRightIcon, ExcelIcon } from '../../components/icons';
 import { PracticeFrame } from '../../components/Practice';
-import { Button, PageHeader } from '../../components/ui';
+import { Button, ButtonLink, PageHeader } from '../../components/ui';
 import { listNumber } from '../../lib/listNumber';
 import type { Session } from '../../lib/storage';
 import { saveSession, useAppData } from '../../lib/useAppData';
@@ -53,7 +54,16 @@ function useLessonContent(lesson: Lesson | null): LessonContent | null {
 
 export default function ExcelPage() {
   const passed = passedLessons(useAppData().sessions);
-  const [screen, setScreen] = useState<Screen>({ name: 'list' });
+  // /excel?aralin=5 (the Kodigo's "Balikan" links) opens that lesson right away.
+  const [params, setParams] = useSearchParams();
+  const [screen, setScreen] = useState<Screen>(() => {
+    const level = Number(params.get('aralin'));
+    return LESSONS.some((l) => l.level === level && l.topics) ? { name: 'lesson', level } : { name: 'list' };
+  });
+  useEffect(() => {
+    // Forget the link's lesson, so going back to the list and reloading shows the list.
+    if (params.has('aralin')) setParams({}, { replace: true });
+  }, [params, setParams]);
   const [attempt, setAttempt] = useState(0); // a new key = a fresh lesson / quiz
   const go = (s: Screen) => {
     setAttempt((n) => n + 1);
@@ -151,6 +161,11 @@ export default function ExcelPage() {
         title="Excel"
         description="Matuto ng Excel, isang aralin sa isang pagkakataon. Walang oras, at puwedeng ulitin kahit kailan."
       />
+      <div className="-mt-4 mb-6">
+        <ButtonLink to="/excel/kodigo" variant="secondary">
+          Kodigo: lahat ng shortcut at formula
+        </ButtonLink>
+      </div>
 
       <ol className="border-t-2 border-stone-800">
         {LESSONS.map((l) => (
