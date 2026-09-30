@@ -28,6 +28,9 @@ The app must be easy for **older and non-techy users**:
   - The work itself looks like a real **English** hiring test/form: field labels and in-test buttons are English with the Taglish meaning smaller beside them, via `EnTl` (e.g. "Name (Pangalan)", "Submit (Ipasa)", "Finish (Tapusin na)"). Typing passages stay English; records use real-looking Filipino names/places.
   - Exception (owner's choice, 2026-09-26): **spreadsheet column headers are English only** + the format hint (e.g. "Date" + `mm/dd/yyyy`), no Taglish, to keep them short like a real sheet.
   - Code, comments, and commit messages stay in English.
+- **Two languages: Taglish (default) and English** (owner's decision 2026-09-30: "minsan mas madali nilang nage-gets pag English"). `settings.language` ('tl' | 'en', optional, missing = Taglish; no schema bump). It REPLACED the "English lang" toggle: the old `englishOnly: true` counts as English (`langOf`). Picked in Settings (first row, "Wika / Language": Taglish / English) and once on Home (a small bilingual question at the top until a language is picked). In English, `EnTl` shows only the English word. `<html lang>` follows (`fil` / `en`), dates use `en-PH` / `fil-PH` (`localeOf`).
+  - How: `lib/i18n.ts`, no library and no keys file; both texts sit side by side where they are used: `const t = useT(); t('Simulan', 'Start')` (components), or `translator(lang)` in pure functions, which take `lang: Lang = 'tl'` as their LAST parameter so old calls and tests keep Taglish (`nextFocus`, `beltStatus`, `backupStatusText`, `dailyGoalText`, `greeting`). A sentence with markup: `lang === 'en' ? <>...</> : <>...</>`. Every new text must get both languages.
+  - Done so far (phase 1a, 2026-09-30): the app shell (sidebar, menu, skip link, 404), shared components (`ui.tsx`), Home, Settings, the coach, the belt card and hints, the reminders. Next: the five practices (phase 1b), the Assessment and Sensei (phase 1c); then phase 2: the Excel lessons and the Kodigo (owner's order).
 - Big readable text (root 17px; Settings → "Mas malaking text" = 19px via `html.large-text`, `settings.largeText`; owner chose NOT to have it in the sidebar). Buttons at least 44px tall. No ALL-CAPS labels.
 - Every page: icon + title + one-sentence explanation, then numbered steps (`Step` component) for what to do.
 - **Practice pages use two screens** (owner's decision, 2026-09-26, because one long page felt overwhelming) — `components/Practice.tsx`:
@@ -130,11 +133,12 @@ type AppData = {
     sensei?: 'on' | 'small' | 'off';          // optional, missing = 'on'; the Sensei guide (no schema bump)
     // Optional, added 2026-09-27 without a schema bump (missing = old behavior):
     lastBackupAt?: string;                   // ISO; set by "I-download ang backup"; backup reminder (lib/reminders.ts)
-    englishOnly?: boolean;                   // "English lang": EnTl shows only the English word
+    englishOnly?: boolean;                   // OLD "English lang" (replaced by `language`; true counts as English)
     dailyGoal?: number;                      // 0 | 3 | 5 | 10 practices per day (DAILY_GOALS); sidebar + Sensei
     bigSource?: boolean;                     // "Mas malaking babasahin": html.big-source (passage, numpad number, records/documents)
     reduceMotion?: boolean;                  // "Bawasan ang galaw": html.reduce-motion; Sensei doesn't pop up by himself
     soundCorrect?: boolean;                  // "Tunog kapag tama": correctTick() in lib/sound.ts
+    language?: 'tl' | 'en';                  // 2026-09-30: the app's language (missing = Taglish; englishOnly true counts as 'en')
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
   // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).

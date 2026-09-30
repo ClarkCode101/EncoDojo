@@ -91,10 +91,7 @@ describe('currentStreak', () => {
 describe('recentSessions', () => {
   it('returns newest first, limited', () => {
     const sessions = [1, 2, 3, 4].map((d) => session('typing', day(d), {}));
-    expect(recentSessions(sessions, 2).map((s) => s.startedAt)).toEqual([
-      day(4).toISOString(),
-      day(3).toISOString(),
-    ]);
+    expect(recentSessions(sessions, 2).map((s) => s.startedAt)).toEqual([day(4).toISOString(), day(3).toISOString()]);
   });
 });
 

@@ -34,11 +34,7 @@ export function grossWpm(totalTypedChars: number, elapsedSec: number): number {
  * Net WPM = Gross WPM - (uncorrected errors / minutes), never below 0.
  * "Uncorrected errors" = wrong characters still present when time ran out.
  */
-export function netWpm(
-  totalTypedChars: number,
-  uncorrectedErrors: number,
-  elapsedSec: number,
-): number {
+export function netWpm(totalTypedChars: number, uncorrectedErrors: number, elapsedSec: number): number {
   if (elapsedSec <= 0) return 0;
   const minutes = elapsedSec / 60;
   const penalty = uncorrectedErrors / minutes;

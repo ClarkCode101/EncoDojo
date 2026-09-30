@@ -15,13 +15,15 @@ import {
   SidebarToggleIcon,
 } from '../components/icons';
 import { useIsFocusMode } from '../lib/focusMode';
+import { langOf, translator } from '../lib/i18n';
 import { updateSettings, useAppData } from '../lib/useAppData';
 import NextFocusCard from '../features/dashboard/NextFocusCard';
 import { useIsSenseiQuiet } from '../features/sensei/quiet';
 import Sensei from '../features/sensei/Sensei';
 
 type NavItem = { to: string; label: string; icon: ReactNode };
-type NavGroup = { heading?: string; items: NavItem[] };
+/** `heading`: [Taglish, English]. */
+type NavGroup = { heading?: [string, string]; items: NavItem[] };
 
 const groups: NavGroup[] = [
   {
@@ -31,7 +33,7 @@ const groups: NavGroup[] = [
     ],
   },
   {
-    heading: 'Practice',
+    heading: ['Practice', 'Practice'],
     items: [
       { to: '/typing', label: 'Typing Practice', icon: <KeyboardIcon /> },
       { to: '/numpad', label: 'Numpad Practice', icon: <NumpadIcon /> },
@@ -43,7 +45,7 @@ const groups: NavGroup[] = [
   {
     // Learning tracks (owner's decision, 2026-09-27): Microsoft Office skills, one lesson at a time.
     // Not part of the Assessment or the belt. Word and others will be added here later.
-    heading: 'Matuto',
+    heading: ['Matuto', 'Learn'],
     items: [{ to: '/excel', label: 'Excel', icon: <ExcelIcon /> }],
   },
   { items: [{ to: '/settings', label: 'Settings', icon: <SettingsIcon /> }] },
@@ -66,13 +68,21 @@ const navClass =
   };
 
 export default function Layout() {
-  const { largeText, sidebarCollapsed, sensei, reduceMotion, bigSource } = useAppData().settings;
+  const settings = useAppData().settings;
+  const { largeText, sidebarCollapsed, sensei, reduceMotion, bigSource } = settings;
   // "Exam mode" (a running Assessment): no sidebar, the exam gets the whole screen.
   const focus = useIsFocusMode();
   // Room at the bottom of scrolling pages so Sensei never covers the last buttons.
   const senseiRoom = !useIsSenseiQuiet() && sensei !== 'off' ? (sensei === 'small' ? 'pb-20' : 'pb-32') : '';
   // The sidebar can be collapsed to icons only (desktop), for more room. Remembered in the settings.
   const collapsed = sidebarCollapsed === true;
+  const lang = langOf(settings);
+  const t = translator(lang);
+
+  // The page's language, for screen readers and the browser (Settings -> "Wika / Language").
+  useEffect(() => {
+    document.documentElement.lang = lang === 'en' ? 'en' : 'fil';
+  }, [lang]);
 
   // "Mas malaking text" in Settings makes the whole app bigger (see index.css).
   useEffect(() => {
@@ -90,7 +100,7 @@ export default function Layout() {
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded focus:bg-white focus:px-3 focus:py-2"
       >
-        Lumaktaw sa nilalaman
+        {t('Lumaktaw sa nilalaman', 'Skip to content')}
       </a>
 
       {!focus && (
@@ -117,8 +127,14 @@ export default function Layout() {
               onClick={() => updateSettings({ sidebarCollapsed: !collapsed })}
               aria-controls="main-nav"
               aria-expanded={!collapsed}
-              aria-label={collapsed ? 'Ipakita ang buong menu' : 'Itago ang menu (icons lang)'}
-              title={collapsed ? 'Ipakita ang buong menu' : 'Itago ang menu'}
+              aria-label={
+                collapsed
+                  ? t('Ipakita ang buong menu', 'Show the full menu')
+                  : t('Itago ang menu (icons lang)', 'Hide the menu (icons only)')
+              }
+              title={
+                collapsed ? t('Ipakita ang buong menu', 'Show the full menu') : t('Itago ang menu', 'Hide the menu')
+              }
               className={
                 'hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg text-brand-100 transition-colors hover:bg-brand-800 hover:text-white md:inline-flex ' +
                 'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
@@ -142,7 +158,7 @@ export default function Layout() {
                       <div aria-hidden="true" className="mx-2 mb-2 hidden border-t border-brand-700 md:block" />
                     ) : (
                       <div className="hidden px-3 pb-1 text-sm font-semibold text-brand-300 md:block">
-                        {group.heading}
+                        {t(...group.heading)}
                       </div>
                     ))}
                   <ul className="flex flex-wrap gap-1 md:block md:space-y-1">
@@ -177,7 +193,7 @@ export default function Layout() {
       <main id="main" className={`min-w-0 flex-1 px-4 py-6 md:px-10 print:p-0 ${senseiRoom}`}>
         {/* Wider page when the sidebar is collapsed: that is the point of collapsing it. */}
         <div className={'mx-auto max-w-5xl ' + (collapsed || focus ? 'md:max-w-7xl' : '')}>
-          <Suspense fallback={<p className="text-lg text-stone-700">Naglo-load…</p>}>
+          <Suspense fallback={<p className="text-lg text-stone-700">{t('Naglo-load…', 'Loading…')}</p>}>
             <Outlet />
           </Suspense>
         </div>

@@ -2,13 +2,7 @@
  * Plain-language (Taglish) explanations of every number the app shows.
  * Used by the "Ano ito?" buttons so every screen explains things the same way.
  */
-import {
-  JOB_READY_COPY,
-  JOB_READY_ENCODING,
-  JOB_READY_NUMPAD,
-  JOB_READY_QC,
-  JOB_READY_TYPING,
-} from './targets';
+import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_QC, JOB_READY_TYPING } from './targets';
 
 const kph = JOB_READY_NUMPAD.kph.toLocaleString('en-US');
 
@@ -54,7 +48,7 @@ export const HELP = {
   qcSpeed:
     `Bilis = ilang record ang na-check mo kada minuto. ${JOB_READY_QC.perMinute} pataas ang target ` +
     '(mga 20 segundo bawat record). Tantiya ito ng EncoDojo (walang iisang pamantayan).',
-  streak:'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
+  streak: 'Ilang araw nang sunod-sunod kang nag-practice. Kahit ilang minuto lang bawat araw, malaking tulong na!',
   numpad:
     'Ang numpad ay ang mga number key sa KANAN ng keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +
     'Siguraduhing naka-ON ang Num Lock. Kung laptop na walang numpad, puwede ang number keys sa itaas.',

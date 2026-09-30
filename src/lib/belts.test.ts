@@ -61,7 +61,11 @@ describe('beltStatus', () => {
   });
 
   it('Black Belt needs Job-ready on 3 DIFFERENT days', () => {
-    const sameDay = [assessment(8), assessment(8, 8, '2026-09-26T09:00:00.000Z'), assessment(8, 8, '2026-09-26T10:00:00.000Z')];
+    const sameDay = [
+      assessment(8),
+      assessment(8, 8, '2026-09-26T09:00:00.000Z'),
+      assessment(8, 8, '2026-09-26T10:00:00.000Z'),
+    ];
     const s1 = beltStatus(sameDay);
     expect(s1.belt.rank).toBe('blue');
     expect(s1.jobReadyDays).toBe(1);

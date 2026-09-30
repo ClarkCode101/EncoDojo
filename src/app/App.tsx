@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ButtonLink, PageHeader } from '../components/ui';
+import { useT } from '../lib/i18n';
 import Layout from './Layout';
 
 // Each screen is loaded only when you open it (smaller first download).
@@ -16,11 +17,15 @@ const Kodigo = lazy(() => import('../features/excel/KodigoPage'));
 const Settings = lazy(() => import('../features/settings/SettingsPage'));
 
 function NotFound() {
+  const t = useT();
   return (
     <div>
-      <PageHeader title="Hindi makita ang page" description="Baka mali ang link. Bumalik na lang sa Home." />
+      <PageHeader
+        title={t('Hindi makita ang page', 'Page not found')}
+        description={t('Baka mali ang link. Bumalik na lang sa Home.', 'The link may be wrong. Go back to Home.')}
+      />
       <ButtonLink to="/" size="lg">
-        Bumalik sa Home
+        {t('Bumalik sa Home', 'Back to Home')}
       </ButtonLink>
     </div>
   );

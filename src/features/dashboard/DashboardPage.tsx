@@ -5,6 +5,9 @@
  * instead of boxes, and no emoji. Each practice row shows your number AGAINST
  * the job-ready target ("38 / 40 WPM") with a small bar (owner's choice
  * 2026-09-30, option B), so how close you are is seen at a glance.
+ *
+ * Taglish or English (Settings -> "Wika / Language"). Until a language is
+ * picked, a small question at the top asks once.
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -18,10 +21,11 @@ import {
   NumpadIcon,
   QcIcon,
 } from '../../components/icons';
-import { ConfirmButton, HelpTip, Section } from '../../components/ui';
+import { Button, ConfirmButton, HelpTip, Section } from '../../components/ui';
+import { langOf, localeOf, translator, useT, type T } from '../../lib/i18n';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
-import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
+import { clearSessions, removeSession, updateSettings, useAppData } from '../../lib/useAppData';
 import {
   JOB_READY_COPY,
   JOB_READY_ENCODING,
@@ -44,55 +48,101 @@ import {
   recentSessions,
 } from './stats';
 
-function summary(session: Session): string {
+function summary(session: Session, t: T): string {
   const m = session.metrics;
-  if (session.type === 'typing') return `${display(m.netWpm)} WPM, ${display(m.accuracy)}% tama`;
+  const k = (v: number) => display(v).toLocaleString();
+  if (session.type === 'typing')
+    return t(
+      `${display(m.netWpm)} WPM, ${display(m.accuracy)}% tama`,
+      `${display(m.netWpm)} WPM, ${display(m.accuracy)}% correct`,
+    );
   if (session.type === 'assessment') {
-    const verdict = m.jobReady === 1 ? 'Job-ready' : `${m.targetsMet} sa ${m.targetsTotal} na target`;
-    return `${verdict}, ${display(m.typingNetWpm)} WPM, ${display(m.numpadKph).toLocaleString()} KPH`;
+    const verdict =
+      m.jobReady === 1
+        ? 'Job-ready'
+        : t(`${m.targetsMet} sa ${m.targetsTotal} na target`, `${m.targetsMet} of ${m.targetsTotal} targets`);
+    return `${verdict}, ${display(m.typingNetWpm)} WPM, ${k(m.numpadKph)} KPH`;
   }
   if (session.type === 'copy') {
-    if (m.records === 0) return 'Walang natapos na record';
-    return `${display(m.fieldAccuracy)}% tamang field, ${display(copyKphOf(m)).toLocaleString()} KPH, ${m.records} record`;
+    if (m.records === 0) return t('Walang natapos na record', 'No record finished');
+    return t(
+      `${display(m.fieldAccuracy)}% tamang field, ${k(copyKphOf(m))} KPH, ${m.records} record`,
+      `${display(m.fieldAccuracy)}% correct fields, ${k(copyKphOf(m))} KPH, ${m.records} records`,
+    );
   }
   if (session.type === 'encoding') {
-    if (m.documents === 0) return 'Walang natapos na dokumento';
-    return `${display(m.fieldAccuracy)}% tamang field, ${display(m.kph).toLocaleString()} KPH, ${m.documents} dokumento`;
+    if (m.documents === 0) return t('Walang natapos na dokumento', 'No document finished');
+    return t(
+      `${display(m.fieldAccuracy)}% tamang field, ${k(m.kph)} KPH, ${m.documents} dokumento`,
+      `${display(m.fieldAccuracy)}% correct fields, ${k(m.kph)} KPH, ${m.documents} documents`,
+    );
   }
   if (session.type === 'excel') {
     // The Pagsusulit (with `passed`); the first timed rounds had no `passed`.
     if (typeof m.passed === 'number')
-      return `Pagsusulit: ${m.tasksDone} sa ${m.tasksTotal}${m.passed ? ', pasado' : ''}`;
-    return `${m.tasksDone} sa ${m.tasksTotal} na task, ${m.tasksShortcut} gamit ang shortcut`;
+      return t(
+        `Pagsusulit: ${m.tasksDone} sa ${m.tasksTotal}${m.passed ? ', pasado' : ''}`,
+        `Quiz: ${m.tasksDone} of ${m.tasksTotal}${m.passed ? ', passed' : ''}`,
+      );
+    return t(
+      `${m.tasksDone} sa ${m.tasksTotal} na task, ${m.tasksShortcut} gamit ang shortcut`,
+      `${m.tasksDone} of ${m.tasksTotal} tasks, ${m.tasksShortcut} with the shortcut`,
+    );
   }
   if (session.type === 'qc') {
-    if (m.records === 0) return 'Walang na-check na record';
-    return `${display(m.decisionAccuracy)}% tamang check, ${m.records} record`;
+    if (m.records === 0) return t('Walang na-check na record', 'No record checked');
+    return t(
+      `${display(m.decisionAccuracy)}% tamang check, ${m.records} record`,
+      `${display(m.decisionAccuracy)}% correct checks, ${m.records} records`,
+    );
   }
-  return `${display(m.kph).toLocaleString()} KPH, ${display(m.entryAccuracy)}% tama`;
+  return t(
+    `${k(m.kph)} KPH, ${display(m.entryAccuracy)}% tama`,
+    `${k(m.kph)} KPH, ${display(m.entryAccuracy)}% correct`,
+  );
 }
 
 /** Small grey detail under the name in the log, e.g. "Sales Invoice, spreadsheet". */
-function detail(session: Session): string | null {
+function detail(session: Session, t: T): string | null {
   if (session.type === 'copy' && session.metrics.sheet === 1) return 'spreadsheet';
-  if (isBeginnerNumpad(session)) return 'pang-baguhan';
+  if (isBeginnerNumpad(session)) return t('pang-baguhan', 'beginner');
   if (session.type === 'encoding') {
     const docType = docTypeFromCode(session.metrics.docType);
-    const doc = docType ? DOC_INFO[docType].label : 'Halo-halo';
+    const doc = docType ? DOC_INFO[docType].label : t('Halo-halo', 'Mixed');
     return session.metrics.sheet === 1 ? `${doc}, spreadsheet` : doc;
   }
   return null;
 }
 
-const typeLabel: Record<Session['type'], string> = {
-  typing: 'Typing Practice',
-  numpad: 'Numpad Practice',
-  copy: 'Copy Test',
-  encoding: 'Document Encoding',
-  qc: 'QC Check',
-  excel: 'Excel (aralin)',
-  assessment: 'Assessment',
-};
+const typeLabel = (type: Session['type'], t: T): string =>
+  ({
+    typing: 'Typing Practice',
+    numpad: 'Numpad Practice',
+    copy: 'Copy Test',
+    encoding: 'Document Encoding',
+    qc: 'QC Check',
+    excel: t('Excel (aralin)', 'Excel (lesson)'),
+    assessment: 'Assessment',
+  })[type];
+
+/** Asked once on Home until a language is picked (Settings -> "Wika / Language" can change it later). */
+function LanguageQuestion() {
+  return (
+    <section
+      aria-label="Wika / Language"
+      className="rounded-r-lg border-l-4 border-brand-500 bg-white px-5 py-4 shadow-sm"
+    >
+      <p className="text-lg font-bold text-stone-900">
+        Anong wika ang gusto mo? <span className="font-normal text-stone-600">/ Which language do you prefer?</span>
+      </p>
+      <div className="mt-3 flex flex-wrap gap-3">
+        <Button onClick={() => updateSettings({ language: 'tl' })}>Taglish</Button>
+        <Button onClick={() => updateSettings({ language: 'en' })}>English</Button>
+      </div>
+      <p className="mt-2 text-sm text-stone-600">Puwede itong palitan sa Settings. / You can change it in Settings.</p>
+    </section>
+  );
+}
 
 /**
  * One ruled line of the "Ensayo" list: icon, name, a short line, your number against the target
@@ -118,6 +168,7 @@ function EnsayoRow({
   target: number;
   unit: string;
 }) {
+  const t = useT();
   const shown = value === null ? null : display(value);
   const reached = shown !== null && shown >= target;
   return (
@@ -133,7 +184,7 @@ function EnsayoRow({
         </span>
         <span className="text-right">
           {shown === null ? (
-            <span className="text-sm text-stone-500">hindi pa nasusubukan</span>
+            <span className="text-sm text-stone-500">{t('hindi pa nasusubukan', 'not tried yet')}</span>
           ) : (
             <>
               <span className="font-display text-2xl font-bold tabular-nums text-stone-900">
@@ -164,7 +215,11 @@ function EnsayoRow({
 const comingSoon = ['Word', 'Progress Reports'];
 
 export default function DashboardPage() {
-  const { profile, sessions } = useAppData();
+  const { profile, sessions, settings } = useAppData();
+  const lang = langOf(settings);
+  const t = translator(lang);
+  // The language question, until a language is picked (the old "English lang" counts as picked).
+  const askLanguage = settings.language === undefined && !settings.englishOnly;
   const now = new Date();
   const training = sessions.filter((s) => s.type !== 'assessment');
   // Copy Test / Encoding / QC runs with nothing finished say "100%" or "0%": skip them.
@@ -191,17 +246,22 @@ export default function DashboardPage() {
   const excelLessons = readyLessons().length;
   const excelPassed = passedLessons(sessions).size;
 
-  const today = now.toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' });
-  const hello = `${greeting(now)}${profile.displayName ? `, ${profile.displayName}` : ''}.`;
+  const today = now.toLocaleDateString(localeOf(lang), { weekday: 'long', month: 'long', day: 'numeric' });
+  const hello = `${greeting(now, lang)}${profile.displayName ? `, ${profile.displayName}` : ''}.`;
   const subline =
     sessions.length === 0
-      ? 'Bago ka rito. Simulan natin sa Typing Practice.'
+      ? t('Bago ka rito. Simulan natin sa Typing Practice.', "You're new here. Let's start with Typing Practice.")
       : streak >= 2
-        ? `${streak} araw ka nang sunod-sunod na nag-eensayo. Ituloy mo lang.`
-        : 'Handa na ang dojo. Saan tayo mag-eensayo ngayon?';
+        ? t(
+            `${streak} araw ka nang sunod-sunod na nag-eensayo. Ituloy mo lang.`,
+            `You've practiced ${streak} days in a row. Keep it up.`,
+          )
+        : t('Handa na ang dojo. Saan tayo mag-eensayo ngayon?', 'The dojo is ready. What will you practice today?');
 
   return (
     <div className="space-y-12">
+      {askLanguage && <LanguageQuestion />}
+
       {/* Greeting */}
       <header>
         <p className="text-stone-600">{today}</p>
@@ -211,25 +271,42 @@ export default function DashboardPage() {
 
       {/* Ensayo: the five practices, then the Assessment */}
       <Section
-        title="Ensayo"
+        title={t('Ensayo', 'Practice')}
         aside={
           // One explanation for all the numbers (not one per row).
-          <HelpTip label="Ano ang mga numerong ito?">
+          <HelpTip label={t('Ano ang mga numerong ito?', 'What are these numbers?')}>
             <ul className="list-disc space-y-1 pl-5">
               <li>
-                <strong>Typing:</strong> ang pinakamabilis mong Net WPM.
+                <strong>Typing:</strong> {t('ang pinakamabilis mong Net WPM.', 'your fastest Net WPM.')}
               </li>
               <li>
-                <strong>Numpad:</strong> ang pinakamabilis mong KPH (Halo-halo lang ang binibilang).
+                <strong>Numpad:</strong>{' '}
+                {t(
+                  'ang pinakamabilis mong KPH (Halo-halo lang ang binibilang).',
+                  'your fastest KPH (only Mixed numbers count).',
+                )}
               </li>
               <li>
-                <strong>Copy Test at Document Encoding:</strong> ilang porsyento ng field ang eksaktong tama sa huli
-                mong practice.
+                <strong>{t('Copy Test at Document Encoding:', 'Copy Test and Document Encoding:')}</strong>{' '}
+                {t(
+                  'ilang porsyento ng field ang eksaktong tama sa huli mong practice.',
+                  'the percent of fields exactly right in your last practice.',
+                )}
               </li>
               <li>
-                <strong>QC Check:</strong> ilang porsyento ng check mo ang tama sa huli mong practice.
+                <strong>QC Check:</strong>{' '}
+                {t(
+                  'ilang porsyento ng check mo ang tama sa huli mong practice.',
+                  'the percent of your checks that were right in your last practice.',
+                )}
               </li>
             </ul>
+            <p className="mt-1">
+              {t(
+                'Ang ikalawang numero ay ang target para maging job-ready.',
+                'The second number is the target for being job-ready.',
+              )}
+            </p>
           </HelpTip>
         }
       >
@@ -238,7 +315,7 @@ export default function DashboardPage() {
             to="/typing"
             icon={<KeyboardIcon className="h-7 w-7" />}
             title="Typing Practice"
-            text="Bilis at tamang pagta-type"
+            text={t('Bilis at tamang pagta-type', 'Fast and correct typing')}
             value={typingBest}
             target={JOB_READY_TYPING.netWpm}
             unit="WPM"
@@ -247,7 +324,7 @@ export default function DashboardPage() {
             to="/numpad"
             icon={<NumpadIcon className="h-7 w-7" />}
             title="Numpad Practice"
-            text="Mga numero gamit ang numpad"
+            text={t('Mga numero gamit ang numpad', 'Numbers on the numpad')}
             value={numpadBest}
             target={JOB_READY_NUMPAD.kph}
             unit="KPH"
@@ -256,28 +333,28 @@ export default function DashboardPage() {
             to="/copy"
             icon={<CopyIcon className="h-7 w-7" />}
             title="Copy Test"
-            text="Kopyahin ang record nang eksakto"
+            text={t('Kopyahin ang record nang eksakto', 'Copy records exactly')}
             value={copyLatest}
             target={JOB_READY_COPY.fieldAccuracy}
-            unit="% tama"
+            unit={t('% tama', '% correct')}
           />
           <EnsayoRow
             to="/encoding"
             icon={<DocumentIcon className="h-7 w-7" />}
             title="Document Encoding"
-            text="Mula sa invoice, resibo at form"
+            text={t('Mula sa invoice, resibo at form', 'From invoices, receipts and forms')}
             value={encodingLatest}
             target={JOB_READY_ENCODING.fieldAccuracy}
-            unit="% tama"
+            unit={t('% tama', '% correct')}
           />
           <EnsayoRow
             to="/qc"
             icon={<QcIcon className="h-7 w-7" />}
             title="QC Check"
-            text="Hanapin ang mali ng iba"
+            text={t('Hanapin ang mali ng iba', "Find mistakes in others' work")}
             value={qcLatest}
             target={JOB_READY_QC.decisionAccuracy}
-            unit="% tama"
+            unit={t('% tama', '% correct')}
           />
         </ol>
 
@@ -291,22 +368,32 @@ export default function DashboardPage() {
             <p className="text-stone-700">
               {latestAssessment
                 ? latestAssessment.metrics.jobReady === 1
-                  ? 'Job-ready ka na sa huli mong subok. Ulitin sa ibang araw para sa susunod na belt.'
-                  : `Huling subok: ${latestAssessment.metrics.targetsMet} sa ${latestAssessment.metrics.targetsTotal} na target. Mga 10 hanggang 12 minuto.`
-                : 'Lahat ng skill sa iisang exam. Mga 10 hanggang 12 minuto.'}
+                  ? t(
+                      'Job-ready ka na sa huli mong subok. Ulitin sa ibang araw para sa susunod na belt.',
+                      'You were job-ready on your last try. Take it again on another day for the next belt.',
+                    )
+                  : t(
+                      `Huling subok: ${latestAssessment.metrics.targetsMet} sa ${latestAssessment.metrics.targetsTotal} na target. Mga 10 hanggang 12 minuto.`,
+                      `Last try: ${latestAssessment.metrics.targetsMet} of ${latestAssessment.metrics.targetsTotal} targets. About 10 to 12 minutes.`,
+                    )
+                : t(
+                    'Lahat ng skill sa iisang exam. Mga 10 hanggang 12 minuto.',
+                    'Every skill in one exam. About 10 to 12 minutes.',
+                  )}
             </p>
           </div>
           <Link
             to="/assessment"
             className="col-start-2 inline-flex min-h-[2.75rem] items-center justify-center gap-2 justify-self-start rounded-lg bg-brand-700 px-5 py-2 font-semibold text-white shadow-sm transition-colors hover:bg-brand-800 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:col-start-auto"
           >
-            {latestAssessment ? 'Subukan ulit' : 'Simulan'} <ArrowRightIcon className="h-5 w-5" />
+            {latestAssessment ? t('Subukan ulit', 'Try again') : t('Simulan', 'Start')}{' '}
+            <ArrowRightIcon className="h-5 w-5" />
           </Link>
         </div>
       </Section>
 
       {/* Learning tracks: Microsoft Office skills (not part of the Assessment or the belt). */}
-      <Section title="Matuto">
+      <Section title={t('Matuto', 'Learn')}>
         <ul className="-mt-4">
           <li className="border-b border-stone-300">
             <Link
@@ -318,15 +405,20 @@ export default function DashboardPage() {
               </span>
               <span className="min-w-0">
                 <span className="block text-lg font-bold text-stone-900">Excel</span>
-                <span className="block text-stone-600">Mga shortcut, formatting at formulas, paisa-isang aralin</span>
+                <span className="block text-stone-600">
+                  {t(
+                    'Mga shortcut, formatting at formulas, paisa-isang aralin',
+                    'Shortcuts, formatting and formulas, one lesson at a time',
+                  )}
+                </span>
               </span>
               <span className="text-right text-sm text-stone-600">
                 {excelRounds === 0 ? (
-                  'hindi pa nasisimulan'
+                  t('hindi pa nasisimulan', 'not started yet')
                 ) : (
                   <>
                     <span className="font-display text-2xl font-bold tabular-nums text-stone-900">{excelPassed}</span>{' '}
-                    sa {excelLessons} aralin ang pasado
+                    {t(`sa ${excelLessons} aralin ang pasado`, `of ${excelLessons} lessons passed`)}
                   </>
                 )}
               </span>
@@ -334,25 +426,35 @@ export default function DashboardPage() {
             </Link>
           </li>
         </ul>
-        <p className="mt-2 text-sm text-stone-600">Para matuto lang ito. Hindi kasama sa Assessment at sa belt.</p>
+        <p className="mt-2 text-sm text-stone-600">
+          {t(
+            'Para matuto lang ito. Hindi kasama sa Assessment at sa belt.',
+            'This is only for learning. It is not part of the Assessment or the belt.',
+          )}
+        </p>
       </Section>
 
       {/* The log */}
-      <Section title="Mga huling ginawa">
+      <Section title={t('Mga huling ginawa', 'Recent activity')}>
         {recent.length === 0 ? (
-          <p className="text-lg text-stone-700">Wala pa rito. Lalabas dito ang bawat practice at Assessment mo.</p>
+          <p className="text-lg text-stone-700">
+            {t(
+              'Wala pa rito. Lalabas dito ang bawat practice at Assessment mo.',
+              'Nothing here yet. Every practice and Assessment you do shows up here.',
+            )}
+          </p>
         ) : (
           // About 5 rows tall; more rows scroll inside the list (the header row stays put).
           <div className="-mt-4 max-h-[25rem] overflow-auto">
             <table className="w-full text-left text-base">
               <thead className="sticky top-0 z-[1] bg-paper text-sm text-stone-600">
                 <tr className="border-b border-stone-300">
-                  <th className="py-2 pr-4 font-semibold">Kailan</th>
-                  <th className="py-2 pr-4 font-semibold">Ginawa</th>
-                  <th className="py-2 pr-4 font-semibold">Tagal</th>
-                  <th className="py-2 pr-4 font-semibold">Resulta</th>
+                  <th className="py-2 pr-4 font-semibold">{t('Kailan', 'When')}</th>
+                  <th className="py-2 pr-4 font-semibold">{t('Ginawa', 'What')}</th>
+                  <th className="py-2 pr-4 font-semibold">{t('Tagal', 'Time')}</th>
+                  <th className="py-2 pr-4 font-semibold">{t('Resulta', 'Result')}</th>
                   <th className="py-2">
-                    <span className="sr-only">Burahin</span>
+                    <span className="sr-only">{t('Burahin', 'Delete')}</span>
                   </th>
                 </tr>
               </thead>
@@ -360,7 +462,7 @@ export default function DashboardPage() {
                 {recent.map((s) => (
                   <tr key={s.id} className="border-b border-stone-200">
                     <td className="py-3 pr-4 text-stone-600">
-                      {new Date(s.startedAt).toLocaleString(undefined, {
+                      {new Date(s.startedAt).toLocaleString(localeOf(lang), {
                         month: 'short',
                         day: 'numeric',
                         hour: 'numeric',
@@ -368,16 +470,16 @@ export default function DashboardPage() {
                       })}
                     </td>
                     <td className="py-3 pr-4 font-medium text-stone-900">
-                      {typeLabel[s.type]}
-                      {detail(s) && <span className="block text-sm font-normal text-stone-500">{detail(s)}</span>}
+                      {typeLabel(s.type, t)}
+                      {detail(s, t) && <span className="block text-sm font-normal text-stone-500">{detail(s, t)}</span>}
                     </td>
                     <td className="py-3 pr-4 tabular-nums text-stone-700">{formatClock(s.durationSec)}</td>
-                    <td className="py-3 pr-4 tabular-nums text-stone-800">{summary(s)}</td>
+                    <td className="py-3 pr-4 tabular-nums text-stone-800">{summary(s, t)}</td>
                     <td className="py-3 text-right">
                       <ConfirmButton
                         size="sm"
-                        label="Burahin"
-                        question="Burahin ito?"
+                        label={t('Burahin', 'Delete')}
+                        question={t('Burahin ito?', 'Delete this?')}
                         onConfirm={() => removeSession(s.id)}
                       />
                     </td>
@@ -390,10 +492,13 @@ export default function DashboardPage() {
         {training.length > 0 && (
           <div className="mt-4 flex justify-end">
             <ConfirmButton
-              label="Burahin lahat ng practice"
+              label={t('Burahin lahat ng practice', 'Delete all practice')}
               // The warning shows only when it matters: right before deleting. (Assessments stay.)
-              question={`Burahin lahat ng ${training.length} practice? Magbabago rin ang best scores at streak.`}
-              confirmLabel="Oo, burahin lahat"
+              question={t(
+                `Burahin lahat ng ${training.length} practice? Magbabago rin ang best scores at streak.`,
+                `Delete all ${training.length} practices? Your best scores and streak change too.`,
+              )}
+              confirmLabel={t('Oo, burahin lahat', 'Yes, delete all')}
               onConfirm={() => clearSessions(PRACTICE_TYPES)}
             />
           </div>
@@ -401,7 +506,8 @@ export default function DashboardPage() {
       </Section>
 
       <p className="border-t border-stone-300 pt-4 text-stone-600">
-        <span className="font-semibold text-stone-700">Parating pa:</span> {comingSoon.join(', ')}.
+        <span className="font-semibold text-stone-700">{t('Parating pa:', 'Coming soon:')}</span>{' '}
+        {comingSoon.join(', ')}.
       </p>
     </div>
   );

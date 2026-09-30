@@ -78,8 +78,13 @@ export type Settings = {
    */
   /** When the last backup file was downloaded (ISO). Missing = never. Used for the backup reminder. */
   lastBackupAt?: string;
-  /** true = hide the Taglish meanings beside English labels inside tests ("English lang"), like a real hiring test. */
+  /**
+   * OLD (replaced by `language` on 2026-09-30): true = hide the Taglish meanings beside English
+   * labels inside tests ("English lang"). Kept so saved data still loads; true now counts as English.
+   */
   englishOnly?: boolean;
+  /** The app's language (owner's decision 2026-09-30): 'tl' Taglish (default when missing) or 'en' English. */
+  language?: 'tl' | 'en';
   /** Practices per day the user wants to do (3, 5 or 10). Missing or 0 = no daily goal. */
   dailyGoal?: number;
   /** true = bigger text in the passage, the number to type, and the documents (only what you read from). */
@@ -140,7 +145,8 @@ function hasValidExtraSettings(settings: Record<string, unknown>): boolean {
     (settings.dailyGoal === undefined || (DAILY_GOALS as readonly unknown[]).includes(settings.dailyGoal)) &&
     isBooleanOrMissing(settings.bigSource) &&
     isBooleanOrMissing(settings.reduceMotion) &&
-    isBooleanOrMissing(settings.soundCorrect)
+    isBooleanOrMissing(settings.soundCorrect) &&
+    (settings.language === undefined || settings.language === 'tl' || settings.language === 'en')
   );
 }
 
@@ -185,7 +191,10 @@ export function isAppData(value: unknown): value is AppData {
     typeof settings.largeText === 'boolean' &&
     isCopyModeOrMissing(settings.copyMode) &&
     isBooleanOrMissing(settings.sidebarCollapsed) &&
-    (settings.sensei === undefined || settings.sensei === 'on' || settings.sensei === 'small' || settings.sensei === 'off') &&
+    (settings.sensei === undefined ||
+      settings.sensei === 'on' ||
+      settings.sensei === 'small' ||
+      settings.sensei === 'off') &&
     hasValidExtraSettings(settings)
   );
 }
@@ -299,7 +308,9 @@ export function exportFileName(now: Date = new Date()): string {
   return `encodojo-progress-${y}-${m}-${d}.json`;
 }
 
-export type ImportResult = { ok: true; data: AppData } | { ok: false; error: string };
+/** `problem`: 'unreadable' (not JSON) or 'notEncodojo' (JSON, but not our data), so the page can say it in either language. */
+export type ImportResult =
+  { ok: true; data: AppData } | { ok: false; error: string; problem: 'unreadable' | 'notEncodojo' };
 
 /** Check an imported file BEFORE replacing anything. */
 export function parseImport(text: string): ImportResult {
@@ -307,11 +318,15 @@ export function parseImport(text: string): ImportResult {
   try {
     raw = JSON.parse(text);
   } catch {
-    return { ok: false, error: 'Hindi mabasa ang file na ito. Siguraduhing backup file ito ng EncoDojo (.json).' };
+    return {
+      ok: false,
+      problem: 'unreadable',
+      error: 'Hindi mabasa ang file na ito. Siguraduhing backup file ito ng EncoDojo (.json).',
+    };
   }
   const data = migrate(raw);
   if (!data) {
-    return { ok: false, error: 'Hindi ito backup file ng EncoDojo. Pumili ng ibang file.' };
+    return { ok: false, problem: 'notEncodojo', error: 'Hindi ito backup file ng EncoDojo. Pumili ng ibang file.' };
   }
   return { ok: true, data: { ...data, sessions: capSessions(data.sessions) } };
 }

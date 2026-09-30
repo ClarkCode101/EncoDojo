@@ -1,3 +1,4 @@
+import { translator, type Lang } from '../../lib/i18n';
 import type { Session, SessionType } from '../../lib/storage';
 import { MIXED_DIFFICULTY, NUMPAD_MODES } from '../numpad/entries';
 
@@ -65,12 +66,13 @@ export function currentStreak(sessions: Session[], today: Date = new Date()): nu
 }
 
 /** A time-of-day greeting in Filipino, e.g. "Magandang hapon". */
-export function greeting(date: Date = new Date()): string {
+export function greeting(date: Date = new Date(), lang: Lang = 'tl'): string {
+  const t = translator(lang);
   const h = date.getHours();
-  if (h < 12) return 'Magandang umaga';
-  if (h < 13) return 'Magandang tanghali';
-  if (h < 18) return 'Magandang hapon';
-  return 'Magandang gabi';
+  if (h < 12) return t('Magandang umaga', 'Good morning');
+  if (h < 13) return t('Magandang tanghali', 'Good afternoon');
+  if (h < 18) return t('Magandang hapon', 'Good afternoon');
+  return t('Magandang gabi', 'Good evening');
 }
 
 /** Newest first. */

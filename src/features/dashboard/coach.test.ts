@@ -28,7 +28,10 @@ describe('nextFocus', () => {
 
   it('beginner-only numpad: suggests trying Halo-halo', () => {
     const beginner = s('numpad', { kph: 12000, entryAccuracy: 100, difficulty: NUMPAD_MODES.beginner.difficulty });
-    expect(nextFocus([goodTyping(), beginner])).toMatchObject({ skill: 'numpad', reason: expect.stringMatching(/Halo-halo/) });
+    expect(nextFocus([goodTyping(), beginner])).toMatchObject({
+      skill: 'numpad',
+      reason: expect.stringMatching(/Halo-halo/),
+    });
   });
 
   it('a Copy Test with nothing finished does not count as tried', () => {
@@ -66,10 +69,15 @@ describe('nextFocus', () => {
   it('Excel is a learning track: never suggested, and a weak Excel round does not change the advice', () => {
     const noShortcuts = s('excel', { taskAccuracy: 100, shortcutRate: 50, tasksDone: 8 });
     expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc()]).skill).toBe('assessment');
-    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc(), noShortcuts]).skill).toBe('assessment');
+    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc(), noShortcuts]).skill).toBe(
+      'assessment',
+    );
   });
 
   it('everything at target: the Assessment', () => {
-    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc(), goodExcel()])).toMatchObject({ skill: 'assessment', to: '/assessment' });
+    expect(nextFocus([goodTyping(), goodNumpad(), goodCopy(), goodEncoding(), goodQc(), goodExcel()])).toMatchObject({
+      skill: 'assessment',
+      to: '/assessment',
+    });
   });
 });

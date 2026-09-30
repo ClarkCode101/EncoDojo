@@ -7,6 +7,7 @@
 import { Link } from 'react-router-dom';
 import { useBeltPreview, previewSessions } from '../features/assessment/DevJump'; // TEMPORARY (DevJump)
 import { beltStatus } from '../lib/belts';
+import { useLang } from '../lib/i18n';
 import { useAppData } from '../lib/useAppData';
 import { BeltIcon } from './icons';
 
@@ -19,15 +20,21 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
   // import.meta.env.DEV is a build-time constant, so this is never called (and is removed) in the built site.
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const preview = import.meta.env.DEV ? useBeltPreview() : null;
-  const s = beltStatus(preview ? previewSessions(preview) : sessions);
-  const summary = s.next ? `${s.belt.label}. Susunod: ${s.next.label}. ${s.nextHint}` : `${s.belt.label}. ${s.nextHint}`;
+  const lang = useLang();
+  const en = lang === 'en';
+  const s = beltStatus(preview ? previewSessions(preview) : sessions, lang);
+  const nextWord = en ? 'Next' : 'Susunod';
+  const summary = s.next
+    ? `${s.belt.label}. ${nextWord}: ${s.next.label}. ${s.nextHint}`
+    : `${s.belt.label}. ${s.nextHint}`;
+  const yourBelt = en ? 'Your belt' : 'Ang belt mo';
 
   if (collapsed) {
     return (
       <Link
         to="/assessment"
         title={summary}
-        aria-label={`Ang belt mo: ${summary}`}
+        aria-label={`${yourBelt}: ${summary}`}
         className={`mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-brand-800 transition-colors hover:bg-brand-700 ${focusRing}`}
       >
         <BeltIcon color={s.belt.color} className="h-10 w-10" />
@@ -39,13 +46,16 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
     <Link
       to="/assessment"
       title={summary}
-      aria-label={`Ang belt mo: ${summary}`}
+      aria-label={`${yourBelt}: ${summary}`}
       className={`block rounded-xl border border-brand-700 bg-brand-800 p-3 transition-colors hover:border-belt-400 ${focusRing}`}
     >
       <div className="flex items-center gap-3">
         <BeltIcon color={s.belt.color} className="h-11 w-11 shrink-0" />
         <div>
-          <div className="text-sm text-brand-200">Ang belt mo{preview && ' (test preview)'}</div>
+          <div className="text-sm text-brand-200">
+            {yourBelt}
+            {preview && ' (test preview)'}
+          </div>
           <div className="text-lg font-bold leading-tight text-white">{s.belt.label}</div>
         </div>
       </div>
@@ -57,7 +67,7 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
       <p className="mt-2 text-sm leading-snug text-brand-100 [@media(max-height:900px)]:hidden">
         {s.next ? (
           <>
-            Susunod: <strong className="text-white">{s.next.label}</strong>. {s.nextHint}
+            {nextWord}: <strong className="text-white">{s.next.label}</strong>. {s.nextHint}
           </>
         ) : (
           s.nextHint

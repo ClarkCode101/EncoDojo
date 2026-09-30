@@ -14,6 +14,7 @@ import {
   NumpadIcon,
   QcIcon,
 } from '../../components/icons';
+import { useLang } from '../../lib/i18n';
 import { dailyGoalText, doneToday } from '../../lib/reminders';
 import { useAppData } from '../../lib/useAppData';
 import { nextFocus, type NextFocus } from './coach';
@@ -32,10 +33,12 @@ const focusRing =
 
 export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
   const { sessions, settings } = useAppData();
-  const f = nextFocus(sessions);
+  const lang = useLang();
+  const f = nextFocus(sessions, lang);
   // Settings -> "Araw-araw na target" (null when there is no goal).
-  const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions));
-  const summary = `Susunod na gagawin: ${f.label}. ${f.reason}${goal ? ` ${goal}` : ''}`;
+  const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions), lang);
+  const heading = lang === 'en' ? 'Do next' : 'Susunod na gagawin';
+  const summary = `${heading}: ${f.label}. ${f.reason}${goal ? ` ${goal}` : ''}`;
 
   if (collapsed) {
     return (
@@ -57,7 +60,7 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
       aria-label={summary}
       className={`group block rounded-xl border border-dashed border-brand-600 p-3 transition-colors hover:border-belt-400 hover:bg-brand-800 ${focusRing}`}
     >
-      <div className="text-sm text-brand-200">Susunod na gagawin</div>
+      <div className="text-sm text-brand-200">{heading}</div>
       <div className="mt-0.5 flex items-center gap-2 font-bold text-white">
         <span className="text-belt-300">{ICONS[f.skill]('h-5 w-5')}</span>
         {f.label}
@@ -76,9 +79,7 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
       >
         {f.reason}
       </p>
-      {goal && (
-        <p className="mt-1 text-sm font-semibold text-belt-300 [@media(max-height:760px)]:hidden">{goal}</p>
-      )}
+      {goal && <p className="mt-1 text-sm font-semibold text-belt-300 [@media(max-height:760px)]:hidden">{goal}</p>}
     </Link>
   );
 }

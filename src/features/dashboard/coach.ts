@@ -7,6 +7,7 @@
  * (A ✓ for "done today" was tried and removed: it looked like the practice
  * was finished and could not be done again.)
  */
+import { translator, type Lang } from '../../lib/i18n';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
 import {
@@ -39,7 +40,7 @@ export type NextFocus = {
   skill: PracticeSkill | 'assessment';
   label: string;
   to: string;
-  /** One short Taglish reason. */
+  /** One short reason, in the app's language. */
   reason: string;
 };
 
@@ -52,38 +53,86 @@ const latest = (list: Session[]): Session | null =>
 function latestScore(sessions: Session[], skill: PracticeSkill): Score | null {
   if (skill === 'typing') {
     const s = latest(sessions.filter((x) => x.type === 'typing'));
-    return s && { speed: s.metrics.netWpm, speedTarget: JOB_READY_TYPING.netWpm, accuracy: s.metrics.accuracy, accuracyTarget: JOB_READY_TYPING.accuracy };
+    return (
+      s && {
+        speed: s.metrics.netWpm,
+        speedTarget: JOB_READY_TYPING.netWpm,
+        accuracy: s.metrics.accuracy,
+        accuracyTarget: JOB_READY_TYPING.accuracy,
+      }
+    );
   }
   if (skill === 'numpad') {
     // Only "Halo-halo" counts (same numbers as the Assessment).
     const s = latest(sessions.filter((x) => x.type === 'numpad' && x.metrics.difficulty === MIXED_DIFFICULTY));
-    return s && { speed: s.metrics.kph, speedTarget: JOB_READY_NUMPAD.kph, accuracy: s.metrics.entryAccuracy, accuracyTarget: JOB_READY_NUMPAD.entryAccuracy };
+    return (
+      s && {
+        speed: s.metrics.kph,
+        speedTarget: JOB_READY_NUMPAD.kph,
+        accuracy: s.metrics.entryAccuracy,
+        accuracyTarget: JOB_READY_NUMPAD.entryAccuracy,
+      }
+    );
   }
   if (skill === 'copy') {
     // Runs with nothing finished say "100%" (nothing wrong yet), so they don't count.
     const s = latest(sessions.filter((x) => x.type === 'copy' && x.metrics.records > 0));
-    return s && { speed: copyKphOf(s.metrics), speedTarget: JOB_READY_COPY.kph, accuracy: s.metrics.fieldAccuracy, accuracyTarget: JOB_READY_COPY.fieldAccuracy };
+    return (
+      s && {
+        speed: copyKphOf(s.metrics),
+        speedTarget: JOB_READY_COPY.kph,
+        accuracy: s.metrics.fieldAccuracy,
+        accuracyTarget: JOB_READY_COPY.fieldAccuracy,
+      }
+    );
   }
   if (skill === 'qc') {
     const s = latest(sessions.filter((x) => x.type === 'qc' && x.metrics.records > 0));
-    return s && { speed: s.metrics.perMinute, speedTarget: JOB_READY_QC.perMinute, accuracy: s.metrics.decisionAccuracy, accuracyTarget: JOB_READY_QC.decisionAccuracy };
+    return (
+      s && {
+        speed: s.metrics.perMinute,
+        speedTarget: JOB_READY_QC.perMinute,
+        accuracy: s.metrics.decisionAccuracy,
+        accuracyTarget: JOB_READY_QC.decisionAccuracy,
+      }
+    );
   }
   const s = latest(sessions.filter((x) => x.type === 'encoding' && x.metrics.documents > 0));
-  return s && { speed: s.metrics.kph, speedTarget: JOB_READY_ENCODING.kph, accuracy: s.metrics.fieldAccuracy, accuracyTarget: JOB_READY_ENCODING.fieldAccuracy };
+  return (
+    s && {
+      speed: s.metrics.kph,
+      speedTarget: JOB_READY_ENCODING.kph,
+      accuracy: s.metrics.fieldAccuracy,
+      accuracyTarget: JOB_READY_ENCODING.fieldAccuracy,
+    }
+  );
 }
 
 const n = (v: number) => display(v).toLocaleString('en-US');
 
-function weakReason(skill: PracticeSkill, s: Score): string {
+function weakReason(skill: PracticeSkill, s: Score, lang: Lang): string {
+  const t = translator(lang);
   const accShare = display(s.accuracy) / s.accuracyTarget;
   const speedShare = display(s.speed) / s.speedTarget;
   if (accShare <= speedShare) {
     const what =
-      skill === 'typing' ? 'tama' : skill === 'numpad' ? 'tamang numero' : skill === 'qc' ? 'tamang check' : 'tamang field';
-    return `${n(s.accuracy)}% pa lang ang ${what} (target: ${s.accuracyTarget}%).`;
+      skill === 'typing'
+        ? t('tama', 'correct')
+        : skill === 'numpad'
+          ? t('tamang numero', 'correct numbers')
+          : skill === 'qc'
+            ? t('tamang check', 'correct checks')
+            : t('tamang field', 'correct fields');
+    return t(
+      `${n(s.accuracy)}% pa lang ang ${what} (target: ${s.accuracyTarget}%).`,
+      `Only ${n(s.accuracy)}% ${what} so far (target: ${s.accuracyTarget}%).`,
+    );
   }
-  const unit = skill === 'typing' ? 'WPM' : skill === 'qc' ? 'record bawat minuto' : 'KPH';
-  return `${n(s.speed)} ${unit} pa lang (target: ${n(s.speedTarget)}).`;
+  const unit = skill === 'typing' ? 'WPM' : skill === 'qc' ? t('record bawat minuto', 'records per minute') : 'KPH';
+  return t(
+    `${n(s.speed)} ${unit} pa lang (target: ${n(s.speedTarget)}).`,
+    `Only ${n(s.speed)} ${unit} so far (target: ${n(s.speedTarget)}).`,
+  );
 }
 
 /**
@@ -93,16 +142,20 @@ function weakReason(skill: PracticeSkill, s: Score): string {
  *    (speed or accuracy, whichever is weaker);
  * 3. everything at target: the Assessment.
  */
-export function nextFocus(sessions: Session[]): NextFocus {
+export function nextFocus(sessions: Session[], lang: Lang = 'tl'): NextFocus {
+  const t = translator(lang);
   const scores = SKILL_ORDER.map((skill) => ({ skill, score: latestScore(sessions, skill) }));
 
   const untried = scores.find((x) => x.score === null);
   if (untried) {
     const { skill } = untried;
-    let reason = 'Hindi mo pa ito nasusubukan.';
-    if (skill === 'typing') reason = 'Dito magsimula.';
+    let reason = t('Hindi mo pa ito nasusubukan.', "You haven't tried this yet.");
+    if (skill === 'typing') reason = t('Dito magsimula.', 'Start here.');
     else if (skill === 'numpad' && sessions.some((s) => s.type === 'numpad')) {
-      reason = 'Subukan ang Halo-halo na numero (gaya ng Assessment).';
+      reason = t(
+        'Subukan ang Halo-halo na numero (gaya ng Assessment).',
+        'Try the Mixed numbers (like the Assessment).',
+      );
     }
     return { skill, ...SKILL_INFO[skill], reason };
   }
@@ -114,12 +167,19 @@ export function nextFocus(sessions: Session[]): NextFocus {
     if (share < 1 && (!weakest || share < weakest.share)) weakest = { skill, share, score: s };
   }
   if (weakest) {
-    return { skill: weakest.skill, ...SKILL_INFO[weakest.skill], reason: weakReason(weakest.skill, weakest.score) };
+    return {
+      skill: weakest.skill,
+      ...SKILL_INFO[weakest.skill],
+      reason: weakReason(weakest.skill, weakest.score, lang),
+    };
   }
   return {
     skill: 'assessment',
     label: 'Assessment',
     to: '/assessment',
-    reason: 'Pasado ka na sa lahat ng practice. Subukan ang Assessment!',
+    reason: t(
+      'Pasado ka na sa lahat ng practice. Subukan ang Assessment!',
+      'You passed every practice. Try the Assessment!',
+    ),
   };
 }

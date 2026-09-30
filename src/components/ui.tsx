@@ -13,7 +13,7 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { listNumber } from '../lib/listNumber';
-import { useAppData } from '../lib/useAppData';
+import { useLang, useT } from '../lib/i18n';
 import { formatClock } from '../lib/useCountdown';
 
 type Variant = 'primary' | 'secondary' | 'danger';
@@ -79,7 +79,7 @@ export function ButtonLink({
 export function ConfirmButton({
   label,
   question,
-  confirmLabel = 'Oo, burahin',
+  confirmLabel,
   onConfirm,
   size = 'md',
 }: {
@@ -89,6 +89,7 @@ export function ConfirmButton({
   onConfirm: () => void;
   size?: Size;
 }) {
+  const t = useT();
   const [asking, setAsking] = useState(false);
   if (!asking) {
     return (
@@ -109,10 +110,10 @@ export function ConfirmButton({
           onConfirm();
         }}
       >
-        {confirmLabel}
+        {confirmLabel ?? t('Oo, burahin', 'Yes, delete')}
       </Button>
       <Button variant="secondary" size={size} onClick={() => setAsking(false)}>
-        Huwag na
+        {t('Huwag na', 'Cancel')}
       </Button>
     </span>
   );
@@ -190,14 +191,15 @@ export function Section({
  * "Ano ito?": click to show a short explanation. Uses <details>, so it works
  * with mouse, keyboard, touch, and screen readers without extra code.
  */
-export function HelpTip({ children, label = 'Ano ito?' }: { children: ReactNode; label?: string }) {
+export function HelpTip({ children, label }: { children: ReactNode; label?: string }) {
+  const t = useT();
   return (
     <details className="group mt-1 text-sm">
       <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded font-medium text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden">
         <span aria-hidden="true" className="inline-block transition-transform group-open:rotate-90">
           ›
         </span>
-        {label}
+        {label ?? t('Ano ito?', 'What is this?')}
       </summary>
       <div className="mt-1 border-l-2 border-brand-300 bg-brand-50/70 px-3 py-2 text-stone-800">{children}</div>
     </details>
@@ -241,6 +243,7 @@ export function LiveStatsBar({
   started: boolean;
   stats: { label: string; value: ReactNode }[];
 }) {
+  const t = useT();
   const almostDone = started && seconds <= 10;
   // Equal cells, label on top and the number below, split by thin lines.
   const cell = 'min-w-0 flex-1 px-5 py-2';
@@ -255,12 +258,12 @@ export function LiveStatsBar({
       }
     >
       <div className={`${cell} ${almostDone ? 'bg-amber-100' : 'bg-brand-50'}`}>
-        <div className={label}>Natitirang oras</div>
+        <div className={label}>{t('Natitirang oras', 'Time left')}</div>
         <div className={value}>
           {formatClock(seconds)}
           {!started && (
             <span className="ml-2 hidden whitespace-nowrap text-sm font-medium text-stone-600 sm:inline">
-              hindi pa tumatakbo
+              {t('hindi pa tumatakbo', 'not running yet')}
             </span>
           )}
         </div>
@@ -306,6 +309,7 @@ export function PageHeader({ title, description, icon }: { title: string; descri
 
 /** A numbered step, e.g. "01  Pumili ng oras", so the order is obvious. */
 export function Step({ number, title, children }: { number: number; title: string; children?: ReactNode }) {
+  const t = useT();
   return (
     <div className="grid grid-cols-[2.5rem_1fr] gap-x-4">
       <div aria-hidden="true" className="font-display text-2xl font-semibold leading-8 tabular-nums text-stone-400">
@@ -313,7 +317,9 @@ export function Step({ number, title, children }: { number: number; title: strin
       </div>
       <div className="min-w-0">
         <h2 className="font-sans text-lg font-bold leading-8 text-stone-900">
-          <span className="sr-only">Hakbang {number}: </span>
+          <span className="sr-only">
+            {t('Hakbang', 'Step')} {number}:{' '}
+          </span>
           {title}
         </h2>
         {children && <div className="mt-2">{children}</div>}
@@ -328,9 +334,8 @@ export function Step({ number, title, children }: { number: number; title: strin
  * hiring tests and forms, while still understanding them.
  */
 export function EnTl({ en, tl }: { en: string; tl: string }) {
-  // Settings -> "English lang": only the English word, like a real hiring test.
-  const englishOnly = useAppData().settings.englishOnly === true;
-  if (englishOnly) return <>{en}</>;
+  // English (Settings -> "Wika / Language"): only the English word, like a real hiring test.
+  if (useLang() === 'en') return <>{en}</>;
   return (
     <>
       {en} <span className="text-[0.85em] font-normal opacity-80">({tl})</span>

@@ -6,6 +6,7 @@
  * Used by Settings, Sensei, and the sidebar. Pure functions, tested.
  */
 import { localDayKey } from '../features/dashboard/stats';
+import { translator, type Lang } from './i18n';
 import type { Session } from './storage';
 
 /** Remind after this many days without a backup... */
@@ -27,12 +28,13 @@ export function daysSinceBackup(lastBackupAt: string | undefined, now: Date = ne
 }
 
 /** "Huling backup: ..." in plain Taglish. */
-export function backupStatusText(lastBackupAt: string | undefined, now: Date = new Date()): string {
+export function backupStatusText(lastBackupAt: string | undefined, now: Date = new Date(), lang: Lang = 'tl'): string {
+  const t = translator(lang);
   const days = daysSinceBackup(lastBackupAt, now);
-  if (days === null) return 'Wala ka pang backup.';
-  if (days === 0) return 'Huling backup: ngayong araw.';
-  if (days === 1) return 'Huling backup: kahapon.';
-  return `Huling backup: ${days} araw na ang nakalipas.`;
+  if (days === null) return t('Wala ka pang backup.', "You don't have a backup yet.");
+  if (days === 0) return t('Huling backup: ngayong araw.', 'Last backup: today.');
+  if (days === 1) return t('Huling backup: kahapon.', 'Last backup: yesterday.');
+  return t(`Huling backup: ${days} araw na ang nakalipas.`, `Last backup: ${days} days ago.`);
 }
 
 /** True when it's time to remind: enough saved results and no backup for a week (or never). */
@@ -49,8 +51,9 @@ export function doneToday(sessions: Session[], now: Date = new Date()): number {
 }
 
 /** The daily goal line, e.g. "Ngayong araw: 2 sa 3 practice". Null when there is no goal. */
-export function dailyGoalText(goal: number | undefined, done: number): string | null {
+export function dailyGoalText(goal: number | undefined, done: number, lang: Lang = 'tl'): string | null {
+  const t = translator(lang);
   if (!goal) return null;
-  if (done >= goal) return `Naabot mo na ang ${goal} practice ngayong araw.`;
-  return `Ngayong araw: ${done} sa ${goal} practice.`;
+  if (done >= goal) return t(`Naabot mo na ang ${goal} practice ngayong araw.`, `You reached ${goal} practices today.`);
+  return t(`Ngayong araw: ${done} sa ${goal} practice.`, `Today: ${done} of ${goal} practices.`);
 }

@@ -12,6 +12,7 @@
  *   Black  — Job-ready on 3 different days
  * Percentages (not counts) so older assessments with 4 or 6 targets still count.
  */
+import { translator, type Lang } from './i18n';
 import type { Session } from './storage';
 
 export type BeltRank = 'white' | 'yellow' | 'orange' | 'green' | 'blue' | 'black';
@@ -62,7 +63,8 @@ function localDay(iso: string): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
-export function beltStatus(sessions: Session[]): BeltStatus {
+export function beltStatus(sessions: Session[], lang: Lang = 'tl'): BeltStatus {
+  const t = translator(lang);
   const assessments = sessions.filter((s) => s.type === 'assessment' && s.metrics.targetsTotal > 0);
 
   let best: { met: number; total: number } | null = null;
@@ -88,20 +90,32 @@ export function beltStatus(sessions: Session[]): BeltStatus {
   const next = BELTS[BELTS.indexOf(belt) + 1] ?? null;
 
   let progress = 1;
-  let nextHint = 'Pinakamataas na belt na ito. Ang galing mo!';
+  let nextHint = t('Pinakamataas na belt na ito. Ang galing mo!', 'This is the highest belt. Great work!');
   if (next?.rank === 'black') {
     const left = BLACK_BELT_DAYS - jobReadyDays;
     progress = jobReadyDays / BLACK_BELT_DAYS;
-    nextHint = `Maging Job-ready ulit sa ${left} pang ibang araw.`;
+    nextHint = t(
+      `Maging Job-ready ulit sa ${left} pang ibang araw.`,
+      `Be Job-ready again on ${left} more different day${left === 1 ? '' : 's'}.`,
+    );
   } else if (next?.rank === 'blue') {
     progress = share;
-    nextHint = `Maging Job-ready: ${CURRENT_TARGETS} sa ${CURRENT_TARGETS} target sa Assessment.`;
+    nextHint = t(
+      `Maging Job-ready: ${CURRENT_TARGETS} sa ${CURRENT_TARGETS} target sa Assessment.`,
+      `Be Job-ready: ${CURRENT_TARGETS} of ${CURRENT_TARGETS} targets in the Assessment.`,
+    );
   } else if (next) {
     progress = share / SHARE_NEEDED[next.rank]!;
     const need = Math.ceil(SHARE_NEEDED[next.rank]! * CURRENT_TARGETS);
     nextHint = best
-      ? `Pumasa sa ${need} sa ${CURRENT_TARGETS} target sa Assessment.`
-      : `Gawin ang Assessment at pumasa sa ${need} sa ${CURRENT_TARGETS} target.`;
+      ? t(
+          `Pumasa sa ${need} sa ${CURRENT_TARGETS} target sa Assessment.`,
+          `Pass ${need} of ${CURRENT_TARGETS} targets in the Assessment.`,
+        )
+      : t(
+          `Gawin ang Assessment at pumasa sa ${need} sa ${CURRENT_TARGETS} target.`,
+          `Take the Assessment and pass ${need} of ${CURRENT_TARGETS} targets.`,
+        );
   }
 
   return { belt, next, best, jobReadyDays, progress: Math.min(1, progress), nextHint };

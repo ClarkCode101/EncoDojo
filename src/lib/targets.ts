@@ -72,7 +72,11 @@ export type KphLevel = { min: number; label: string; description: string };
  * ~8,000 entry-level, ~10,000 the usual requirement, 12,000+ strong.
  */
 export const KPH_LEVELS: KphLevel[] = [
-  { min: JOB_READY_NUMPAD.kph, label: 'Pasado (entry-level)', description: 'Minimum para sa entry-level na data entry.' },
+  {
+    min: JOB_READY_NUMPAD.kph,
+    label: 'Pasado (entry-level)',
+    description: 'Minimum para sa entry-level na data entry.',
+  },
   { min: 10000, label: 'Karaniwang hinihingi', description: 'Ito ang madalas hinihingi ng maraming employer.' },
   { min: 12000, label: 'Magaling', description: 'Pang-mas mahigpit na trabaho, gaya ng billing at banking.' },
 ];
