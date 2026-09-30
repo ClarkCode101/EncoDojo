@@ -57,11 +57,11 @@ const navClass =
       // Short screens (<900px tall): a little less space, so the sidebar never needs its own scrollbar.
       'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(min-height:721px)_and_(max-height:900px)]:py-1.5 [@media(min-height:681px)_and_(max-height:720px)]:py-1 [@media(max-height:680px)]:py-0.5 ' +
       (collapsed ? 'md:justify-center md:px-0 ' : '') +
-      'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
+      'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 ' +
       (isActive
         ? // The page you're on: white pill + a gold "belt" mark at the sidebar's edge (brand accent).
-          'bg-white text-brand-900 shadow md:before:absolute md:before:-left-3 md:before:inset-y-1 md:before:w-1.5 md:before:rounded-r-full md:before:bg-belt-400'
-        : 'text-brand-50 hover:bg-brand-800')
+          'bg-brand-50 text-brand-800 md:before:absolute md:before:-left-3 md:before:inset-y-1 md:before:w-1.5 md:before:rounded-r-full md:before:bg-belt-400'
+        : 'text-stone-700 hover:bg-stone-100 hover:text-stone-900')
     );
   };
 
@@ -98,7 +98,8 @@ export default function Layout() {
           className={
             // No width animation on purpose (owner's request): the labels and cards switch at once anyway,
             // so an animated width only showed squeezed, half-drawn states. An instant switch looks cleaner.
-            'bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden print:hidden ' +
+            // Option B "Maliwanag" (owner's choice, 2026-09-30): a white sidebar, so the page is what the eye sees first.
+            'border-b border-stone-200 bg-white text-stone-900 md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden md:border-b-0 md:border-r print:hidden ' +
             (collapsed ? 'md:w-20' : 'md:w-64')
           }
         >
@@ -109,7 +110,11 @@ export default function Layout() {
             }
           >
             <Logo className="h-12 w-12 shrink-0" />
-            <div className={'font-display text-2xl font-bold leading-tight ' + (collapsed ? 'md:sr-only' : '')}>
+            <div
+              className={
+                'font-display text-2xl font-bold leading-tight text-brand-900 ' + (collapsed ? 'md:sr-only' : '')
+              }
+            >
               EncoDojo
             </div>
             <button
@@ -120,8 +125,8 @@ export default function Layout() {
               aria-label={collapsed ? 'Ipakita ang buong menu' : 'Itago ang menu (icons lang)'}
               title={collapsed ? 'Ipakita ang buong menu' : 'Itago ang menu'}
               className={
-                'hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg text-brand-100 transition-colors hover:bg-brand-800 hover:text-white md:inline-flex ' +
-                'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
+                'hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 md:inline-flex ' +
+                'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 ' +
                 (collapsed ? '' : 'ml-auto')
               }
             >
@@ -139,9 +144,9 @@ export default function Layout() {
                   {group.heading &&
                     (collapsed ? (
                       // Collapsed: a thin line instead of the heading.
-                      <div aria-hidden="true" className="mx-2 mb-2 hidden border-t border-brand-700 md:block" />
+                      <div aria-hidden="true" className="mx-2 mb-2 hidden border-t border-stone-200 md:block" />
                     ) : (
-                      <div className="hidden px-3 pb-1 text-sm font-semibold text-brand-300 md:block">
+                      <div className="hidden px-3 pb-1 text-sm font-semibold text-stone-500 md:block">
                         {group.heading}
                       </div>
                     ))}

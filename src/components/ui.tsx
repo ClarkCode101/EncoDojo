@@ -133,7 +133,9 @@ export function Card({
   compact?: boolean;
 }) {
   return (
-    <section className={`rounded-lg border border-stone-300 bg-white ${compact ? 'p-4' : 'p-6'} ${className}`}>
+    <section
+      className={`rounded-lg border border-stone-300 bg-white shadow-sm ${compact ? 'p-4' : 'p-6'} ${className}`}
+    >
       {title && (
         <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-stone-900">
           {icon && <span className="text-brand-700">{icon}</span>}

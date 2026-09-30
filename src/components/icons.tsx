@@ -45,9 +45,14 @@ export const Logo = ({ className = 'h-11 w-11' }: IconProps) => (
  * A tied belt in any color (same shape as the logo), for the belt ranks.
  * The light outline keeps every belt (even black) visible on the dark sidebar.
  */
-export const BeltIcon = ({ className = 'h-10 w-10', color }: IconProps & { color: string }) => (
+/** A tied belt in the belt's color. `edge` = the outline (a light one on dark places, a dark one on light places). */
+export const BeltIcon = ({
+  className = 'h-10 w-10',
+  color,
+  edge = '#FBF8F1',
+}: IconProps & { color: string; edge?: string }) => (
   <svg viewBox="0 0 48 48" aria-hidden="true" className={className}>
-    <g fill={color} stroke="#FBF8F1" strokeWidth="1.5" strokeLinejoin="round">
+    <g fill={color} stroke={edge} strokeWidth="1.5" strokeLinejoin="round">
       <rect x="3" y="17" width="42" height="8" rx="2" />
       <path d="M21.5 27 L15 40 h5.5 L24.5 30 Z" />
       <path d="M26.5 27 L33 40 h-5.5 L23.5 30 Z" />

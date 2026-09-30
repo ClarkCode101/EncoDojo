@@ -1,13 +1,16 @@
 /**
  * Home, in the "Dojo notebook" style (owner's choice, 2026-09-27): it should
  * feel made by a person, not generated. So: a real greeting, a ruled list
- * like a notebook or ledger (not a grid of identical cards), numbers that
- * belong to each row, thin rules instead of boxes, and no emoji.
+ * like a notebook or ledger (not a grid of identical cards), thin rules
+ * instead of boxes, and no emoji. Each practice row shows your number AGAINST
+ * the job-ready target ("38 / 40 WPM") with a small bar (owner's choice
+ * 2026-09-30, option B), so how close you are is seen at a glance.
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRightIcon,
+  AssessmentIcon,
   CopyIcon,
   DocumentIcon,
   ExcelIcon,
@@ -19,6 +22,13 @@ import { ConfirmButton, HelpTip, Section } from '../../components/ui';
 import { display } from '../../lib/scoring';
 import { PRACTICE_TYPES, type Session } from '../../lib/storage';
 import { clearSessions, removeSession, useAppData } from '../../lib/useAppData';
+import {
+  JOB_READY_COPY,
+  JOB_READY_ENCODING,
+  JOB_READY_NUMPAD,
+  JOB_READY_QC,
+  JOB_READY_TYPING,
+} from '../../lib/targets';
 import { formatClock } from '../../lib/useCountdown';
 import { copyKphOf } from '../copy/scoreCopy';
 import { DOC_INFO } from '../encoding/documents';
@@ -51,7 +61,8 @@ function summary(session: Session): string {
   }
   if (session.type === 'excel') {
     // The Pagsusulit (with `passed`); the first timed rounds had no `passed`.
-    if (typeof m.passed === 'number') return `Pagsusulit: ${m.tasksDone} sa ${m.tasksTotal}${m.passed ? ', pasado' : ''}`;
+    if (typeof m.passed === 'number')
+      return `Pagsusulit: ${m.tasksDone} sa ${m.tasksTotal}${m.passed ? ', pasado' : ''}`;
     return `${m.tasksDone} sa ${m.tasksTotal} na task, ${m.tasksShortcut} gamit ang shortcut`;
   }
   if (session.type === 'qc') {
@@ -83,46 +94,64 @@ const typeLabel: Record<Session['type'], string> = {
   assessment: 'Assessment',
 };
 
-/** One ruled line of the "Ensayo" list: number, name, a short line, your number, arrow. The whole row is a link. */
+/**
+ * One ruled line of the "Ensayo" list: icon, name, a short line, your number against the target
+ * with a small bar, arrow. The whole row is a link. The bar turns green once the target is reached
+ * (green = correct, like everywhere in the app).
+ */
 function EnsayoRow({
-  n,
   to,
   icon,
   title,
   text,
   value,
+  target,
   unit,
 }: {
-  n: string;
   to: string;
   icon: ReactNode;
   title: string;
   text: string;
   /** null = not tried yet */
-  value: string | null;
+  value: number | null;
+  /** The job-ready target (lib/targets.ts). */
+  target: number;
   unit: string;
 }) {
+  const shown = value === null ? null : display(value);
+  const reached = shown !== null && shown >= target;
   return (
     <li className="border-b border-stone-300">
       <Link
         to={to}
-        className="group grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 gap-y-1 py-4 pl-1 pr-2 transition-colors hover:bg-white/70 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:grid-cols-[2.5rem_1fr_auto_1.5rem]"
+        className="group grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 gap-y-1 py-4 pl-1 pr-2 transition-colors hover:bg-white focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:grid-cols-[2.5rem_1fr_auto_1.5rem]"
       >
-        <span className="font-display text-2xl font-semibold tabular-nums text-stone-400">{n}</span>
+        <span className="flex justify-center text-brand-700">{icon}</span>
         <span className="min-w-0">
-          <span className="flex items-center gap-2 text-lg font-bold text-stone-900">
-            <span className="text-brand-700">{icon}</span>
-            {title}
-          </span>
+          <span className="block text-lg font-bold text-stone-900">{title}</span>
           <span className="block text-stone-600">{text}</span>
         </span>
         <span className="text-right">
-          {value === null ? (
+          {shown === null ? (
             <span className="text-sm text-stone-500">hindi pa nasusubukan</span>
           ) : (
             <>
-              <span className="font-display text-2xl font-bold tabular-nums text-stone-900">{value}</span>
-              <span className="ml-1 text-sm text-stone-600">{unit}</span>
+              <span className="font-display text-2xl font-bold tabular-nums text-stone-900">
+                {shown.toLocaleString()}
+              </span>
+              <span className="ml-1 text-sm text-stone-600">
+                / {target.toLocaleString()} {unit}
+              </span>
+              {/* How close to the target (the numbers say it too). */}
+              <span
+                aria-hidden="true"
+                className="mt-1 ml-auto block h-1.5 w-28 overflow-hidden rounded-full bg-stone-200"
+              >
+                <span
+                  className={'block h-full rounded-full ' + (reached ? 'bg-green-600' : 'bg-brand-600')}
+                  style={{ width: `${Math.min(100, Math.round((shown / target) * 100))}%` }}
+                />
+              </span>
             </>
           )}
         </span>
@@ -132,7 +161,7 @@ function EnsayoRow({
   );
 }
 
-const comingSoon = ['Excel formulas (SUM, IF, VLOOKUP)', 'Word', 'Progress Reports'];
+const comingSoon = ['Word', 'Progress Reports'];
 
 export default function DashboardPage() {
   const { profile, sessions } = useAppData();
@@ -153,12 +182,11 @@ export default function DashboardPage() {
       1,
     )[0] ?? null;
 
-  const num = (v: number | null) => (v === null ? null : display(v).toLocaleString());
-  const typingBest = num(bestMetric(sessions, 'typing', 'netWpm'));
-  const numpadBest = num(bestMetric(forNumpadBest(sessions), 'numpad', 'kph'));
-  const copyLatest = num(latestMetric(withFinishedItems, 'copy', 'fieldAccuracy'));
-  const encodingLatest = num(latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy'));
-  const qcLatest = num(latestMetric(withFinishedItems, 'qc', 'decisionAccuracy'));
+  const typingBest = bestMetric(sessions, 'typing', 'netWpm');
+  const numpadBest = bestMetric(forNumpadBest(sessions), 'numpad', 'kph');
+  const copyLatest = latestMetric(withFinishedItems, 'copy', 'fieldAccuracy');
+  const encodingLatest = latestMetric(withFinishedItems, 'encoding', 'fieldAccuracy');
+  const qcLatest = latestMetric(withFinishedItems, 'qc', 'decisionAccuracy');
   const excelRounds = sessions.filter((s) => s.type === 'excel').length;
   const excelLessons = readyLessons().length;
   const excelPassed = passedLessons(sessions).size;
@@ -207,55 +235,57 @@ export default function DashboardPage() {
       >
         <ol className="-mt-4">
           <EnsayoRow
-            n="01"
             to="/typing"
-            icon={<KeyboardIcon className="h-5 w-5" />}
+            icon={<KeyboardIcon className="h-7 w-7" />}
             title="Typing Practice"
             text="Bilis at tamang pagta-type"
             value={typingBest}
+            target={JOB_READY_TYPING.netWpm}
             unit="WPM"
           />
           <EnsayoRow
-            n="02"
             to="/numpad"
-            icon={<NumpadIcon className="h-5 w-5" />}
+            icon={<NumpadIcon className="h-7 w-7" />}
             title="Numpad Practice"
             text="Mga numero gamit ang numpad"
             value={numpadBest}
+            target={JOB_READY_NUMPAD.kph}
             unit="KPH"
           />
           <EnsayoRow
-            n="03"
             to="/copy"
-            icon={<CopyIcon className="h-5 w-5" />}
+            icon={<CopyIcon className="h-7 w-7" />}
             title="Copy Test"
             text="Kopyahin ang record nang eksakto"
             value={copyLatest}
+            target={JOB_READY_COPY.fieldAccuracy}
             unit="% tama"
           />
           <EnsayoRow
-            n="04"
             to="/encoding"
-            icon={<DocumentIcon className="h-5 w-5" />}
+            icon={<DocumentIcon className="h-7 w-7" />}
             title="Document Encoding"
             text="Mula sa invoice, resibo at form"
             value={encodingLatest}
+            target={JOB_READY_ENCODING.fieldAccuracy}
             unit="% tama"
           />
           <EnsayoRow
-            n="05"
             to="/qc"
-            icon={<QcIcon className="h-5 w-5" />}
+            icon={<QcIcon className="h-7 w-7" />}
             title="QC Check"
             text="Hanapin ang mali ng iba"
             value={qcLatest}
+            target={JOB_READY_QC.decisionAccuracy}
             unit="% tama"
           />
         </ol>
 
-        {/* 06: the Assessment, set apart like a seal on the page */}
+        {/* The Assessment, set apart like a seal on the page */}
         <div className="mt-6 grid grid-cols-[2.5rem_1fr] items-center gap-x-4 gap-y-3 border-l-4 border-belt-400 bg-belt-50 py-5 pl-3 pr-5 sm:grid-cols-[2.5rem_1fr_auto]">
-          <span className="font-display text-2xl font-semibold tabular-nums text-belt-600">06</span>
+          <span className="flex justify-center text-stone-800">
+            <AssessmentIcon className="h-7 w-7" />
+          </span>
           <div>
             <div className="text-lg font-bold text-stone-900">Assessment</div>
             <p className="text-stone-700">
@@ -281,9 +311,9 @@ export default function DashboardPage() {
           <li className="border-b border-stone-300">
             <Link
               to="/excel"
-              className="group grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 py-4 pl-1 pr-2 transition-colors hover:bg-white/70 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:grid-cols-[2.5rem_1fr_auto_1.5rem]"
+              className="group grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-4 py-4 pl-1 pr-2 transition-colors hover:bg-white focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:grid-cols-[2.5rem_1fr_auto_1.5rem]"
             >
-              <span className="text-brand-700">
+              <span className="flex justify-center text-brand-700">
                 <ExcelIcon className="h-7 w-7" />
               </span>
               <span className="min-w-0">

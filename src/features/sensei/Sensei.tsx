@@ -1,7 +1,11 @@
 /**
  * Sensei: a small pixel-art guide in the lower-right corner (owner's idea,
  * 2026-09-27). A speech bubble pops up about 1 second after a page opens and
- * hides by itself after ~9 seconds; clicking Sensei gives a new line.
+ * hides by itself after ~7 seconds; clicking Sensei gives a new line.
+ *
+ * So he never gets in the way (owner's feedback 2026-09-30, the bubble covered
+ * rows and buttons): the bubble sits ABOVE him, narrow, and it goes away as soon
+ * as the user scrolls, types, or clicks anywhere else on the page.
  *
  * - Quiet (hidden) while practicing or taking the Assessment (see quiet.ts);
  *   right after a practice he talks about the results.
@@ -18,10 +22,11 @@ import SenseiArt from './SenseiArt';
 
 /** Wait a moment after a page opens, so the page is seen first. */
 const SPEAK_DELAY_MS = 900;
-/** How long a bubble stays. */
-const BUBBLE_MS = 9000;
+/** How long a bubble stays (if the user does nothing). */
+const BUBBLE_MS = 7000;
 
-const focusRing = 'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600';
+const focusRing =
+  'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600';
 
 export default function Sensei() {
   const { settings, sessions } = useAppData();
@@ -70,11 +75,25 @@ export default function Sensei() {
     return () => window.clearTimeout(t);
   }, [pathname, quiet, mode, say, settings.reduceMotion]);
 
-  // Hide the bubble by itself after a while.
+  // Hide the bubble by itself after a while, or as soon as the user gets to work:
+  // a scroll, a key, or a click anywhere else on the page.
+  const boxRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!line) return;
     const t = window.setTimeout(() => setLine(null), BUBBLE_MS);
-    return () => window.clearTimeout(t);
+    const hide = () => setLine(null);
+    const outside = (e: PointerEvent) => {
+      if (!boxRef.current?.contains(e.target as Node)) hide();
+    };
+    window.addEventListener('scroll', hide, { capture: true, passive: true });
+    window.addEventListener('keydown', hide);
+    window.addEventListener('pointerdown', outside);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('scroll', hide, { capture: true });
+      window.removeEventListener('keydown', hide);
+      window.removeEventListener('pointerdown', outside);
+    };
   }, [line]);
 
   if (mode === 'off' || quiet) return null;
@@ -95,12 +114,15 @@ export default function Sensei() {
 
   const bubble = line && line.path === pathname ? line : null;
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex items-end gap-2">
+    // The bubble stands ABOVE Sensei (not beside him), so it only covers a narrow strip at the right edge.
+    // Clicks go THROUGH the bubble (except its two buttons): a toggle under it still works, and the
+    // click hides the bubble.
+    <div ref={boxRef} className="pointer-events-none fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2">
       {bubble && (
         <div
           key={bubble.id}
           role="status"
-          className="pointer-events-auto relative mb-8 max-w-[min(18rem,70vw)] rounded-2xl border-2 border-brand-800 bg-white px-4 py-3 text-stone-900 shadow-lg motion-safe:animate-sensei-pop"
+          className="pointer-events-none relative mr-2 max-w-[min(16rem,70vw)] rounded-2xl border-2 border-brand-800 bg-white px-3.5 py-2.5 text-[0.95rem] text-stone-900 shadow-lg motion-safe:animate-sensei-pop"
         >
           <div className="mb-1 flex items-center justify-between gap-3">
             <span className="text-sm font-bold text-brand-800">Sensei</span>
@@ -108,7 +130,7 @@ export default function Sensei() {
               type="button"
               onClick={() => setLine(null)}
               aria-label="Isara ang sinabi ni Sensei"
-              className={`-mr-1 rounded px-1 text-stone-500 hover:text-stone-900 ${focusRing}`}
+              className={`pointer-events-auto -mr-1 rounded px-1 text-stone-500 hover:text-stone-900 ${focusRing}`}
             >
               ✕
             </button>
@@ -117,14 +139,14 @@ export default function Sensei() {
           <button
             type="button"
             onClick={() => updateSettings({ sensei: 'small' })}
-            className={`mt-2 rounded text-sm text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-900 ${focusRing}`}
+            className={`pointer-events-auto mt-2 rounded text-sm text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-900 ${focusRing}`}
           >
             Itago si Sensei
           </button>
-          {/* The bubble's little tail, pointing at Sensei. */}
+          {/* The bubble's little tail, pointing down at Sensei. */}
           <span
             aria-hidden="true"
-            className="absolute -right-[9px] bottom-5 h-4 w-4 rotate-45 border-r-2 border-t-2 border-brand-800 bg-white"
+            className="absolute -bottom-[9px] right-7 h-4 w-4 rotate-45 border-b-2 border-r-2 border-brand-800 bg-white"
           />
         </div>
       )}
