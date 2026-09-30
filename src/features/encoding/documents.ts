@@ -9,7 +9,8 @@
  * so totals always add up.
  */
 import * as ph from '../../data/ph';
-import type { FieldSpec, Values } from '../../lib/fieldScoring';
+import { fieldLabels, type FieldSpec, type Values } from '../../lib/fieldScoring';
+import type { Lang } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import { contactNumber } from '../copy/records';
 import { address, digits, fullName, nameParts, upperLetter } from '../typing/generatePassage';
@@ -28,7 +29,13 @@ export const DOC_INFO: Record<DocType, { label: string; tl: string; fields: Fiel
       { key: 'date', label: 'Date', tl: 'Petsa', hint: 'mm/dd/yyyy' },
       { key: 'customer', label: 'Customer', tl: 'Bumili' },
       { key: 'terms', label: 'Terms', tl: 'Kondisyon ng bayad' },
-      { key: 'total', label: 'Total Amount', tl: 'Kabuuang halaga', hint: 'walang ₱ at comma' },
+      {
+        key: 'total',
+        label: 'Total Amount',
+        tl: 'Kabuuang halaga',
+        hint: 'walang ₱ at comma',
+        hintEn: 'no ₱ or commas',
+      },
     ],
   },
   delivery: {
@@ -56,9 +63,14 @@ export const DOC_INFO: Record<DocType, { label: string; tl: string; fields: Fiel
 };
 
 /** Every field key -> its label, for mistake lists (same key = same label in every document). */
-export const ENCODING_FIELD_LABEL: Record<string, string> = Object.fromEntries(
-  DOC_TYPES.flatMap((t) => DOC_INFO[t].fields.map((f) => [f.key, `${f.label} (${f.tl})`])),
-);
+export const encodingFieldLabels = (lang: Lang = 'tl') =>
+  fieldLabels(
+    DOC_TYPES.flatMap((t) => DOC_INFO[t].fields),
+    lang,
+  );
+
+/** The Taglish labels. */
+export const ENCODING_FIELD_LABEL = encodingFieldLabels();
 
 // ---------- document data (what is printed on the paper) ----------
 
@@ -128,7 +140,10 @@ function seller(rng: Rng): Seller {
 /** The buyer / receiver: another company (never the seller itself) or a person. */
 function customer(rng: Rng, sellerName: string, companyShare: number): string {
   if (rng() >= companyShare) return fullName(rng);
-  return pick(rng, ph.companies.filter((c) => c !== sellerName));
+  return pick(
+    rng,
+    ph.companies.filter((c) => c !== sellerName),
+  );
 }
 
 function makeInvoice(rng: Rng): InvoiceDoc {

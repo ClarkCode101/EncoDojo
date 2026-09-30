@@ -17,16 +17,27 @@ import { intBetween, pick, type Rng } from '../../lib/random';
  * The two choices on the Numpad Practice page.
  * "mixed" uses the SAME difficulty as the Assessment, so practice = exam.
  */
-export const NUMPAD_MODES: Record<NumpadMode, { difficulty: Difficulty; label: string; description: string }> = {
+export const NUMPAD_MODES: Record<
+  NumpadMode,
+  { difficulty: Difficulty; label: string; description: string; en: { label: string; description: string } }
+> = {
   mixed: {
     difficulty: 6,
     label: 'Halo-halo (gaya ng Assessment)',
     description: 'Mahahabang numero, halaga na may sentimo at reference number, gaya mismo sa Assessment.',
+    en: {
+      label: 'Mixed (like the Assessment)',
+      description: 'Long numbers, amounts with centavos and reference numbers, exactly like the Assessment.',
+    },
   },
   beginner: {
     difficulty: 1,
     label: 'Pang-baguhan',
     description: 'Maiikling numero lang (hal. 482). Para masanay muna sa puwesto ng mga key sa numpad.',
+    en: {
+      label: 'Beginner',
+      description: 'Short numbers only (e.g. 482). To get used to where the numpad keys are first.',
+    },
   },
 };
 

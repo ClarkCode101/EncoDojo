@@ -11,16 +11,41 @@
 import { formatAmount, formatDate } from '../../lib/format';
 import { pick, type Rng } from '../../lib/random';
 
-/** The rules, as shown to the user above the document (Taglish). */
-export const ENCODING_RULES: { what: string; rule: string; example: string }[] = [
-  { what: 'Petsa', rule: 'Laging mm/dd/yyyy', example: 'Sept. 14, 2026 → 09/14/2026' },
-  { what: 'Halaga', rule: 'Walang ₱ at walang comma', example: '₱5,115.25 → 5115.25' },
-  { what: 'Pangalan at iba pa', rule: 'Eksaktong kopya', example: 'Ma. Luisa → Ma. Luisa' },
+/** The rules, as shown to the user above the document (Taglish; `en` = English). */
+export const ENCODING_RULES: { what: string; rule: string; example: string; en: { what: string; rule: string } }[] = [
+  {
+    what: 'Petsa',
+    rule: 'Laging mm/dd/yyyy',
+    example: 'Sept. 14, 2026 → 09/14/2026',
+    en: { what: 'Date', rule: 'Always mm/dd/yyyy' },
+  },
+  {
+    what: 'Halaga',
+    rule: 'Walang ₱ at walang comma',
+    example: '₱5,115.25 → 5115.25',
+    en: { what: 'Amount', rule: 'No ₱ and no commas' },
+  },
+  {
+    what: 'Pangalan at iba pa',
+    rule: 'Eksaktong kopya',
+    example: 'Ma. Luisa → Ma. Luisa',
+    en: { what: 'Names and the rest', rule: 'Exact copy' },
+  },
 ];
 
 const MONTHS_LONG = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 /** Common short forms in PH documents ("Sept." is more common here than "Sep."). */
 const MONTHS_SHORT = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'];

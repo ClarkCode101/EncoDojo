@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import { KeyboardIcon } from '../../components/icons';
 import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { Button, SegmentedPicker } from '../../components/ui';
+import { type T, useT } from '../../lib/i18n';
 import { makeRng, randomSeed } from '../../lib/random';
 import type { Session } from '../../lib/storage';
 import { removeSession, saveSession, useAppData } from '../../lib/useAppData';
@@ -22,7 +23,7 @@ import TypingRunner from './TypingRunner';
 const DURATIONS = [30, 60] as const;
 type Seconds = (typeof DURATIONS)[number];
 
-const durationLabel = (s: Seconds) => (s === 30 ? '30 segundo' : '1 minuto');
+const durationLabel = (s: Seconds, t: T) => (s === 30 ? t('30 segundo', '30 seconds') : t('1 minuto', '1 minute'));
 
 type Result = {
   session: Session;
@@ -33,6 +34,7 @@ type Result = {
 export default function TypingPage() {
   const data = useAppData();
   const { sound } = data.settings;
+  const t = useT();
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
@@ -92,15 +94,27 @@ export default function TypingPage() {
       <PracticeSetup
         icon={<KeyboardIcon className="h-8 w-8" />}
         title="Typing Practice"
-        description="Sanayin ang bilis at tamang pagta-type."
-        chooseTitle="Pumili ng tagal"
+        description={t('Sanayin ang bilis at tamang pagta-type.', 'Train your typing speed and accuracy.')}
+        chooseTitle={t('Pumili ng tagal', 'Choose how long')}
         choices={
-          <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
+          <SegmentedPicker
+            label={t('Gaano katagal?', 'How long?')}
+            options={DURATIONS}
+            value={seconds}
+            format={(s) => durationLabel(s, t)}
+            onChange={setSeconds}
+          />
         }
         howTo={[
-          'I-type ang text nang eksakto, pati malalaking titik, tuldok at comma.',
-          'Magsisimula ang oras sa unang letra na ita-type mo.',
-          'Bawat mali, sobra o nalaktawang letra ay isang mali. Puwedeng magbura gamit ang Backspace.',
+          t(
+            'I-type ang text nang eksakto, pati malalaking titik, tuldok at comma.',
+            'Type the text exactly, including capital letters, periods and commas.',
+          ),
+          t('Magsisimula ang oras sa unang letra na ita-type mo.', 'The timer starts at the first letter you type.'),
+          t(
+            'Bawat mali, sobra o nalaktawang letra ay isang mali. Puwedeng magbura gamit ang Backspace.',
+            'Every wrong, extra or skipped letter is one mistake. You can erase with Backspace.',
+          ),
         ]}
         onStart={() => setScreen('practice')}
       />
@@ -112,12 +126,12 @@ export default function TypingPage() {
       <PracticeHeader
         icon={<KeyboardIcon className="h-6 w-6" />}
         title="Typing Practice"
-        summary={durationLabel(seconds)}
+        summary={durationLabel(seconds, t)}
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
         actions={
           <Button variant="secondary" onClick={() => restart(true)}>
-            Ibang text
+            {t('Ibang text', 'New text')}
           </Button>
         }
       />

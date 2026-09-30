@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { accuracyPct, display, netWpm, wrongKeystrokes } from '../../lib/scoring';
+import { useT } from '../../lib/i18n';
 import { errorBeep } from '../../lib/sound';
 import { makeId, type Session } from '../../lib/storage';
 import { useCountdown } from '../../lib/useCountdown';
@@ -39,6 +40,7 @@ export default function TypingRunner({
   onStart?: () => void;
   onFinish: (session: Session, finishedEarly: boolean) => void;
 }) {
+  const t = useT();
   const [typed, setTyped] = useState('');
 
   // Line up the typed text with the passage (see alignTyping.ts).
@@ -113,9 +115,12 @@ export default function TypingRunner({
         stats={
           showLiveStats
             ? [
-                { label: 'Bilis (Net WPM)', value: timer.started ? display(netWpm(typed.length, alignment.errors, elapsed)) : '–' },
                 {
-                  label: 'Accuracy (tama)',
+                  label: t('Bilis (Net WPM)', 'Speed (Net WPM)'),
+                  value: timer.started ? display(netWpm(typed.length, alignment.errors, elapsed)) : '–',
+                },
+                {
+                  label: t('Accuracy (tama)', 'Accuracy'),
                   value: `${display(accuracyPct(alignment.correctChars, alignment.correctChars + alignment.errors))}%`,
                 },
               ]
@@ -129,7 +134,7 @@ export default function TypingRunner({
         <ColorLegend />
 
         <label htmlFor="typing-input" className="mb-2 mt-4 block text-lg font-bold text-stone-900">
-          Dito ka mag-type
+          {t('Dito ka mag-type', 'Type here')}
         </label>
         <textarea
           id="typing-input"
@@ -141,7 +146,7 @@ export default function TypingRunner({
           onKeyDown={(e) => {
             if (e.key === 'Enter') e.preventDefault();
           }}
-          placeholder="I-click dito at magsimulang mag-type…"
+          placeholder={t('I-click dito at magsimulang mag-type…', 'Click here and start typing…')}
           spellCheck={false}
           autoComplete="off"
           autoCorrect="off"
@@ -150,7 +155,7 @@ export default function TypingRunner({
           className="w-full rounded-lg border-[1.5px] border-stone-500 bg-white p-4 font-mono text-xl placeholder:text-stone-500 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
         />
         <div className="mt-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
-          <KeyTips tips={[{ key: 'Backspace', text: 'para magbura' }]} />
+          <KeyTips tips={[{ key: 'Backspace', text: t('para magbura', 'to erase') }]} />
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
               <EnTl en="Finish" tl="Tapusin na" />
@@ -164,22 +169,29 @@ export default function TypingRunner({
 
 /** Explains the colors used in the passage. */
 function ColorLegend() {
+  const t = useT();
   return (
-    <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-stone-700" aria-label="Kahulugan ng mga kulay">
+    <ul
+      className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-stone-700"
+      aria-label={t('Kahulugan ng mga kulay', 'What the colors mean')}
+    >
       <li>
-        <span className="rounded bg-yellow-200 px-1 font-mono underline decoration-2">a</span> = susunod na letra
+        <span className="rounded bg-yellow-200 px-1 font-mono underline decoration-2">a</span> ={' '}
+        {t('susunod na letra', 'next letter')}
       </li>
       <li>
-        <span className="font-mono text-stone-900">a</span> = tama
+        <span className="font-mono text-stone-900">a</span> = {t('tama', 'correct')}
       </li>
       <li>
-        <span className="rounded bg-red-200 px-1 font-mono text-red-800">a</span> = mali
+        <span className="rounded bg-red-200 px-1 font-mono text-red-800">a</span> = {t('mali', 'wrong')}
       </li>
       <li>
-        <span className="rounded bg-red-100 px-1 font-mono text-red-700 line-through">a</span> = nalaktawan
+        <span className="rounded bg-red-100 px-1 font-mono text-red-700 line-through">a</span> ={' '}
+        {t('nalaktawan', 'skipped')}
       </li>
       <li>
-        <span className="mx-px inline-block h-4 w-1 rounded-sm bg-red-600 align-middle" /> = sobrang letra
+        <span className="mx-px inline-block h-4 w-1 rounded-sm bg-red-600 align-middle" /> ={' '}
+        {t('sobrang letra', 'extra letter')}
       </li>
     </ul>
   );

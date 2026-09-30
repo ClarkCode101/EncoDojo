@@ -16,8 +16,10 @@ import type { EntryResult } from '../../components/entry/types';
 import { DocumentIcon } from '../../components/icons';
 import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { SegmentedPicker } from '../../components/ui';
+import { type T, useT } from '../../lib/i18n';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
+import { copyModeLabel } from '../copy/records';
 import { DOC_INFO, DOC_TYPES, type DocType } from './documents';
 import { encodingItems } from './encodingItems';
 import EncodingResults from './EncodingResults';
@@ -28,19 +30,21 @@ import { buildEncodingSession } from './scoreEncoding';
 const DURATIONS = [180, 300] as const;
 type Seconds = (typeof DURATIONS)[number];
 
-const durationLabel = (s: Seconds) => `${s / 60} minuto`;
+const durationLabel = (s: Seconds, t: T) => t(`${s / 60} minuto`, `${s / 60} minutes`);
 
 const MODES: CopyMode[] = ['sheet', 'form'];
-const MODE_LABEL: Record<CopyMode, string> = {
-  sheet: 'Spreadsheet (gaya ng Excel)',
-  form: 'Form (gaya ng hiring test)',
-};
 
 /** Spreadsheet column widths per document (the widest values get the most room). */
 const COLUMN_WIDTHS: Record<DocType, Record<string, string>> = {
   invoice: { invoiceNo: 'w-[18%]', date: 'w-[14%]', customer: 'w-[30%]', terms: 'w-[20%]' },
   delivery: { drNo: 'w-[18%]', date: 'w-[14%]', deliverTo: 'w-[24%]', address: 'w-[32%]' },
-  application: { lastName: 'w-[15%]', firstName: 'w-[18%]', birthDate: 'w-[14%]', address: 'w-[32%]', contactNo: 'w-[21%]' },
+  application: {
+    lastName: 'w-[15%]',
+    firstName: 'w-[18%]',
+    birthDate: 'w-[14%]',
+    address: 'w-[32%]',
+    contactNo: 'w-[21%]',
+  },
 };
 
 type Result = { session: Session; finishedEarly: boolean };
@@ -48,6 +52,7 @@ type Result = { session: Session; finishedEarly: boolean };
 export default function EncodingPage() {
   const data = useAppData();
   const { sound } = data.settings;
+  const t = useT();
   // Same layout setting as the Copy Test (default = spreadsheet).
   const mode: CopyMode = data.settings.copyMode ?? 'sheet';
 
@@ -105,7 +110,7 @@ export default function EncodingPage() {
     allowFinishEarly: true,
     sound,
     nextItem,
-    unit: 'dokumento',
+    unit: t('dokumento', 'document'),
     onStart: () => setRunning(true),
     onFinish: handleFinish,
   };
@@ -116,32 +121,53 @@ export default function EncodingPage() {
       <PracticeSetup
         icon={<DocumentIcon className="h-8 w-8" />}
         title="Document Encoding"
-        description="Basahin ang dokumento at i-encode ang mahahalagang detalye ayon sa patakaran."
-        chooseTitle="Pumili ng dokumento, kung saan mag-e-encode, at gaano katagal"
+        description={t(
+          'Basahin ang dokumento at i-encode ang mahahalagang detalye ayon sa patakaran.',
+          'Read the document and encode the key details by the rules.',
+        )}
+        chooseTitle={t(
+          'Pumili ng dokumento, kung saan mag-e-encode, at gaano katagal',
+          'Choose the document, where to encode, and how long',
+        )}
         choices={
           <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
             <SegmentedPicker
-              label="Anong dokumento?"
+              label={t('Anong dokumento?', 'Which document?')}
               options={DOC_TYPES}
               value={docType}
-              format={(t) => DOC_INFO[t].label}
+              format={(d) => DOC_INFO[d].label}
               onChange={setDocType}
             />
-            <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
             <SegmentedPicker
-              label="Saan ka mag-e-encode?"
+              label={t('Gaano katagal?', 'How long?')}
+              options={DURATIONS}
+              value={seconds}
+              format={(s) => durationLabel(s, t)}
+              onChange={setSeconds}
+            />
+            <SegmentedPicker
+              label={t('Saan ka mag-e-encode?', 'Where will you encode?')}
               options={MODES}
               value={mode}
-              format={(m) => MODE_LABEL[m]}
+              format={(m) => copyModeLabel(m, t)}
               onChange={(m) => updateSettings({ copyMode: m })}
             />
           </div>
         }
         howTo={[
-          `Hanapin sa dokumento ang 5 detalyeng hinihingi ng ${mode === 'form' ? 'form' : 'sheet'}. Hindi lahat ng nasa papel ay ie-encode.`,
+          t(
+            `Hanapin sa dokumento ang 5 detalyeng hinihingi ng ${mode === 'form' ? 'form' : 'sheet'}. Hindi lahat ng nasa papel ay ie-encode.`,
+            `Find the 5 details the ${mode === 'form' ? 'form' : 'sheet'} asks for on the document. Not everything on the paper is encoded.`,
+          ),
           mode === 'sheet'
-            ? 'Tab = susunod na cell. Enter sa dulo ng row = susunod na dokumento.'
-            : 'Tab = susunod na field. Enter sa huling field = ipasa ang dokumento.',
+            ? t(
+                'Tab = susunod na cell. Enter sa dulo ng row = susunod na dokumento.',
+                'Tab = next cell. Enter at the end of a row = next document.',
+              )
+            : t(
+                'Tab = susunod na field. Enter sa huling field = ipasa ang dokumento.',
+                'Tab = next field. Enter on the last field = submit the document.',
+              ),
         ]}
         extra={<EncodingRules />}
         onStart={() => setScreen('practice')}
@@ -154,7 +180,7 @@ export default function EncodingPage() {
       <PracticeHeader
         icon={<DocumentIcon className="h-6 w-6" />}
         title="Document Encoding"
-        summary={`${DOC_INFO[docType].label}, ${MODE_LABEL[mode]}, ${durationLabel(seconds)}`}
+        summary={`${DOC_INFO[docType].label}, ${copyModeLabel(mode, t)}, ${durationLabel(seconds, t)}`}
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />

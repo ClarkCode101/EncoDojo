@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display, entryAccuracyPct, isEntryCorrect, keystrokesForEntry, kph } from '../../lib/scoring';
+import { useT } from '../../lib/i18n';
 import { correctTick, errorBeep } from '../../lib/sound';
 import { useAppData } from '../../lib/useAppData';
 import { makeId, type Difficulty, type Session } from '../../lib/storage';
@@ -42,6 +43,7 @@ export default function NumpadRunner({
   onStart?: () => void;
   onFinish: (session: Session, finishedEarly: boolean) => void;
 }) {
+  const t = useT();
   // One random generator per run, kept in a ref so it survives re-renders.
   const rngRef = useRef(makeRng(randomSeed()));
   const [current, setCurrent] = useState(() => makeEntry(rngRef.current, difficulty));
@@ -63,22 +65,22 @@ export default function NumpadRunner({
       if (finishedRef.current) return; // never finish the same run twice
       finishedRef.current = true;
 
-      const t = tallyRef.current;
+      const done = tallyRef.current;
       const session: Session = {
         id: makeId(),
         type: 'numpad',
         startedAt: new Date(Date.now() - elapsedSec * 1000).toISOString(),
         durationSec: elapsedSec,
         metrics: {
-          kph: kph(t.keystrokes, elapsedSec),
-          entryAccuracy: entryAccuracyPct(t.correctEntries, t.entries),
-          entries: t.entries,
-          correctEntries: t.correctEntries,
-          keystrokes: t.keystrokes,
+          kph: kph(done.keystrokes, elapsedSec),
+          entryAccuracy: entryAccuracyPct(done.correctEntries, done.entries),
+          entries: done.entries,
+          correctEntries: done.correctEntries,
+          keystrokes: done.keystrokes,
           seconds,
           difficulty,
         },
-        mistakes: t.wrong,
+        mistakes: done.wrong,
       };
       onFinishRef.current(session, finishedEarly);
     },
@@ -96,11 +98,11 @@ export default function NumpadRunner({
     if (!correct && sound) errorBeep();
     if (correct && soundCorrect) correctTick();
 
-    setTally((t) => ({
-      entries: t.entries + 1,
-      correctEntries: t.correctEntries + (correct ? 1 : 0),
-      keystrokes: t.keystrokes + keystrokesForEntry(current, input),
-      wrong: correct ? t.wrong : [...t.wrong, { expected: current, typed: input, index: t.entries + 1 }],
+    setTally((prev) => ({
+      entries: prev.entries + 1,
+      correctEntries: prev.correctEntries + (correct ? 1 : 0),
+      keystrokes: prev.keystrokes + keystrokesForEntry(current, input),
+      wrong: correct ? prev.wrong : [...prev.wrong, { expected: current, typed: input, index: prev.entries + 1 }],
     }));
     setLastWasCorrect(correct);
     setCurrent(makeEntry(rngRef.current, difficulty));
@@ -115,14 +117,17 @@ export default function NumpadRunner({
         seconds={timer.remainingSec}
         started={timer.started}
         stats={[
-          { label: 'Natapos', value: tally.entries },
+          { label: t('Natapos', 'Done'), value: tally.entries },
           ...(showLiveStats
             ? [
                 {
-                  label: 'Bilis (KPH)',
+                  label: t('Bilis (KPH)', 'Speed (KPH)'),
                   value: timer.started ? display(kph(tally.keystrokes, elapsed)).toLocaleString() : '–',
                 },
-                { label: 'Tamang numero', value: `${display(entryAccuracyPct(tally.correctEntries, tally.entries))}%` },
+                {
+                  label: t('Tamang numero', 'Correct numbers'),
+                  value: `${display(entryAccuracyPct(tally.correctEntries, tally.entries))}%`,
+                },
               ]
             : []),
         ]}
@@ -131,7 +136,9 @@ export default function NumpadRunner({
       {/* No box around the drill: the number is shown on a small sheet of paper. */}
       <div>
         <div className="rounded-md border border-stone-200 bg-white py-5 text-center shadow-paper">
-          <div className="text-lg font-semibold text-stone-700">I-type ang numerong ito:</div>
+          <div className="text-lg font-semibold text-stone-700">
+            {t('I-type ang numerong ito:', 'Type this number:')}
+          </div>
           <div
             className="numpad-number mt-2 select-none font-mono text-6xl font-bold tabular-nums tracking-wide text-stone-900"
             aria-live="polite"
@@ -148,7 +155,7 @@ export default function NumpadRunner({
           }}
         >
           <label htmlFor="numpad-input" className="mb-2 block text-lg font-bold text-stone-900">
-            Dito ka mag-type
+            {t('Dito ka mag-type', 'Type here')}
           </label>
           <input
             id="numpad-input"
@@ -167,18 +174,25 @@ export default function NumpadRunner({
             }}
             onPaste={(e) => e.preventDefault()}
             onDrop={(e) => e.preventDefault()}
-            placeholder="I-type dito…"
+            placeholder={t('I-type dito…', 'Type here…')}
             className="w-full rounded-lg border-[1.5px] border-stone-500 bg-white p-3 text-center font-mono text-4xl tabular-nums placeholder:text-2xl placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
           />
           <div className="mt-3 flex justify-center">
-            <KeyTips tips={[{ key: 'Enter', text: 'pagkatapos ng bawat numero' }, { text: 'Walang comma (,)' }]} />
+            <KeyTips
+              tips={[
+                { key: 'Enter', text: t('pagkatapos ng bawat numero', 'after each number') },
+                { text: t('Walang comma (,)', 'No commas (,)') },
+              ]}
+            />
           </div>
         </form>
 
         <div className="mt-2 flex min-h-11 flex-wrap items-center justify-between gap-3">
           <span role="status" className="text-lg font-bold">
-            {lastWasCorrect === true && <span className="text-green-800">✓ Tama!</span>}
-            {lastWasCorrect === false && <span className="text-red-700">✗ Mali ang huli</span>}
+            {lastWasCorrect === true && <span className="text-green-800">✓ {t('Tama!', 'Correct!')}</span>}
+            {lastWasCorrect === false && (
+              <span className="text-red-700">✗ {t('Mali ang huli', 'The last one was wrong')}</span>
+            )}
           </span>
           {allowFinishEarly && timer.started && (
             <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>

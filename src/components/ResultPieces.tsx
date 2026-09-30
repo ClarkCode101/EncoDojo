@@ -2,7 +2,8 @@
  * Pieces shared by the results screens (Typing, Numpad, Assessment).
  */
 import { display } from '../lib/scoring';
-import { KPH_LEVELS, kphLevel } from '../lib/targets';
+import { useLang, useT } from '../lib/i18n';
+import { KPH_LEVELS, kphLevel, type KphLevel } from '../lib/targets';
 import type { ReactNode } from 'react';
 import { CheckIcon, XIcon } from './icons';
 import { Button } from './ui';
@@ -24,9 +25,10 @@ export function ResultSummary({
   /** The main buttons (e.g. "Ulitin"). */
   children: ReactNode;
 }) {
+  const t = useT();
   return (
     <section
-      aria-label="Buod ng resulta"
+      aria-label={t('Buod ng resulta', 'Result summary')}
       className={
         'mb-6 rounded-r-lg border-l-4 py-5 pl-6 pr-5 ' +
         (ready ? 'border-green-600 bg-green-50' : 'border-brand-700 bg-white')
@@ -53,15 +55,18 @@ export function SaveBanner({
   finishedEarly: boolean;
   onToggle: () => void;
 }) {
-  let message = 'HINDI naka-save ang resultang ito.';
-  let button = 'I-save ulit';
+  const t = useT();
+  let message = t('HINDI naka-save ang resultang ito.', 'This result is NOT saved.');
+  let button = t('I-save ulit', 'Save it again');
   if (saved) {
-    message = '✓ Na-save sa progress mo.';
-    button = 'Huwag i-save';
+    message = t('✓ Na-save sa progress mo.', '✓ Saved to your progress.');
+    button = t('Huwag i-save', "Don't save this");
   } else if (finishedEarly) {
-    message =
-      'Tinapos mo nang maaga, kaya HINDI ito na-save. (Kapag maikli ang oras, lalabas na mas mabilis ka kaysa sa totoo.)';
-    button = 'I-save pa rin';
+    message = t(
+      'Tinapos mo nang maaga, kaya HINDI ito na-save. (Kapag maikli ang oras, lalabas na mas mabilis ka kaysa sa totoo.)',
+      'You finished early, so this was NOT saved. (A short run makes you look faster than you really are.)',
+    );
+    button = t('I-save pa rin', 'Save anyway');
   }
 
   return (
@@ -85,6 +90,9 @@ export function SaveBanner({
  * a plain sentence first, then a bar with a marker, then the list of levels.
  */
 export function KphLevels({ kph }: { kph: number }) {
+  const lang = useLang();
+  const t = useT();
+  const label = (level: KphLevel) => (lang === 'en' ? level.en.label : level.label);
   const score = display(kph);
   const { reached, next } = kphLevel(kph);
   const top = KPH_LEVELS[KPH_LEVELS.length - 1].min;
@@ -94,14 +102,15 @@ export function KphLevels({ kph }: { kph: number }) {
   return (
     <div>
       <p className="text-lg text-stone-900">
-        Antas mo: <strong>{reached ? reached.label : 'Hindi pa pasado'}</strong>
+        {t('Antas mo', 'Your level')}:{' '}
+        <strong>{reached ? label(reached) : t('Hindi pa pasado', 'Not passed yet')}</strong>
         {next && (
           <span className="text-stone-700">
             {' '}
-            ({(next.min - score).toLocaleString()} KPH pa para sa &quot;{next.label}&quot;)
+            ({(next.min - score).toLocaleString()} {t('KPH pa para sa', 'more KPH for')} &quot;{label(next)}&quot;)
           </span>
         )}
-        {!next && <span className="text-stone-700">, ang pinakamataas na antas.</span>}
+        {!next && <span className="text-stone-700">{t(', ang pinakamataas na antas.', ', the highest level.')}</span>}
       </p>
 
       {/* The bar is only a picture of the sentence above, so screen readers skip it. */}
@@ -145,9 +154,11 @@ export function KphLevels({ kph }: { kph: number }) {
                 )}
               </span>
               <span className="w-20 font-bold tabular-nums">{level.min.toLocaleString()}</span>
-              <span className="font-semibold text-stone-900">{level.label}</span>
-              <span className="text-sm text-stone-600">{level.description}</span>
-              <span className="sr-only">{done ? 'naabot mo na' : 'hindi pa naaabot'}</span>
+              <span className="font-semibold text-stone-900">{label(level)}</span>
+              <span className="text-sm text-stone-600">{lang === 'en' ? level.en.description : level.description}</span>
+              <span className="sr-only">
+                {done ? t('naabot mo na', 'reached') : t('hindi pa naaabot', 'not reached yet')}
+              </span>
             </li>
           );
         })}
@@ -161,6 +172,7 @@ export function KphLevels({ kph }: { kph: number }) {
  * It "lands" with a short animation (skipped if the user prefers less motion).
  */
 export function Stamp({ passed }: { passed: boolean }) {
+  const t = useT();
   return (
     <div
       aria-hidden="true"
@@ -170,7 +182,7 @@ export function Stamp({ passed }: { passed: boolean }) {
         (passed ? 'border-green-700 text-green-700' : 'border-amber-700 text-amber-700')
       }
     >
-      {passed ? 'PASADO' : 'HINDI PA'}
+      {passed ? t('PASADO', 'PASSED') : t('HINDI PA', 'NOT YET')}
     </div>
   );
 }
@@ -187,6 +199,7 @@ export function TargetRow({
   target: number;
   unit?: string;
 }) {
+  const t = useT();
   const pass = display(value) >= target;
   return (
     <li className={'flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-stone-200 px-1 py-2 last:border-b-0'}>
@@ -200,10 +213,10 @@ export function TargetRow({
       </span>
       <span className="text-stone-600">
         / {target.toLocaleString()}
-        {unit} ang kailangan
+        {unit} {t('ang kailangan', 'needed')}
       </span>
       <span className={`ml-auto text-sm font-semibold ${pass ? 'text-green-800' : 'text-red-700'}`}>
-        {pass ? 'Pasado' : 'Hindi pa'}
+        {pass ? t('Pasado', 'Passed') : t('Hindi pa', 'Not yet')}
       </span>
     </li>
   );

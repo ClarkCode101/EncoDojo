@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckIcon, XIcon } from '../../components/icons';
 import { Button, EnTl, Kbd, KeyTips, LiveStatsBar } from '../../components/ui';
+import { useT } from '../../lib/i18n';
 import { makeRng, randomSeed } from '../../lib/random';
 import { display } from '../../lib/scoring';
 import { correctTick, errorBeep } from '../../lib/sound';
@@ -38,6 +39,7 @@ export default function QcRunner({
   onStart?: () => void;
   onFinish: (session: Session, finishedEarly: boolean) => void;
 }) {
+  const t = useT();
   const rngRef = useRef(makeRng(randomSeed()));
   const [item, setItem] = useState(() => makeQcItem(rngRef.current));
   const [flagged, setFlagged] = useState<FieldKey[]>([]);
@@ -127,11 +129,17 @@ export default function QcRunner({
         seconds={timer.remainingSec}
         started={timer.started}
         stats={[
-          { label: 'Na-check', value: checked.length },
+          { label: t('Na-check', 'Checked'), value: checked.length },
           ...(showLiveStats
             ? [
-                { label: 'Tamang check', value: checked.length ? `${display(live.decisionAccuracy)}%` : '–' },
-                { label: 'Bilis (bawat minuto)', value: timer.started ? display(live.perMinute) : '–' },
+                {
+                  label: t('Tamang check', 'Correct checks'),
+                  value: checked.length ? `${display(live.decisionAccuracy)}%` : '–',
+                },
+                {
+                  label: t('Bilis (bawat minuto)', 'Speed (per minute)'),
+                  value: timer.started ? display(live.perMinute) : '–',
+                },
               ]
             : []),
         ]}
@@ -144,14 +152,17 @@ export default function QcRunner({
             <span className="font-display text-lg font-bold text-stone-900">Record #{checked.length + 1}</span>
             <span role="status" className="font-bold">
               {last && last.missed === 0 && last.falseAlarms === 0 && (
-                <span className="text-green-800">✓ #{last.n}: tama ang check mo</span>
+                <span className="text-green-800">
+                  ✓ #{last.n}: {t('tama ang check mo', 'you checked it right')}
+                </span>
               )}
               {last && (last.missed > 0 || last.falseAlarms > 0) && (
                 <span className="text-red-700">
                   ✗ #{last.n}:{' '}
                   {[
-                    last.missed > 0 && `${last.missed} mali ang hindi napansin`,
-                    last.falseAlarms > 0 && `${last.falseAlarms} tama ang minarkahang mali`,
+                    last.missed > 0 && t(`${last.missed} mali ang hindi napansin`, `${last.missed} missed`),
+                    last.falseAlarms > 0 &&
+                      t(`${last.falseAlarms} tama ang minarkahang mali`, `${last.falseAlarms} correct marked wrong`),
                   ]
                     .filter(Boolean)
                     .join(', ')}
@@ -162,8 +173,8 @@ export default function QcRunner({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <KeyTips
               tips={[
-                { key: '1–5', text: 'markahan ang field' },
-                { key: 'Enter', text: 'ipasa' },
+                { key: '1–5', text: t('markahan ang field', 'mark the field') },
+                { key: 'Enter', text: t('ipasa', 'submit') },
               ]}
             />
             {allowFinishEarly && timer.started && (
@@ -178,7 +189,10 @@ export default function QcRunner({
         <div className="min-h-0 overflow-y-auto rounded-md border border-stone-300 bg-white shadow-paper">
           <table className="w-full table-fixed border-collapse text-left">
             <caption className="sr-only">
-              Ihambing ang Original at ang Encoded. Markahan ang mga field na magkaiba.
+              {t(
+                'Ihambing ang Original at ang Encoded. Markahan ang mga field na magkaiba.',
+                'Compare the Original and the Encoded. Mark the fields that differ.',
+              )}
             </caption>
             <thead className="bg-stone-100 text-sm text-stone-700">
               <tr>
@@ -221,7 +235,11 @@ export default function QcRunner({
                       <button
                         type="button"
                         aria-pressed={marked}
-                        aria-label={`${f.label}: ${marked ? 'may mali (pindutin para alisin)' : 'markahan na may mali'}`}
+                        aria-label={`${f.label}: ${
+                          marked
+                            ? t('may mali (pindutin para alisin)', 'has an error (press to remove)')
+                            : t('markahan na may mali', 'mark as an error')
+                        }`}
                         // A mouse click must not move the focus here, so Enter still means "ipasa".
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={(e) => {
@@ -237,7 +255,7 @@ export default function QcRunner({
                         }
                       >
                         {marked ? <XIcon className="h-4 w-4" /> : <CheckIcon className="h-4 w-4" />}
-                        {marked ? 'May mali' : 'Tama'}
+                        {marked ? t('May mali', 'Error') : t('Tama', 'Correct')}
                       </button>
                     </td>
                   </tr>
@@ -253,8 +271,11 @@ export default function QcRunner({
           </Button>
           <span className="text-stone-600">
             {flagged.length === 0
-              ? 'Walang minarkahan = walang mali ang record na ito.'
-              : `${flagged.length} field ang minarkahan mong may mali.`}
+              ? t('Walang minarkahan = walang mali ang record na ito.', 'Nothing marked = this record has no mistakes.')
+              : t(
+                  `${flagged.length} field ang minarkahan mong may mali.`,
+                  `You marked ${flagged.length} field${flagged.length === 1 ? '' : 's'} as wrong.`,
+                )}
           </span>
         </div>
       </div>

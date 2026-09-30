@@ -12,8 +12,9 @@
  * Enter (before that it only counts toward speed).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '../../lib/fieldScoring';
+import { hintOf, isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '../../lib/fieldScoring';
 import { display } from '../../lib/scoring';
+import { useLang, useT } from '../../lib/i18n';
 import { correctTick, errorBeep } from '../../lib/sound';
 import { useAppData } from '../../lib/useAppData';
 import { useCountdown } from '../../lib/useCountdown';
@@ -52,6 +53,8 @@ export default function EntrySheetRunner({
   /** Tall sources (documents) scroll inside a box so the sheet stays in view. */
   scrollSource?: boolean;
 }) {
+  const lang = useLang();
+  const t = useT();
   // items[i] is the source for rows[i]. The LAST one is the row being typed.
   const [items, setItems] = useState<EntryItem[]>(() => [nextItem(0)]);
   const [rows, setRows] = useState<Values[]>(() => [emptyValues(items[0].fields)]);
@@ -125,11 +128,14 @@ export default function EntrySheetRunner({
         seconds={timer.remainingSec}
         started={timer.started}
         stats={[
-          { label: 'Natapos', value: submitted.length },
+          { label: t('Natapos', 'Done'), value: submitted.length },
           ...(showLiveStats
             ? [
-                { label: 'Bilis (KPH)', value: timer.started ? display(live.kph).toLocaleString() : '–' },
-                { label: 'Tamang field', value: `${display(live.fieldAccuracy)}%` },
+                {
+                  label: t('Bilis (KPH)', 'Speed (KPH)'),
+                  value: timer.started ? display(live.kph).toLocaleString() : '–',
+                },
+                { label: t('Tamang field', 'Correct fields'), value: `${display(live.fieldAccuracy)}%` },
               ]
             : []),
         ]}
@@ -146,23 +152,31 @@ export default function EntrySheetRunner({
               <span className="font-display text-lg font-bold text-stone-900">
                 {current.title} #{items.length}
               </span>
-              <span className="ml-2 text-stone-700">i-type sa row {excelRow(items.length - 1)}</span>
+              <span className="ml-2 text-stone-700">
+                {t('i-type sa row', 'type in row')} {excelRow(items.length - 1)}
+              </span>
             </span>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
               <span role="status" className="font-bold">
                 {message?.wrong === 0 && (
-                  <span className="text-green-800">✓ Row {excelRow(message.row)}: lahat tama!</span>
+                  <span className="text-green-800">
+                    ✓ Row {excelRow(message.row)}: {t('lahat tama!', 'all correct!')}
+                  </span>
                 )}
                 {message && message.wrong > 0 && (
                   <span className="text-red-700">
-                    ✗ Row {excelRow(message.row)}: {message.wrong} cell ang mali
+                    ✗ Row {excelRow(message.row)}:{' '}
+                    {t(
+                      `${message.wrong} cell ang mali`,
+                      `${message.wrong} wrong cell${message.wrong === 1 ? '' : 's'}`,
+                    )}
                   </span>
                 )}
               </span>
               <KeyTips
                 tips={[
-                  { key: 'Tab', text: 'susunod na cell' },
-                  { key: 'Enter', text: 'susunod na row' },
+                  { key: 'Tab', text: t('susunod na cell', 'next cell') },
+                  { key: 'Enter', text: t('susunod na row', 'next row') },
                 ]}
               />
               {allowFinishEarly && timer.started && (
@@ -172,7 +186,9 @@ export default function EntrySheetRunner({
               )}
             </div>
           </div>
-          <div className={`source-zoom min-h-[6rem] shrink overflow-y-auto rounded-sm ${scrollSource ? 'max-h-[28rem]' : ''}`}>
+          <div
+            className={`source-zoom min-h-[6rem] shrink overflow-y-auto rounded-sm ${scrollSource ? 'max-h-[28rem]' : ''}`}
+          >
             {current.source}
           </div>
         </section>
@@ -181,7 +197,9 @@ export default function EntrySheetRunner({
         {/* Like Excel: the header rows stay put and the rows scroll inside the sheet. */}
         <div className="mt-3 max-h-[16rem] shrink-0 overflow-auto rounded-md border border-stone-300">
           <table className="w-full min-w-[52rem] table-fixed border-collapse text-left font-mono text-[0.95rem]">
-            <caption className="sr-only">Spreadsheet: isang row bawat {unit}</caption>
+            <caption className="sr-only">
+              {t(`Spreadsheet: isang row bawat ${unit}`, `Spreadsheet: one row per ${unit}`)}
+            </caption>
             <thead className="sticky top-0 z-[1]">
               {/* Column letters, like Excel */}
               <tr className="bg-stone-100 text-center text-xs font-semibold text-stone-500">
@@ -213,7 +231,7 @@ export default function EntrySheetRunner({
                     {/* The format to use, like in the form (e.g. mm/dd/yyyy). */}
                     {f.hint && (
                       <div className="mt-1 inline-block rounded bg-belt-100 px-1.5 text-xs font-semibold text-stone-900">
-                        {f.hint}
+                        {hintOf(f, lang)}
                       </div>
                     )}
                   </th>

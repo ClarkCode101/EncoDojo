@@ -15,11 +15,26 @@
  *   and accuracy.
  */
 import { alignTyping } from './alignTyping';
+import type { Lang } from './i18n';
 import { accuracyPct, grossWpm, kph, netWpm } from './scoring';
 import type { SessionMistake } from './storage';
 
-/** One form field / spreadsheet column. `label` is English, `tl` its Taglish meaning. */
-export type FieldSpec = { key: string; label: string; tl: string; hint?: string };
+/**
+ * One form field / spreadsheet column. `label` is English, `tl` its Taglish meaning.
+ * `hint` is the format (e.g. mm/dd/yyyy); `hintEn` only when the hint has words to translate.
+ */
+export type FieldSpec = { key: string; label: string; tl: string; hint?: string; hintEn?: string };
+
+/** The format hint in a language. */
+export const hintOf = (f: FieldSpec, lang: Lang) => (lang === 'en' ? (f.hintEn ?? f.hint) : f.hint);
+
+/**
+ * Field key -> name for mistake lists: "Date (Petsa)" in Taglish, "Date" in English.
+ * Same key = same label in every document.
+ */
+export function fieldLabels(fields: readonly FieldSpec[], lang: Lang = 'tl'): Record<string, string> {
+  return Object.fromEntries(fields.map((f) => [f.key, lang === 'en' ? f.label : `${f.label} (${f.tl})`]));
+}
 
 export type Values = Record<string, string>;
 

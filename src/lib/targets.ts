@@ -64,7 +64,8 @@ export const JOB_READY_EXCEL = {
   shortcutRate: 75,
 } as const;
 
-export type KphLevel = { min: number; label: string; description: string };
+/** `label` and `description` are Taglish; `en` holds the English ones. */
+export type KphLevel = { min: number; label: string; description: string; en: { label: string; description: string } };
 
 /**
  * KPH levels shown on the results, lowest first. The first one is the
@@ -76,9 +77,20 @@ export const KPH_LEVELS: KphLevel[] = [
     min: JOB_READY_NUMPAD.kph,
     label: 'Pasado (entry-level)',
     description: 'Minimum para sa entry-level na data entry.',
+    en: { label: 'Passed (entry-level)', description: 'The minimum for entry-level data entry.' },
   },
-  { min: 10000, label: 'Karaniwang hinihingi', description: 'Ito ang madalas hinihingi ng maraming employer.' },
-  { min: 12000, label: 'Magaling', description: 'Pang-mas mahigpit na trabaho, gaya ng billing at banking.' },
+  {
+    min: 10000,
+    label: 'Karaniwang hinihingi',
+    description: 'Ito ang madalas hinihingi ng maraming employer.',
+    en: { label: 'Usually required', description: 'What many employers usually ask for.' },
+  },
+  {
+    min: 12000,
+    label: 'Magaling',
+    description: 'Pang-mas mahigpit na trabaho, gaya ng billing at banking.',
+    en: { label: 'Strong', description: 'For stricter jobs, like billing and banking.' },
+  },
 ];
 
 /**

@@ -1,7 +1,9 @@
 /**
- * Plain-language (Taglish) explanations of every number the app shows.
- * Used by the "Ano ito?" buttons so every screen explains things the same way.
+ * Plain-language explanations of every number the app shows, in Taglish (`HELP`)
+ * and English (`HELP_EN`). Used by the "Ano ito?" buttons so every screen explains
+ * things the same way. Components use `useHelp()` to get the user's language.
  */
+import { type Lang, useLang } from './i18n';
 import { JOB_READY_COPY, JOB_READY_ENCODING, JOB_READY_NUMPAD, JOB_READY_QC, JOB_READY_TYPING } from './targets';
 
 const kph = JOB_READY_NUMPAD.kph.toLocaleString('en-US');
@@ -52,4 +54,62 @@ export const HELP = {
   numpad:
     'Ang numpad ay ang mga number key sa KANAN ng keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +
     'Siguraduhing naka-ON ang Num Lock. Kung laptop na walang numpad, puwede ang number keys sa itaas.',
-} as const;
+};
+
+export type HelpTexts = Record<keyof typeof HELP, string>;
+
+export const HELP_EN: HelpTexts = {
+  netWpm:
+    `Net WPM = how many words per minute you typed, minus the mistakes. ` +
+    `This is what hiring tests usually look at. The target is ${JOB_READY_TYPING.netWpm} or more.`,
+  grossWpm: 'Gross WPM = your speed including the mistakes. It is always the same as or higher than Net WPM.',
+  accuracy: `Accuracy = what percent of what you typed is correct in the end. The target is ${JOB_READY_TYPING.accuracy}% or more.`,
+  keystrokeAccuracy:
+    'Keystroke accuracy = what percent of all the keys you pressed were right the first time. ' +
+    'It counts the mistakes you erased with Backspace too. If it is far below Accuracy, you erase a lot.',
+  kph:
+    `KPH (keystrokes per hour) = how many correct numpad keys you can press in one hour. ` +
+    `The target is ${kph} or more.`,
+  kphLevels:
+    'These are the commonly quoted standards for 10-key / numpad data entry: about 8,000 KPH for ' +
+    'entry-level, 10,000 is often required, and 12,000 or more for stricter jobs. ' +
+    'This is only a guide. Every employer is different, so always check the job post itself. ' +
+    'The practice here is shorter (1 minute) than a usual test, so look at the average of a few tries.',
+  entryAccuracy: `Entry accuracy = what percent of the numbers are fully correct. The target is ${JOB_READY_NUMPAD.entryAccuracy}% or more.`,
+  fieldAccuracy:
+    `Field accuracy = what percent of the fields (name, date, address, ID) are EXACTLY right. ` +
+    `Even one wrong letter, period, or space makes the whole field wrong. That's how real encoding works. ` +
+    `The target is ${JOB_READY_COPY.fieldAccuracy}% or more.`,
+  copyKph:
+    `Copying speed (net KPH) = correct keystrokes per hour, minus the mistakes. ` +
+    `The target is ${JOB_READY_COPY.kph.toLocaleString('en-US')} or more. This is the usual minimum in employers' "alphanumeric data entry tests".`,
+  copyWpm:
+    'Net WPM here is only for comparing with Typing Practice. KPH is the target in the Copy Test. ' +
+    'Names, addresses, and IDs really are slower to type than ordinary sentences.',
+  encodingKph:
+    `Encoding speed (net KPH) = correct keystrokes per hour, minus the mistakes. ` +
+    `The target is ${JOB_READY_ENCODING.kph.toLocaleString('en-US')} or more, lower than the Copy Test because you first have to ` +
+    `FIND the right value on the document and convert the date and amount. This is an EncoDojo estimate (there is no single standard).`,
+  encodingRules:
+    'At work, dates and amounts look different on every document, but the system or spreadsheet uses ONE format. ' +
+    'So convert before you type: date → mm/dd/yyyy, amount → numbers only (no ₱ and no commas).',
+  qcAccuracy:
+    'Correct checks = for every field of every record, was your decision right ("has a mistake" or "correct")? ' +
+    'It goes down when you miss a mistake, and when you mark a correct field as wrong. ' +
+    `The target is ${JOB_READY_QC.decisionAccuracy}% or more.`,
+  qcSpeed:
+    `Speed = how many records you checked per minute. The target is ${JOB_READY_QC.perMinute} or more ` +
+    '(about 20 seconds per record). This is an EncoDojo estimate (there is no single standard).',
+  streak: 'How many days in a row you have practiced. Even a few minutes a day helps a lot!',
+  numpad:
+    'The numpad is the number keys on the RIGHT of the keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +
+    'Make sure Num Lock is ON. On a laptop without a numpad, the number keys at the top work too.',
+};
+
+/** The explanations in a language. */
+export const helpFor = (lang: Lang): HelpTexts => (lang === 'en' ? HELP_EN : HELP);
+
+/** The explanations in the user's language (React). */
+export function useHelp(): HelpTexts {
+  return helpFor(useLang());
+}

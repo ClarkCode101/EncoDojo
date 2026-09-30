@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { NumpadIcon } from '../../components/icons';
 import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { HelpTip, SegmentedPicker } from '../../components/ui';
-import { HELP } from '../../lib/glossary';
+import { useHelp } from '../../lib/glossary';
+import { type T, useLang, useT } from '../../lib/i18n';
 import type { NumpadMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import NumpadResults from './NumpadResults';
@@ -17,7 +18,7 @@ import { NUMPAD_MODES } from './entries';
 const DURATIONS = [30, 60] as const;
 type Seconds = (typeof DURATIONS)[number];
 
-const durationLabel = (s: Seconds) => (s === 30 ? '30 segundo' : '1 minuto');
+const durationLabel = (s: Seconds, t: T) => (s === 30 ? t('30 segundo', '30 seconds') : t('1 minuto', '1 minute'));
 
 const MODES: NumpadMode[] = ['mixed', 'beginner'];
 
@@ -27,6 +28,10 @@ export default function NumpadPage() {
   const data = useAppData();
   const { numpadMode: mode, sound } = data.settings;
   const difficulty = NUMPAD_MODES[mode].difficulty;
+  const lang = useLang();
+  const t = useT();
+  const help = useHelp();
+  const modeText = (m: NumpadMode) => (lang === 'en' ? NUMPAD_MODES[m].en : NUMPAD_MODES[m]);
 
   const [seconds, setSeconds] = useState<Seconds>(60);
   const [screen, setScreen] = useState<'setup' | 'practice'>('setup');
@@ -76,32 +81,48 @@ export default function NumpadPage() {
       <PracticeSetup
         icon={<NumpadIcon className="h-8 w-8" />}
         title="Numpad Practice"
-        description="Sanayin ang pag-type ng mga numero gamit ang numpad."
-        chooseTitle="Pumili ng klase ng numero at tagal"
+        description={t('Sanayin ang pag-type ng mga numero gamit ang numpad.', 'Train typing numbers on the numpad.')}
+        chooseTitle={t('Pumili ng klase ng numero at tagal', 'Choose the kind of numbers and how long')}
         choices={
           <>
             <div className="flex flex-wrap items-end gap-6">
               <SegmentedPicker
-                label="Anong klase ng numero?"
+                label={t('Anong klase ng numero?', 'What kind of numbers?')}
                 options={MODES}
                 value={mode}
-                format={(m) => NUMPAD_MODES[m].label}
+                format={(m) => modeText(m).label}
                 onChange={(m) => updateSettings({ numpadMode: m })}
               />
-              <SegmentedPicker label="Gaano katagal?" options={DURATIONS} value={seconds} format={durationLabel} onChange={setSeconds} />
+              <SegmentedPicker
+                label={t('Gaano katagal?', 'How long?')}
+                options={DURATIONS}
+                value={seconds}
+                format={(s) => durationLabel(s, t)}
+                onChange={setSeconds}
+              />
             </div>
             <p className="mt-3 text-stone-700">
-              {NUMPAD_MODES[mode].description}
-              {mode === 'beginner' && ' Hindi ito kasama sa "Pinakamabilis na numpad" sa Home.'}
+              {modeText(mode).description}
+              {mode === 'beginner' &&
+                t(
+                  ' Hindi ito kasama sa "Pinakamabilis na numpad" sa Home.',
+                  ' It does not count for "Fastest numpad" on Home.',
+                )}
             </p>
           </>
         }
         howTo={[
-          'I-ON ang Num Lock at ilagay ang mga daliri sa 4-5-6 ng numpad.',
-          'I-type ang numerong lalabas at pindutin ang Enter. Hindi kailangan ang comma.',
-          'Magsisimula ang oras sa unang numero na ita-type mo.',
+          t(
+            'I-ON ang Num Lock at ilagay ang mga daliri sa 4-5-6 ng numpad.',
+            'Turn ON Num Lock and rest your fingers on 4-5-6 of the numpad.',
+          ),
+          t(
+            'I-type ang numerong lalabas at pindutin ang Enter. Hindi kailangan ang comma.',
+            'Type the number you see and press Enter. No commas needed.',
+          ),
+          t('Magsisimula ang oras sa unang numero na ita-type mo.', 'The timer starts at the first number you type.'),
         ]}
-        extra={<HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>}
+        extra={<HelpTip label={t('Nasaan ang numpad?', 'Where is the numpad?')}>{help.numpad}</HelpTip>}
         onStart={() => setScreen('practice')}
       />
     );
@@ -112,7 +133,7 @@ export default function NumpadPage() {
       <PracticeHeader
         icon={<NumpadIcon className="h-6 w-6" />}
         title="Numpad Practice"
-        summary={`${NUMPAD_MODES[mode].label}, ${durationLabel(seconds)}`}
+        summary={`${modeText(mode).label}, ${durationLabel(seconds, t)}`}
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />

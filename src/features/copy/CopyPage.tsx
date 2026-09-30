@@ -12,29 +12,28 @@ import { useState } from 'react';
 import { CopyIcon } from '../../components/icons';
 import { PracticeFrame, PracticeHeader, PracticeSetup } from '../../components/Practice';
 import { SegmentedPicker } from '../../components/ui';
+import { type T, useT } from '../../lib/i18n';
 import type { CopyMode, Session } from '../../lib/storage';
 import { removeSession, saveSession, updateSettings, useAppData } from '../../lib/useAppData';
 import CopyResults from './CopyResults';
 import CopyRunner from './CopyRunner';
+import { copyModeLabel } from './records';
 
 /** A record takes about 20-40 seconds, so 30 seconds would be too short. */
 const DURATIONS = [60, 120] as const;
 type Seconds = (typeof DURATIONS)[number];
 
-const durationLabel = (s: Seconds) => (s === 60 ? '1 minuto' : '2 minuto');
+const durationLabel = (s: Seconds, t: T) => (s === 60 ? t('1 minuto', '1 minute') : t('2 minuto', '2 minutes'));
 
 /** Spreadsheet first: it's the default, since most encoder jobs use Excel / Google Sheets. */
 const MODES: CopyMode[] = ['sheet', 'form'];
-const MODE_LABEL: Record<CopyMode, string> = {
-  sheet: 'Spreadsheet (gaya ng Excel)',
-  form: 'Form (gaya ng hiring test)',
-};
 
 type Result = { session: Session; finishedEarly: boolean };
 
 export default function CopyPage() {
   const data = useAppData();
   const { sound } = data.settings;
+  const t = useT();
   // Default = spreadsheet (like most encoder jobs). The Assessment always uses the form.
   const mode: CopyMode = data.settings.copyMode ?? 'sheet';
 
@@ -85,32 +84,47 @@ export default function CopyPage() {
       <PracticeSetup
         icon={<CopyIcon className="h-8 w-8" />}
         title="Copy Test"
-        description="Kopyahin ang mga record nang eksakto, gaya ng pag-encode sa Excel o sa hiring test."
-        chooseTitle="Pumili kung saan mag-e-encode at gaano katagal"
+        description={t(
+          'Kopyahin ang mga record nang eksakto, gaya ng pag-encode sa Excel o sa hiring test.',
+          'Copy the records exactly, like encoding in Excel or in a hiring test.',
+        )}
+        chooseTitle={t('Pumili kung saan mag-e-encode at gaano katagal', 'Choose where to encode and how long')}
         choices={
           <div className="flex flex-wrap items-end gap-6">
             <SegmentedPicker
-              label="Saan ka mag-e-encode?"
+              label={t('Saan ka mag-e-encode?', 'Where will you encode?')}
               options={MODES}
               value={mode}
-              format={(m) => MODE_LABEL[m]}
+              format={(m) => copyModeLabel(m, t)}
               onChange={(m) => updateSettings({ copyMode: m })}
             />
             <SegmentedPicker
-              label="Gaano katagal?"
+              label={t('Gaano katagal?', 'How long?')}
               options={DURATIONS}
               value={seconds}
-              format={durationLabel}
+              format={(s) => durationLabel(s, t)}
               onChange={setSeconds}
             />
           </div>
         }
         howTo={[
-          'Kopyahin ang bawat record nang eksakto, pati malalaking titik, tuldok, comma at space.',
+          t(
+            'Kopyahin ang bawat record nang eksakto, pati malalaking titik, tuldok, comma at space.',
+            'Copy every record exactly, including capital letters, periods, commas and spaces.',
+          ),
           mode === 'sheet'
-            ? 'Tab = susunod na cell. Enter sa dulo ng row = susunod na record. Puwede mong balikan ang naunang row.'
-            : 'Tab = susunod na field. Enter sa huling field (ID No.) = ipasa ang record.',
-          'Kahit isang letra lang ang mali, mali na ang buong field.',
+            ? t(
+                'Tab = susunod na cell. Enter sa dulo ng row = susunod na record. Puwede mong balikan ang naunang row.',
+                'Tab = next cell. Enter at the end of a row = next record. You can go back to an earlier row.',
+              )
+            : t(
+                'Tab = susunod na field. Enter sa huling field (ID No.) = ipasa ang record.',
+                'Tab = next field. Enter on the last field (ID No.) = submit the record.',
+              ),
+          t(
+            'Kahit isang letra lang ang mali, mali na ang buong field.',
+            'Even one wrong letter makes the whole field wrong.',
+          ),
         ]}
         onStart={() => setScreen('practice')}
       />
@@ -122,7 +136,7 @@ export default function CopyPage() {
       <PracticeHeader
         icon={<CopyIcon className="h-6 w-6" />}
         title="Copy Test"
-        summary={`${MODE_LABEL[mode]}, ${durationLabel(seconds)}`}
+        summary={`${copyModeLabel(mode, t)}, ${durationLabel(seconds, t)}`}
         canChangeSettings={!running}
         onChangeSettings={() => setScreen('setup')}
       />

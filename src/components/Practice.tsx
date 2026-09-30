@@ -16,6 +16,7 @@
 import type { ReactNode } from 'react';
 import { useSenseiQuiet } from '../features/sensei/quiet';
 import { ArrowRightIcon } from './icons';
+import { useT } from '../lib/i18n';
 import { listNumber } from '../lib/listNumber';
 import { Button, PageHeader, Step } from './ui';
 
@@ -43,6 +44,7 @@ export function PracticeSetup({
   extra?: ReactNode;
   onStart: () => void;
 }) {
+  const t = useT();
   return (
     <div>
       <PageHeader icon={icon} title={title} description={description} />
@@ -54,7 +56,7 @@ export function PracticeSetup({
           </Step>
         </div>
         <div className="border-b border-stone-300 py-5">
-          <Step number={2} title="Tandaan">
+          <Step number={2} title={t('Tandaan', 'Remember')}>
             <ul className="list-disc space-y-0.5 pl-6 text-lg text-stone-800">
               {howTo.map((point, i) => (
                 <li key={i}>{point}</li>
@@ -69,7 +71,7 @@ export function PracticeSetup({
           </div>
           <div>
             <Button size="lg" autoFocus onClick={onStart}>
-              Simulan <ArrowRightIcon className="h-5 w-5" />
+              {t('Simulan', 'Start')} <ArrowRightIcon className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -107,6 +109,7 @@ export function PracticeHeader({
   canChangeSettings: boolean;
   onChangeSettings: () => void;
 }) {
+  const t = useT();
   return (
     <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
@@ -119,7 +122,7 @@ export function PracticeHeader({
         <div className="flex flex-wrap gap-2">
           {actions}
           <Button variant="secondary" onClick={onChangeSettings}>
-            ‹ Palitan ang settings
+            ‹ {t('Palitan ang settings', 'Change settings')}
           </Button>
         </div>
       )}

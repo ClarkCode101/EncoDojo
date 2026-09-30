@@ -11,8 +11,9 @@
  * the result to `onFinish`. To start over, the parent gives it a new `key`.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '../../lib/fieldScoring';
+import { hintOf, isFieldCorrect, scoreRecords, type FilledRecord, type Values } from '../../lib/fieldScoring';
 import { display } from '../../lib/scoring';
+import { useLang, useT } from '../../lib/i18n';
 import { correctTick, errorBeep } from '../../lib/sound';
 import { useAppData } from '../../lib/useAppData';
 import { useCountdown } from '../../lib/useCountdown';
@@ -32,6 +33,8 @@ export default function EntryFormRunner({
   /** Documents are wider than record cards, so they get more room. */
   wideSource?: boolean;
 }) {
+  const lang = useLang();
+  const t = useT();
   const [item, setItem] = useState<EntryItem>(() => nextItem(0));
   const [values, setValues] = useState<Values>(() => emptyValues(item.fields));
   const [submitted, setSubmitted] = useState<FilledRecord[]>([]);
@@ -106,11 +109,14 @@ export default function EntryFormRunner({
         seconds={timer.remainingSec}
         started={timer.started}
         stats={[
-          { label: 'Natapos', value: submitted.length },
+          { label: t('Natapos', 'Done'), value: submitted.length },
           ...(showLiveStats
             ? [
-                { label: 'Bilis (KPH)', value: timer.started ? display(live.kph).toLocaleString() : '–' },
-                { label: 'Tamang field', value: `${display(live.fieldAccuracy)}%` },
+                {
+                  label: t('Bilis (KPH)', 'Speed (KPH)'),
+                  value: timer.started ? display(live.kph).toLocaleString() : '–',
+                },
+                { label: t('Tamang field', 'Correct fields'), value: `${display(live.fieldAccuracy)}%` },
               ]
             : []),
         ]}
@@ -129,10 +135,18 @@ export default function EntryFormRunner({
             </span>
             <span role="status" className="font-bold">
               {/* "#1" = the number of the item just submitted (same as its title, e.g. "Sales Invoice #1"). */}
-              {lastWrongFields === 0 && <span className="text-green-800">✓ #{submitted.length}: lahat tama!</span>}
+              {lastWrongFields === 0 && (
+                <span className="text-green-800">
+                  ✓ #{submitted.length}: {t('lahat tama!', 'all correct!')}
+                </span>
+              )}
               {lastWrongFields !== null && lastWrongFields > 0 && (
                 <span className="text-red-700">
-                  ✗ #{submitted.length}: {lastWrongFields} field ang mali
+                  ✗ #{submitted.length}:{' '}
+                  {t(
+                    `${lastWrongFields} field ang mali`,
+                    `${lastWrongFields} wrong field${lastWrongFields === 1 ? '' : 's'}`,
+                  )}
                 </span>
               )}
             </span>
@@ -140,8 +154,8 @@ export default function EntryFormRunner({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <KeyTips
               tips={[
-                { key: 'Tab', text: 'susunod na field' },
-                { key: 'Enter', text: 'sa huling field = ipasa' },
+                { key: 'Tab', text: t('susunod na field', 'next field') },
+                { key: 'Enter', text: t('sa huling field = ipasa', 'on the last field = submit') },
               ]}
             />
             {allowFinishEarly && timer.started && (
@@ -182,7 +196,7 @@ export default function EntryFormRunner({
 
           {/* The form to fill in. */}
           <form
-            aria-label="Form na pupunan"
+            aria-label={t('Form na pupunan', 'Form to fill in')}
             className="flex min-h-0 min-w-0 flex-col"
             onSubmit={(e) => {
               e.preventDefault();
@@ -204,7 +218,7 @@ export default function EntryFormRunner({
                     autoFocus={i === 0}
                     type="text"
                     // The format (e.g. mm/dd/yyyy) shows inside the empty box, like in real data entry software.
-                    placeholder={f.hint}
+                    placeholder={hintOf(f, lang)}
                     autoComplete="off"
                     spellCheck={false}
                     autoCorrect="off"
