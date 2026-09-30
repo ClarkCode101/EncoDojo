@@ -69,6 +69,7 @@ export default function ExcelSheetView({
   onCommand,
   taskKey,
   computed,
+  flash = null,
 }: {
   sheet: Sheet;
   /** Tailwind width classes, one per column. */
@@ -86,6 +87,8 @@ export default function ExcelSheetView({
   taskKey?: string | number;
   /** Formula lessons: the computed value of every cell (formula cells show this, the formula bar shows the formula). */
   computed?: string[][] | null;
+  /** A task was just done: these cells ("row,col") light up green on the sheet. */
+  flash?: Set<string> | null;
 }) {
   /** What a cell shows: a formula's result (with the cell's number format), or the value itself. */
   const shown = (p: Pos): string => {
@@ -378,16 +381,20 @@ export default function ExcelSheetView({
                           // only from Ctrl+B, and numbers sit on the right, like Excel.
                           ((sheet.formatting ? formatOf(sheet, { r, c }).bold : r === 0) ? 'font-bold ' : '') +
                           (rightAligned({ r, c }) ? 'text-right ' : '') +
-                          // Conditional Formatting: Excel's "Light Red Fill with Dark Red Text".
+                          // Conditional Formatting: Excel's "Light Red Fill with Dark Red Text". It comes first, so a
+                          // finished Conditional Formatting task still shows its red (that red IS the result).
+                          // A task just done: the cells it changed, green (green = correct).
                           (highlighted.has(formatKey({ r, c }))
                             ? 'bg-red-100 text-red-900 '
-                            : selected && !active
-                              ? 'bg-green-50 '
-                              : r === 0
-                                ? 'bg-stone-50 '
-                                : frozenR || frozenC
-                                  ? 'bg-white '
-                                  : '') +
+                            : flash?.has(formatKey({ r, c }))
+                              ? 'bg-green-100 text-green-950 transition-colors duration-300 '
+                              : selected && !active
+                                ? 'bg-green-50 '
+                                : r === 0
+                                  ? 'bg-stone-50 '
+                                  : frozenR || frozenC
+                                    ? 'bg-white '
+                                    : '') +
                           (active ? 'outline outline-2 -outline-offset-2 outline-green-700' : '')
                         }
                       >

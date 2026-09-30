@@ -11,6 +11,11 @@
  * small link. Done = "✓ Tama!" (plus the faster shortcut if it was done the
  * long way) and a "Susunod" button. Nothing is saved here; the Pagsusulit at
  * the end is what gets saved.
+ *
+ * Owner's request 2026-09-30 (a better lesson UX): the "Gawin" card is pinned
+ * at the bottom of the guide (always in view), and a finished task is clearly
+ * seen: the card turns green, and the cells the user changed (or, when nothing
+ * changed, the cells they went to or selected) light up green on the sheet.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRightIcon } from '../../components/icons';
@@ -30,6 +35,7 @@ import {
   pressKey,
   tabCells,
   runCommand,
+  selectionRange,
   typeInCell,
   type KeyPress,
   type Pos,
@@ -47,6 +53,30 @@ type Step = { topic: number; task: string };
 const DEMO_STEP_MS = 700;
 const DEMO_FAST_STEP_MS = 300;
 const DEMO_END_MS = 1600;
+
+/**
+ * The cells to light up when a task is done: the ones whose value changed since the task started,
+ * or (a move, a selection, a format, another tab) the cells now selected. As "row,col" keys.
+ */
+function doneCells(before: Sheet, after: Sheet): Set<string> {
+  const out = new Set<string>();
+  const sameShape =
+    (before.tabs?.index ?? 0) === (after.tabs?.index ?? 0) &&
+    before.cells.length === after.cells.length &&
+    before.cells[0].length === after.cells[0].length;
+  if (sameShape) {
+    after.cells.forEach((row, r) =>
+      row.forEach((v, c) => {
+        if (v !== before.cells[r][c]) out.add(`${r},${c}`);
+      }),
+    );
+  }
+  if (out.size === 0) {
+    const { top, left, bottom, right } = selectionRange(after);
+    for (let r = top; r <= bottom; r++) for (let c = left; c <= right; c++) out.add(`${r},${c}`);
+  }
+  return out;
+}
 
 /** The help button's words, by how much help was already given. */
 const HELP_LABELS = ['Kailangan ng tulong?', 'Ipakita ang key', 'Ipakita kung paano', 'Ipakita ulit kung paano'];
@@ -81,7 +111,8 @@ export default function ExcelLesson({
   const [sheet, setSheet] = useState<Sheet>(() => startTask(set.sheet, set.tasks[steps[firstStepOf(startTopic)].task]));
   /** 0 = no help yet, 1 = hint in words, 2 = the keys, 3 = shown how. */
   const [help, setHelp] = useState(0);
-  const [done, setDone] = useState<{ shortcut: boolean } | null>(null);
+  /** The task is done: how (with the shortcut or not), and the cells to light up on the sheet. */
+  const [done, setDone] = useState<{ shortcut: boolean; cells: Set<string> } | null>(null);
   const [demo, setDemo] = useState<'playing' | 'shown' | null>(null);
   /** The tasks done in this lesson (to show which topics are finished). */
   const [doneSteps, setDoneSteps] = useState<Set<number>>(() => new Set());
@@ -130,7 +161,10 @@ export default function ExcelLesson({
   function update(next: Sheet) {
     setSheet(next);
     if (done || demo === 'playing' || !task.check(next)) return;
-    setDone({ shortcut: !mouseRef.current && keysRef.current <= task.maxKeys });
+    setDone({
+      shortcut: !mouseRef.current && keysRef.current <= task.maxKeys,
+      cells: doneCells(startSheetRef.current, next),
+    });
     setDoneSteps((d) => new Set(d).add(index));
     if (soundCorrect) correctTick();
   }
@@ -253,67 +287,73 @@ export default function ExcelLesson({
           ))}
         </ul>
       </section>
-
-      {/* What to do now, on the sheet. */}
-      <section aria-label="Gawin" className="rounded-r-lg border-l-4 border-brand-700 bg-white px-4 py-3">
-        <div className="text-sm font-bold text-brand-700">
-          Gawin{tasksInTopic.length > 1 ? ` (${nthInTopic} sa ${tasksInTopic.length})` : ''}
-        </div>
-        <p className="font-bold text-stone-900">{task.text}</p>
-        {task.record && <TaskRecord record={task.record} />}
-
-        <div role="status" className="mt-2 text-sm text-stone-800">
-          {done ? (
-            <span className="font-semibold text-green-800">
-              ✓ Tama!{' '}
-              {done.shortcut ? (
-                'Ang galing.'
-              ) : (
-                <span className="font-normal text-stone-700">
-                  Mas mabilis kung <TipKeys tip={task.tip} /> ang gagamitin.
-                </span>
-              )}
-            </span>
-          ) : demo === 'playing' ? (
-            <span>
-              Pinapakita: <TipKeys tip={task.tip} />
-            </span>
-          ) : demo === 'shown' ? (
-            <span className="font-semibold">
-              Ikaw naman ngayon: <TipKeys tip={task.tip} />
-            </span>
-          ) : help === 1 ? (
-            <span>{task.hint}</span>
-          ) : help >= 2 ? (
-            <span>
-              Gamitin: <TipKeys tip={task.tip} />
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-          {done ? (
-            <Button autoFocus onClick={() => goTo(index + 1, sheet)}>
-              {isLast ? 'Tapusin ang aralin' : 'Susunod'} <ArrowRightIcon className="h-5 w-5" />
-            </Button>
-          ) : (
-            <>
-              <Button variant="secondary" disabled={demo === 'playing'} onClick={moreHelp}>
-                {HELP_LABELS[help]}
-              </Button>
-              <button
-                type="button"
-                disabled={demo === 'playing'}
-                onClick={() => goTo(index + 1, sheet)}
-                className="rounded text-sm text-stone-600 underline decoration-dotted underline-offset-2 hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 disabled:opacity-50"
-              >
-                Laktawan
-              </button>
-            </>
-          )}
-        </div>
-      </section>
     </>
+  );
+
+  // What to do now, on the sheet: pinned at the bottom of the guide (LessonLayout `footer`), always in view.
+  const gawin = (
+    <section
+      aria-label="Gawin"
+      className={
+        'rounded-r-lg border-l-4 px-4 py-3 shadow-sm transition-colors ' +
+        (done ? 'border-green-600 bg-green-50' : 'border-brand-700 bg-white')
+      }
+    >
+      <div className={'text-sm font-bold ' + (done ? 'text-green-800' : 'text-brand-700')}>
+        Gawin{tasksInTopic.length > 1 ? ` (${nthInTopic} sa ${tasksInTopic.length})` : ''}
+      </div>
+      <p className="font-bold text-stone-900">{task.text}</p>
+      {task.record && <TaskRecord record={task.record} />}
+
+      <div role="status" className="mt-2 text-sm text-stone-800">
+        {done ? (
+          <span className="block">
+            <span className="block text-lg font-bold text-green-800">✓ Tama!{done.shortcut ? ' Ang galing.' : ''}</span>
+            {!done.shortcut && (
+              <span className="text-stone-700">
+                Mas mabilis kung <TipKeys tip={task.tip} /> ang gagamitin.
+              </span>
+            )}
+          </span>
+        ) : demo === 'playing' ? (
+          <span>
+            Pinapakita: <TipKeys tip={task.tip} />
+          </span>
+        ) : demo === 'shown' ? (
+          <span className="font-semibold">
+            Ikaw naman ngayon: <TipKeys tip={task.tip} />
+          </span>
+        ) : help === 1 ? (
+          <span>{task.hint}</span>
+        ) : help >= 2 ? (
+          <span>
+            Gamitin: <TipKeys tip={task.tip} />
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {done ? (
+          <Button autoFocus onClick={() => goTo(index + 1, sheet)}>
+            {isLast ? 'Tapusin ang aralin' : 'Susunod'} <ArrowRightIcon className="h-5 w-5" />
+          </Button>
+        ) : (
+          <>
+            <Button variant="secondary" disabled={demo === 'playing'} onClick={moreHelp}>
+              {HELP_LABELS[help]}
+            </Button>
+            <button
+              type="button"
+              disabled={demo === 'playing'}
+              onClick={() => goTo(index + 1, sheet)}
+              className="rounded text-sm text-stone-600 underline decoration-dotted underline-offset-2 hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 disabled:opacity-50"
+            >
+              Laktawan
+            </button>
+          </>
+        )}
+      </div>
+    </section>
   );
 
   return (
@@ -322,6 +362,7 @@ export default function ExcelLesson({
       title={title}
       onBack={onExit}
       panel={panel}
+      footer={gawin}
       sheet={
         <ExcelSheetView
           sheet={sheet}
@@ -329,6 +370,7 @@ export default function ExcelLesson({
           tools={content.tools}
           taskKey={index}
           computed={computed}
+          flash={done?.cells ?? null}
           onKey={onKey}
           onCommand={onCommand}
           onEditChange={(v) => setSheet(typeInCell(sheet, v))}
