@@ -28,7 +28,7 @@ const ICONS: Record<NextFocus['skill'], (className: string) => ReactNode> = {
 };
 
 const focusRing =
-  'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600';
+  'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300';
 
 export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
   const { sessions, settings } = useAppData();
@@ -43,7 +43,7 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
         to={f.to}
         title={summary}
         aria-label={summary}
-        className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-stone-300 text-brand-700 transition-colors hover:border-brand-400 hover:bg-brand-50 ${focusRing}`}
+        className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-belt-400 text-belt-300 transition-colors hover:bg-brand-800 ${focusRing}`}
       >
         {ICONS[f.skill]('h-6 w-6')}
       </Link>
@@ -55,11 +55,11 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
       to={f.to}
       title={summary}
       aria-label={summary}
-      className={`group block rounded-xl border border-dashed border-stone-300 p-3 transition-colors hover:border-brand-400 hover:bg-brand-50 ${focusRing}`}
+      className={`group block rounded-xl border border-dashed border-brand-600 p-3 transition-colors hover:border-belt-400 hover:bg-brand-800 ${focusRing}`}
     >
-      <div className="text-sm text-stone-600">Susunod na gagawin</div>
-      <div className="mt-0.5 flex items-center gap-2 font-bold text-stone-900">
-        <span className="text-brand-700">{ICONS[f.skill]('h-5 w-5')}</span>
+      <div className="text-sm text-brand-200">Susunod na gagawin</div>
+      <div className="mt-0.5 flex items-center gap-2 font-bold text-white">
+        <span className="text-belt-300">{ICONS[f.skill]('h-5 w-5')}</span>
         {f.label}
         <ArrowRightIcon className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
       </div>
@@ -70,13 +70,15 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
       */}
       <p
         className={
-          'mt-1 text-sm leading-snug text-stone-600 [@media(max-height:900px)]:hidden ' +
+          'mt-1 text-sm leading-snug text-brand-100 [@media(max-height:900px)]:hidden ' +
           (goal ? '[@media(max-height:1000px)]:hidden' : '')
         }
       >
         {f.reason}
       </p>
-      {goal && <p className="mt-1 text-sm font-semibold text-brand-700 [@media(max-height:760px)]:hidden">{goal}</p>}
+      {goal && (
+        <p className="mt-1 text-sm font-semibold text-belt-300 [@media(max-height:760px)]:hidden">{goal}</p>
+      )}
     </Link>
   );
 }

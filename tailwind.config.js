@@ -16,12 +16,7 @@ export default {
        * - brand: deep indigo for buttons, links, and the sidebar (main color: 800).
        * - belt:  gold accent for the logo, badges, and highlights. Use it as a
        *          BACKGROUND with dark text — gold text on white is hard to read.
-       * - paper: the page background, a light cool grey (option B "Maliwanag", owner's
-       *          choice 2026-09-30): white cards and the white sidebar stand out on it.
-       * - stone: the neutrals (text, rules, borders). Tailwind's warm stone is replaced
-       *          by a cool grey with a hint of the brand indigo, so the neutrals match
-       *          the brand; every stone-* class in the app follows. 500+ passes 4.5:1 on
-       *          paper and on white (text); 300/200 are for rules and borders.
+       * - paper: warm off-white page background (softer on the eyes than pure white).
        * Red (mistakes), green (correct), and amber (warnings) keep their meaning,
        * so they are NOT used as brand colors.
        */
@@ -47,20 +42,7 @@ export default {
           500: '#D99A00',
           600: '#A87700',
         },
-        paper: '#F6F6F8',
-        stone: {
-          50: '#F8F8FA',
-          100: '#F0F0F4',
-          200: '#E4E3EA',
-          300: '#D1CFDA',
-          400: '#A4A1B2',
-          500: '#6E6B80',
-          600: '#57546A',
-          700: '#423F52',
-          800: '#2D2B3A',
-          900: '#1E1D27',
-          950: '#121118',
-        },
+        paper: '#FBF8F1',
       },
       boxShadow: {
         /** Makes a card look like a sheet of paper on a desk. */
