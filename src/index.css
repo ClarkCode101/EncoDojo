@@ -57,7 +57,7 @@ html.big-source .source-zoom > * {
  * `data-fit="1"`, then "1 2", ... Each step is a little tighter and keeps the steps before it.
  */
 @media (min-width: 768px) {
-  /* 1: less space around the logo, the groups and the links; the cards' hint lines hide (the hover title has them). */
+  /* 1: less space around the logo, the groups and the links. */
   .sidebar[data-fit~='1'] .sb-head {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
@@ -69,12 +69,7 @@ html.big-source .source-zoom > * {
     padding-top: 0.375rem;
     padding-bottom: 0.375rem;
   }
-  .sidebar[data-fit~='1'] .sb-reason,
-  .sidebar[data-fit~='1'] .sb-belt-hint {
-    display: none;
-  }
-
-  /* 2: tighter still; the daily goal line hides too. */
+  /* 2: tighter still. */
   .sidebar[data-fit~='2'] .sb-head {
     padding-top: 0.375rem;
     padding-bottom: 0.375rem;
@@ -86,11 +81,7 @@ html.big-source .source-zoom > * {
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
   }
-  .sidebar[data-fit~='2'] .sb-goal {
-    display: none;
-  }
-
-  /* 3: smaller logo, the cards get less padding. */
+  /* 3: a smaller logo and the tightest links. */
   .sidebar[data-fit~='3'] .sb-logo {
     width: 2.25rem;
     height: 2.25rem;
@@ -99,21 +90,8 @@ html.big-source .source-zoom > * {
     padding-top: 0.125rem;
     padding-bottom: 0.125rem;
   }
-  .sidebar[data-fit~='3'] .sb-card {
-    padding: 0.5rem 0.75rem;
-  }
-  .sidebar[data-fit~='3'] .sb-cards {
-    padding-bottom: 0.5rem;
-  }
-
-  /* 4: the cards keep only the essentials (what to do next, the belt's name). */
-  .sidebar[data-fit~='4'] .sb-card-label,
-  .sidebar[data-fit~='4'] .sb-belt-bar {
-    display: none;
-  }
-
-  /* 5 (very small windows): the group names ("Practice", "Matuto") hide; the links stay. */
-  .sidebar[data-fit~='5'] .sb-heading {
+  /* 4 (very small windows): the group names ("Practice", "Matuto") hide; the links stay. */
+  .sidebar[data-fit~='4'] .sb-heading {
     display: none;
   }
 }

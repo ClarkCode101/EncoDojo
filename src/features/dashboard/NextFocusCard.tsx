@@ -1,7 +1,7 @@
 /**
- * "Susunod na gagawin" in the sidebar, above the belt card: the practice to do
- * next (see coach.ts) with one short reason; the whole card is a link to it.
- * Collapsed sidebar: just that practice's icon; the details show on hover.
+ * "Susunod na gagawin" on Home (moved from the sidebar, owner's choice 2026-10-01: the
+ * sidebar is only the menu now): the practice to do next (see coach.ts) with one short
+ * reason, and the daily goal; the whole card is a link to that practice.
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -28,50 +28,26 @@ const ICONS: Record<NextFocus['skill'], (className: string) => ReactNode> = {
   assessment: (c) => <AssessmentIcon className={c} />,
 };
 
-const focusRing =
-  'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300';
-
-export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
+export default function NextFocusCard() {
   const { sessions, settings } = useAppData();
   const lang = useLang();
   const f = nextFocus(sessions, lang);
   // Settings -> "Araw-araw na target" (null when there is no goal).
   const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions), lang);
-  const heading = lang === 'en' ? 'Do next' : 'Susunod na gagawin';
-  const summary = `${heading}: ${f.label}. ${f.reason}${goal ? ` ${goal}` : ''}`;
-
-  if (collapsed) {
-    return (
-      <Link
-        to={f.to}
-        title={summary}
-        aria-label={summary}
-        className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-belt-400 text-belt-300 transition-colors hover:bg-brand-800 ${focusRing}`}
-      >
-        {ICONS[f.skill]('h-6 w-6')}
-      </Link>
-    );
-  }
 
   return (
     <Link
       to={f.to}
-      title={summary}
-      aria-label={summary}
-      className={`sb-card group block rounded-xl border border-dashed border-brand-600 p-3 transition-colors hover:border-belt-400 hover:bg-brand-800 ${focusRing}`}
+      className="group block rounded-xl border border-stone-300 border-l-4 border-l-belt-400 bg-white p-4 shadow-sm transition-colors hover:border-brand-500 hover:border-l-belt-400 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600"
     >
-      <div className="sb-card-label text-sm text-brand-200">{heading}</div>
-      <div className="mt-0.5 flex items-center gap-2 font-bold text-white">
-        <span className="text-belt-300">{ICONS[f.skill]('h-5 w-5')}</span>
+      <div className="text-sm font-semibold text-stone-600">{lang === 'en' ? 'Do next' : 'Susunod na gagawin'}</div>
+      <div className="mt-1 flex items-center gap-2 text-lg font-bold text-stone-900">
+        <span className="text-brand-700">{ICONS[f.skill]('h-6 w-6')}</span>
         {f.label}
-        <ArrowRightIcon className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+        <ArrowRightIcon className="ml-auto h-5 w-5 text-stone-500 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
       </div>
-      {/*
-        These lines hide when the sidebar must fit a short window (useSidebarFit; the hover title has them):
-        the reason first, then the daily goal.
-      */}
-      <p className="sb-reason mt-1 text-sm leading-snug text-brand-100">{f.reason}</p>
-      {goal && <p className="sb-goal mt-1 text-sm font-semibold text-belt-300">{goal}</p>}
+      <p className="mt-1 text-stone-700">{f.reason}</p>
+      {goal && <p className="mt-1 text-sm font-semibold text-brand-700">{goal}</p>}
     </Link>
   );
 }

@@ -1,5 +1,4 @@
 import { Suspense, useEffect, useRef, type ReactNode } from 'react';
-import BeltCard from '../components/BeltCard';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   AssessmentIcon,
@@ -17,7 +16,6 @@ import {
 import { useIsFocusMode } from '../lib/focusMode';
 import { langOf, translator } from '../lib/i18n';
 import { updateSettings, useAppData } from '../lib/useAppData';
-import NextFocusCard from '../features/dashboard/NextFocusCard';
 import { useIsSenseiQuiet } from '../features/sensei/quiet';
 import Sensei from '../features/sensei/Sensei';
 import { useSidebarFit } from './useSidebarFit';
@@ -69,7 +67,7 @@ const navClass =
   };
 
 export default function Layout() {
-  const { settings, sessions } = useAppData();
+  const { settings } = useAppData();
   const { largeText, sidebarCollapsed, sensei, reduceMotion, bigSource } = settings;
   // "Exam mode" (a running Assessment): no sidebar, the exam gets the whole screen.
   const focus = useIsFocusMode();
@@ -81,10 +79,7 @@ export default function Layout() {
   const t = translator(lang);
   // The sidebar measures itself and gets tighter until it fits the window (no scrollbar).
   const sidebarRef = useRef<HTMLElement>(null);
-  const fit = useSidebarFit(
-    sidebarRef,
-    [largeText, lang, collapsed, focus, sessions.length, settings.dailyGoal].join('|'),
-  );
+  const fit = useSidebarFit(sidebarRef, [largeText, lang, collapsed, focus].join('|'));
 
   // The page's language, for screen readers and the browser (Settings -> "Wika / Language").
   useEffect(() => {
@@ -182,12 +177,6 @@ export default function Layout() {
               ))}
             </div>
           </nav>
-
-          {/* "Susunod na gagawin" + the belt card: bottom of the sidebar on desktop, under the links on phones. */}
-          <div className="sb-cards space-y-2 px-3 pb-4 md:mt-auto">
-            <NextFocusCard collapsed={collapsed} />
-            <BeltCard collapsed={collapsed} />
-          </div>
         </aside>
       )}
 

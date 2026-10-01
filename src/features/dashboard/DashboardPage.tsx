@@ -21,6 +21,7 @@ import {
   NumpadIcon,
   QcIcon,
 } from '../../components/icons';
+import BeltCard from '../../components/BeltCard';
 import { Button, ConfirmButton, HelpTip, Section } from '../../components/ui';
 import { langOf, localeOf, translator, useT, type T } from '../../lib/i18n';
 import { display } from '../../lib/scoring';
@@ -47,6 +48,7 @@ import {
   latestMetric,
   recentSessions,
 } from './stats';
+import NextFocusCard from './NextFocusCard';
 
 function summary(session: Session, t: T): string {
   const m = session.metrics;
@@ -250,7 +252,7 @@ export default function DashboardPage() {
   const hello = `${greeting(now, lang)}${profile.displayName ? `, ${profile.displayName}` : ''}.`;
   const subline =
     sessions.length === 0
-      ? t('Bago ka rito. Simulan natin sa Typing Practice.', "You're new here. Let's start with Typing Practice.")
+      ? t('Bago ka rito. Maligayang pagdating sa dojo.', "You're new here. Welcome to the dojo.")
       : streak >= 2
         ? t(
             `${streak} araw ka nang sunod-sunod na nag-eensayo. Ituloy mo lang.`,
@@ -267,6 +269,11 @@ export default function DashboardPage() {
         <p className="text-stone-600">{today}</p>
         <h1 className="mt-1 font-display text-4xl font-bold text-stone-900">{hello}</h1>
         <p className="mt-2 text-lg text-stone-700">{subline}</p>
+        {/* What to do next and your belt (moved here from the sidebar, owner's choice 2026-10-01). */}
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <NextFocusCard />
+          <BeltCard />
+        </div>
       </header>
 
       {/* Ensayo: the five practices, then the Assessment */}

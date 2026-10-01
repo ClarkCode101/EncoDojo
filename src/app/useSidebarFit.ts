@@ -1,10 +1,10 @@
 /**
  * Makes the desktop sidebar fit the window without its own scrollbar (owner's
  * request 2026-10-01: at 100% zoom it scrolled). Fixed height breakpoints were
- * not enough: browser zoom, "Mas malaking text", the language and the text in
- * the cards all change how tall it is. So the sidebar measures itself: when its
+ * not enough: browser zoom, "Mas malaking text" and the language all change how
+ * tall it is. So the sidebar measures itself: when its
  * content is taller than the window, it goes one "fit" step tighter (less space,
- * then the small hint lines hide, ...) until it fits. The steps are in index.css
+ * a smaller logo, ...) until it fits. The steps are in index.css
  * (`.sidebar[data-fit~='N']`). It starts again from the roomiest look whenever
  * the window size (also zoom) or the content changes. If even the last step does
  * not fit (a very small window), the sidebar still scrolls, as a last resort.
@@ -12,7 +12,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 /** How many fit steps exist in index.css. */
-export const FIT_STEPS = 5;
+export const FIT_STEPS = 4;
 
 /**
  * Returns the `data-fit` value for the sidebar: '' (roomy), '1', '1 2', ... (each step keeps the
