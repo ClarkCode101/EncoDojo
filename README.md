@@ -2,53 +2,92 @@
 
 **Live app: https://encodojo.vercel.app**
 
-A free, browser-only practice app for **Encoder / Data Entry** job skills in the Philippines:
-typing speed & accuracy, numpad (10-key) speed, copying records, and encoding from source documents
-(invoices, delivery receipts, application forms), plus an Assessment that checks if you're job-ready.
+EncoDojo is a free practice app for **Encoder and Data Entry** jobs in the Philippines. It trains the skills
+these jobs test and use every day: typing speed and accuracy, numpad (10-key) speed, copying records,
+encoding from source documents, checking other people's work (QC), and Excel. An Assessment then tells you
+whether you are job-ready.
 
-- No login, no server, no ads, no cost.
-- Made for everyone, including older and non-techy users: simple **Taglish** UI, big text and buttons
-  (plus a "Mas malaking text" option), numbered steps, and an "Ano ito?" explanation for every number.
-- Your progress is saved in your browser (localStorage). Use **Settings → I-download ang backup** to back it up.
-- All names, addresses, and numbers in the drills are fake.
+- **Free and private.** No login, no server, no ads. Everything runs in your browser.
+- **Made for everyone**, including older and non-techy users: big text and buttons, numbered steps, and a
+  plain explanation for every number on screen.
+- **Two languages:** Taglish (the default) or English, chosen on the welcome screen or in Settings.
+- **Your progress stays in your browser** (localStorage). The app reminds you to download a backup file, and
+  you can restore it on another computer.
+- **All sample data is fake:** names, addresses, ID numbers, companies and amounts are made up.
 
-## Features
+## What you can do
 
-EncoDojo has two modes:
+### Practice
 
-- **Practice (training)** — practice any skill as often as you like; saving results is optional.
-- **Assessment** — every skill in a row under exam rules, then a report card that says whether you're job-ready, with tips.
+Practice any skill as often as you like. Results are saved by default, and you can choose not to save one.
 
-| Screen | What it does |
+| Practice | What it trains |
 | --- | --- |
-| Home | 5 steps (Typing → Numpad → Copy Test → Document Encoding → Assessment), your best scores, daily streak, recent sessions (delete one or clear all), coming-soon features |
-| Assessment | Typing (1 min) + Numpad (1 min) + Copy Test (2 min) + Document Encoding (3 min), no live stats or early finish; report card with a PASADO / HINDI PA stamp, 8 job-ready targets, KPH levels, tips, change since last time, and history |
-| Typing Practice | 30 sec or 1 min, fresh plain office-text passages every time, Gross/Net WPM, accuracy, keystroke accuracy, job-ready check, comparison with your last test and personal best, mistakes list |
-| Numpad Practice | 30 sec or 1 min, **Halo-halo** (same numbers as the Assessment) or **Pang-baguhan** (short numbers), KPH, entry accuracy, job-ready check, KPH levels (8,000 / 10,000 / 12,000) |
-| Copy Test | 1 or 2 min: copy fake records (name, birth date, address, contact no., ID) into a form exactly, in a **Form** (like an alphanumeric data entry test) or a **Spreadsheet** (like Excel: one row per record, Tab between cells, Enter for the next row); field accuracy, net KPH, targets, and wrong fields with the exact wrong characters highlighted |
-| Document Encoding | 3 or 5 min: read a fake **Sales Invoice**, **Delivery Receipt**, or **Application Form**, find the 5 key fields, and encode them following simple rules (dates → mm/dd/yyyy, amounts → no ₱ or commas, text → exact copy). Spreadsheet (like an invoice log in Excel) or Form layout; the format of each column is shown in the header |
-| Settings | Name, larger text, sound, backup / restore (JSON), delete everything |
+| Typing Practice | 30 seconds or 1 minute of plain office text. Shows Gross and Net WPM, accuracy, keystroke accuracy, a comparison with your last test and personal best, and every mistake. |
+| Numpad Practice | 30 seconds or 1 minute of numbers typed on the numpad. **Mixed** uses the same numbers as the Assessment; **Beginner** uses short numbers. Shows KPH, entry accuracy, and the common KPH levels (8,000 / 10,000 / 12,000). |
+| Copy Test | 1 or 2 minutes copying fake records (name, birth date, address, contact number, ID) exactly, in a **Form** (like a hiring test) or a **Spreadsheet** (like Excel: one row per record). Wrong fields show the exact wrong characters. |
+| Document Encoding | 3 or 5 minutes reading a fake Sales Invoice, Delivery Receipt or Application Form, finding the key fields, and encoding them by simple rules (dates as mm/dd/yyyy, amounts without ₱ or commas, text copied exactly). |
+| QC Check | 1 or 2 minutes comparing an original record with an encoded copy and marking the fields that have a mistake, like a QC checker. |
 
-### How scores are calculated
+### Assessment
+
+All five skills in a row under exam rules (fixed times, no live stats, no early finish), about 10 to 12
+minutes with breaks. The report card shows a PASADO / HINDI PA stamp, each of the 10 job-ready targets,
+tips for the parts not passed yet, the change since your last Assessment, and your mistakes. You can
+download it as an image. It is a self-assessed practice result, not an official certificate.
+
+Passing more targets earns **belt ranks**: White, Yellow, Orange, Green, Blue (job-ready once) and Black
+(job-ready on three different days). A belt is never taken away.
+
+### Learn Excel
+
+A separate learning track with **14 short lessons**, from moving around a sheet to PivotTables: data entry
+shortcuts, formatting, sort and filter, formulas (SUM, IF, COUNTIF, SUMIF), VLOOKUP and XLOOKUP, cleaning
+text, splitting and joining names, Conditional Formatting, dropdowns, dates, rows and columns, several tabs,
+and PivotTables. Each lesson explains a topic in one or two sentences, then you do it on an Excel-like sheet,
+with a hint, the keys, or a step-by-step demo when you get stuck. A short quiz ends each lesson. There is no
+timer, and the **Kodigo** (Cheat sheet) page lists every shortcut and formula from the lessons (printable).
+
+Formulas are computed by [HyperFormula](https://hyperformula.handsontable.com/), loaded only when a formula
+lesson opens.
+
+### Help and comfort
+
+- **Sensei**, a small pixel-art guide, gives tips for the page you are on and comments on your results. He
+  stays quiet while you practice and can be made small or turned off.
+- **Home** shows what to practice next, your belt, your numbers against the job-ready targets, and your
+  recent activity.
+- **Settings:** language, your name, dark mode, larger text, bigger reading text, less motion, an on-screen
+  **keyboard guide** (lights up the next key and names the finger to use), sounds, and backup / restore.
+
+## How scores are calculated
 
 - **Gross WPM** = (typed characters ÷ 5) ÷ minutes
 - **Net WPM** = Gross WPM − (uncorrected errors ÷ minutes), never below 0
 - **Accuracy** = correct characters ÷ (correct characters + mistakes) × 100
-- **Keystroke accuracy** = keys typed without a mistake ÷ all keys typed × 100 (mistakes fixed with Backspace still count)
-- **Mistakes** = wrong keys + extra keys (e.g. a double space) + skipped letters. Your typing is lined up with
-  the passage like a "diff", so one slip counts as one mistake and doesn't make the rest of the line wrong.
-- **KPH** = correct keystrokes ÷ hours (digits, decimal point, and Enter; commas are optional and not counted)
-- **Entry accuracy** = fully correct entries ÷ total entries × 100
+- **Keystroke accuracy** = keys typed without a mistake ÷ all keys typed × 100 (mistakes fixed with
+  Backspace still count)
+- **Mistakes** = wrong keys + extra keys (such as a double space) + skipped letters. Your typing is lined up
+  with the passage like a "diff", so one slip counts as one mistake and does not make the rest of the line wrong.
+- **KPH** = correct keystrokes ÷ hours (digits, the decimal point and Enter; commas are not needed)
+- **Entry accuracy** = fully correct entries ÷ all entries × 100
 - **Field accuracy** (Copy Test, Document Encoding) = fields typed exactly right ÷ all fields × 100
 - **Net KPH** (Copy Test, Document Encoding) = (typed characters − mistakes) × 3600 ÷ seconds
+- **Correct checks** (QC Check) = right decisions ("has a mistake" or "correct") ÷ all fields checked × 100;
+  **speed** = records checked per minute
 
-The code for these is in [`src/lib/scoring.ts`](src/lib/scoring.ts) and [`src/lib/fieldScoring.ts`](src/lib/fieldScoring.ts).
-Targets (e.g. 40 Net WPM, 8,000 KPH; Document Encoding's 6,000 KPH is an EncoDojo estimate) are in
+The job-ready targets are 40 Net WPM and 95% accuracy (Typing), 8,000 KPH and 95% (Numpad), 95% of fields
+and 8,000 net KPH (Copy Test), 95% of fields and 6,000 net KPH (Document Encoding), and 95% correct checks
+and 3 records per minute (QC Check). The Document Encoding and QC targets are EncoDojo's own estimates,
+since there is no public standard.
+
+The code is in [`src/lib/scoring.ts`](src/lib/scoring.ts), [`src/lib/fieldScoring.ts`](src/lib/fieldScoring.ts)
+and [`src/features/qc/scoreQc.ts`](src/features/qc/scoreQc.ts); the targets are in
 [`src/lib/targets.ts`](src/lib/targets.ts).
 
 ## Run it locally
 
-You need [Node.js](https://nodejs.org/) 20 or newer.
+You need [Node.js](https://nodejs.org/) 22 (the project is developed on 22.11).
 
 ```bash
 npm install
@@ -60,38 +99,48 @@ Other commands:
 ```bash
 npm run test     # unit tests (Vitest)
 npm run lint     # ESLint
-npm run build    # production build into dist/
+npm run build    # type check + production build into dist/
 npm run preview  # serve the built dist/ folder locally
 ```
 
 ## Deploy for free
 
-The app is a static site, so it needs no environment variables or secrets.
+The app is a static site, so it needs no environment variables, secrets, or backend.
 
 **Vercel (Hobby plan)**
+
 1. Push this repo to GitHub.
 2. On vercel.com, choose *Add New → Project* and import the repo.
 3. Framework preset: **Vite**. Build command `npm run build`, output directory `dist`.
-4. Deploy. `vercel.json` already makes deep links like `/typing` work.
+4. Deploy. `vercel.json` makes deep links like `/typing` work and adds the security headers.
 
 **Cloudflare Pages**
+
 1. Push this repo to GitHub.
 2. In the Cloudflare dashboard, go to *Workers & Pages → Create → Pages → Connect to Git*.
 3. Build command `npm run build`, output directory `dist`.
-4. Deploy. `public/_redirects` already makes deep links work.
+4. Deploy. `public/_redirects` makes deep links work and `public/_headers` adds the security headers.
+
+## Tech and privacy
+
+- React, TypeScript, Vite, Tailwind CSS, React Router, Vitest. Fonts are bundled (no outside requests).
+- No analytics, no cookies, no network calls: the app never sends your data anywhere.
+- A Content-Security-Policy and other security headers allow only the site's own code, and stop other sites
+  from showing EncoDojo inside a frame.
 
 ## Project structure
 
 ```
 src/
-  app/          router and layout (sidebar)
-  components/   shared UI (Button, Card, StatBadge, …) and entry/ (form + spreadsheet runners)
-  data/         original typing passages and fake Filipino names/places (fake data only)
-  features/     one folder per screen: dashboard, assessment, typing, numpad, copy, encoding, settings
-  lib/          scoring, storage, random helpers, timer
+  app/          router, layout and sidebar
+  components/   shared UI pieces and entry/ (the form and spreadsheet runners)
+  data/         original typing passages and fake Filipino names and places
+  features/     one folder per area: dashboard, assessment, typing, numpad, copy, encoding,
+                qc, excel (lessons, the spreadsheet model in model/, the Cheat sheet), sensei,
+                settings, welcome
+  lib/          scoring, storage and backup, languages, belts, targets, random helpers, timer
 ```
 
 ## License
 
-[GPL-3.0](LICENSE). This project will use HyperFormula (GPL-3.0 license key) in a later phase,
-so it must stay open source.
+[GPL-3.0](LICENSE). EncoDojo uses HyperFormula under its GPL-3.0 license, so this project stays open source.
