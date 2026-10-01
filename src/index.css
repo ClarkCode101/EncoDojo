@@ -192,6 +192,20 @@ html.dark {
 }
 
 /*
+ * The sidebar in dark mode (owner's choice 2026-10-01): a darker indigo (brand-950), still the
+ * brand color and still apart from the near-black page; the current page is a soft indigo pill
+ * with white text instead of the bright white pill (which glared); the gold edge mark stays.
+ */
+html.dark .sidebar {
+  background-color: rgb(22 20 58);
+}
+html.dark .sidebar .sb-active {
+  background-color: rgb(74 66 153);
+  color: rgb(255 255 255);
+  box-shadow: none;
+}
+
+/*
  * Text size for the whole app. Tailwind sizes are in rem, so changing the
  * root font size makes EVERYTHING (text, buttons, spacing) bigger together.
  *   normal:     17px (a bit bigger than the usual 16px, easier to read)

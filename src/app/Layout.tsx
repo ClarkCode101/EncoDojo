@@ -61,7 +61,7 @@ const navClass =
       'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
       (isActive
         ? // The page you're on: white pill + a gold "belt" mark at the sidebar's edge (brand accent).
-          'bg-white text-brand-900 shadow md:before:absolute md:before:-left-3 md:before:inset-y-1 md:before:w-1.5 md:before:rounded-r-full md:before:bg-belt-400'
+          'sb-active bg-white text-brand-900 shadow md:before:absolute md:before:-left-3 md:before:inset-y-1 md:before:w-1.5 md:before:rounded-r-full md:before:bg-belt-400'
         : 'text-brand-50 hover:bg-brand-800')
     );
   };
