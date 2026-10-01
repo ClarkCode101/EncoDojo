@@ -86,6 +86,7 @@ export type Settings = {
   /** The app's language (owner's decision 2026-09-30): 'tl' Taglish (default when missing) or 'en' English. */
   language?: 'tl' | 'en';
   /** Practices per day the user wants to do (3, 5 or 10). Missing or 0 = no daily goal. */
+  /** OLD (removed 2026-10-01): the daily goal. Kept so older data and backups still load; unused. */
   dailyGoal?: number;
   /** true = bigger text in the passage, the number to type, and the documents (only what you read from). */
   bigSource?: boolean;

@@ -11,10 +11,8 @@ import { SettingsIcon } from '../../components/icons';
 import { Button, HelpTip, Notice, PageHeader, Section, SegmentedPicker, Toggle } from '../../components/ui';
 import { langOf, translator } from '../../lib/i18n';
 import { backupStatusText, needsBackup } from '../../lib/reminders';
-import { DAILY_GOALS, defaultData, exportFileName, exportJson, parseImport, type AppData } from '../../lib/storage';
+import { defaultData, exportFileName, exportJson, parseImport, type AppData } from '../../lib/storage';
 import { replaceAppData, updateAppData, updateSettings, useAppData } from '../../lib/useAppData';
-
-type DailyGoal = (typeof DAILY_GOALS)[number];
 
 /** One ruled Settings row: the name and one short line on the left, the control on the right. */
 function SettingRow({
@@ -183,24 +181,6 @@ export default function SettingsPage() {
               value={data.profile.displayName}
               onChange={(e) => updateAppData((d) => ({ ...d, profile: { ...d.profile, displayName: e.target.value } }))}
               className={inputClass}
-            />
-          </SettingRow>
-          <SettingRow
-            label={t('Araw-araw na target', 'Daily goal')}
-            description={t(
-              'Ilang practice ang gusto mong gawin bawat araw. Makikita sa sidebar.',
-              'How many practices you want to do each day. Shown in the sidebar.',
-            )}
-          >
-            <SegmentedPicker
-              label={t('Araw-araw na target', 'Daily goal')}
-              hideLabel
-              options={DAILY_GOALS}
-              value={
-                (DAILY_GOALS as readonly number[]).includes(s.dailyGoal ?? 0) ? ((s.dailyGoal ?? 0) as DailyGoal) : 0
-              }
-              format={(n) => (n === 0 ? t('Wala', 'None') : String(n))}
-              onChange={(n) => updateSettings({ dailyGoal: n })}
             />
           </SettingRow>
         </div>

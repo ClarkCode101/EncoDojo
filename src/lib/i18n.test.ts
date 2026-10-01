@@ -9,7 +9,7 @@ import { beltStatus } from './belts';
 import { hintOf } from './fieldScoring';
 import { HELP, helpFor } from './glossary';
 import { langOf, translator } from './i18n';
-import { backupStatusText, dailyGoalText } from './reminders';
+import { backupStatusText } from './reminders';
 import { defaultData, isAppData } from './storage';
 import { KPH_LEVELS } from './targets';
 
@@ -36,7 +36,6 @@ describe('two languages (Taglish / English)', () => {
     expect(nextFocus([]).reason).toBe('Dito magsimula.');
     expect(beltStatus([], 'en').nextHint).toMatch(/^Take the Assessment and pass \d+ of \d+ targets\.$/);
     expect(backupStatusText(undefined, new Date(), 'en')).toBe("You don't have a backup yet.");
-    expect(dailyGoalText(5, 2, 'en')).toBe('Today: 2 of 5 practices.');
     expect(greeting(new Date(2026, 8, 30, 8), 'en')).toBe('Good morning');
   });
 

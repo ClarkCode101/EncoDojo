@@ -1,11 +1,9 @@
 /**
  * Small reminders from the Settings choices (owner's request, 2026-09-27):
- * - the backup reminder (progress lives only in this browser, so a backup
- *   file is the only way not to lose it),
- * - the daily goal ("3 practice bawat araw").
- * Used by Settings, Sensei, and the sidebar. Pure functions, tested.
+ * the backup reminder (progress lives only in this browser, so a backup file
+ * is the only way not to lose it). Used by Settings and Sensei. Pure functions,
+ * tested. (The daily goal was removed with its setting, owner's choice 2026-10-01.)
  */
-import { localDayKey } from '../features/dashboard/stats';
 import { translator, type Lang } from './i18n';
 import type { Session } from './storage';
 
@@ -42,18 +40,4 @@ export function needsBackup(lastBackupAt: string | undefined, sessions: Session[
   if (sessions.length < BACKUP_REMIND_MIN_SESSIONS) return false;
   const days = daysSinceBackup(lastBackupAt, now);
   return days === null || days >= BACKUP_REMIND_DAYS;
-}
-
-/** How many saved sessions (practices and assessments) were done today (local day). */
-export function doneToday(sessions: Session[], now: Date = new Date()): number {
-  const today = localDayKey(now);
-  return sessions.filter((s) => localDayKey(new Date(s.startedAt)) === today).length;
-}
-
-/** The daily goal line, e.g. "Ngayong araw: 2 sa 3 practice". Null when there is no goal. */
-export function dailyGoalText(goal: number | undefined, done: number, lang: Lang = 'tl'): string | null {
-  const t = translator(lang);
-  if (!goal) return null;
-  if (done >= goal) return t(`Naabot mo na ang ${goal} practice ngayong araw.`, `You reached ${goal} practices today.`);
-  return t(`Ngayong araw: ${done} sa ${goal} practice.`, `Today: ${done} of ${goal} practices.`);
 }

@@ -9,7 +9,7 @@
  */
 import { beltStatus } from '../../lib/belts';
 import { translator, type Lang } from '../../lib/i18n';
-import { dailyGoalText, doneToday, needsBackup } from '../../lib/reminders';
+import { needsBackup } from '../../lib/reminders';
 import type { Session } from '../../lib/storage';
 import { nextFocus } from '../dashboard/coach';
 import { currentStreak } from '../dashboard/stats';
@@ -140,29 +140,16 @@ export const BACKUP_LINE_EN =
   'You have not made a backup in a while. Go to Settings and download a backup so you never lose your progress.';
 
 /** The Settings choices Sensei looks at. */
-export type SenseiSettings = { dailyGoal?: number; lastBackupAt?: string };
+export type SenseiSettings = { lastBackupAt?: string };
 
 export const WELCOME = 'Maligayang pagdating sa dojo! Simulan natin sa Typing Practice.';
 export const WELCOME_EN = "Welcome to the dojo! Let's start with Typing Practice.";
 
 /** Lines about the user's own results (empty for a brand-new user). */
-export function personalLines(
-  sessions: Session[],
-  today: Date = new Date(),
-  settings: SenseiSettings = {},
-  lang: Lang = 'tl',
-): string[] {
+export function personalLines(sessions: Session[], today: Date = new Date(), lang: Lang = 'tl'): string[] {
   if (sessions.length === 0) return [];
   const t = translator(lang);
   const lines: string[] = [];
-  const done = doneToday(sessions, today);
-  const goal = dailyGoalText(settings.dailyGoal, done, lang);
-  if (goal) {
-    const reached = done >= (settings.dailyGoal ?? 0);
-    lines.push(
-      reached ? `${goal} ${t('Ang galing!', 'Great job!')}` : `${goal} ${t("Kaya mo 'yan!", 'You can do it!')}`,
-    );
-  }
   const f = nextFocus(sessions, lang);
   lines.push(
     f.skill === 'assessment'
@@ -206,7 +193,7 @@ export function senseiLine(
   const en = lang === 'en';
   const tips = en ? TIPS_EN : TIPS;
   const cheers = en ? CHEERS_EN : CHEERS;
-  const personal = personalLines(sessions, new Date(), settings, lang);
+  const personal = personalLines(sessions, new Date(), lang);
   if (place === 'home' && sessions.length === 0) return en ? WELCOME_EN : WELCOME;
   const r = rand();
   // The backup reminder comes first on Home and Settings (often, not every time).

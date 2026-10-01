@@ -1,7 +1,8 @@
 /**
  * "Susunod na gagawin" on Home (moved from the sidebar, owner's choice 2026-10-01: the
  * sidebar is only the menu now): the practice to do next (see coach.ts) with one short
- * reason, and the daily goal; the whole card is a link to that practice.
+ * reason; the whole card is a link to that practice. (The daily goal line was removed
+ * with the setting, owner's choice 2026-10-01.)
  */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -15,7 +16,6 @@ import {
   QcIcon,
 } from '../../components/icons';
 import { useLang } from '../../lib/i18n';
-import { dailyGoalText, doneToday } from '../../lib/reminders';
 import { useAppData } from '../../lib/useAppData';
 import { nextFocus, type NextFocus } from './coach';
 
@@ -29,11 +29,9 @@ const ICONS: Record<NextFocus['skill'], (className: string) => ReactNode> = {
 };
 
 export default function NextFocusCard() {
-  const { sessions, settings } = useAppData();
+  const { sessions } = useAppData();
   const lang = useLang();
   const f = nextFocus(sessions, lang);
-  // Settings -> "Araw-araw na target" (null when there is no goal).
-  const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions), lang);
 
   return (
     <Link
@@ -47,7 +45,6 @@ export default function NextFocusCard() {
         <ArrowRightIcon className="ml-auto h-5 w-5 text-stone-500 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
       </div>
       <p className="mt-1 text-stone-700">{f.reason}</p>
-      {goal && <p className="mt-1 text-sm font-semibold text-brand-700">{goal}</p>}
     </Link>
   );
 }

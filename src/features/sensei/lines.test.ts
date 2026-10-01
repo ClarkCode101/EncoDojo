@@ -85,12 +85,6 @@ describe('reminders from Settings', () => {
     const recent = { lastBackupAt: new Date().toISOString() };
     expect(senseiLine({ place: 'home', sessions: five, settings: recent }, seq(0.1))).not.toBe(BACKUP_LINE);
   });
-
-  it('adds the daily goal to the personal lines', () => {
-    const lines = personalLines(five, new Date(), { dailyGoal: 10 });
-    expect(lines[0]).toContain('Ngayong araw: 5 sa 10 practice.');
-    expect(personalLines(five, new Date(), { dailyGoal: 3 })[0]).toContain('Naabot mo na');
-  });
 });
 
 describe('Sensei in English', () => {
@@ -114,11 +108,8 @@ describe('Sensei in English', () => {
   });
 
   it('the lines about your results are English too', () => {
-    const lines = personalLines([typing(0), typing(24 * 3600 * 1000)], new Date(), { dailyGoal: 10 }, 'en');
-    expect(lines[0]).toBe('Today: 1 of 10 practices. You can do it!'); // the other one was yesterday
+    const lines = personalLines([typing(0), typing(24 * 3600 * 1000)], new Date(), 'en');
+    expect(lines[0]).toMatch(/^Next, try Numpad Practice/);
     expect(lines.some((l) => /practiced 2 days in a row/.test(l))).toBe(true);
-    expect(personalLines(five, new Date(), { dailyGoal: 3 }, 'en')[0]).toBe(
-      'You reached 3 practices today. Great job!',
-    );
   });
 });
