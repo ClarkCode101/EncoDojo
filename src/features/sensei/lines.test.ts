@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { Session } from '../../lib/storage';
+import { defaultData, isAppData, type Session } from '../../lib/storage';
 import {
   BACKUP_LINE,
   BACKUP_LINE_EN,
   CHEERS,
   CHEERS_EN,
+  NUMPAD_TOP_TIPS,
+  NUMPAD_TOP_TIPS_EN,
   TIPS,
   TIPS_EN,
   WELCOME,
@@ -111,5 +113,21 @@ describe('Sensei in English', () => {
     const lines = personalLines([typing(0), typing(24 * 3600 * 1000)], new Date(), 'en');
     expect(lines[0]).toMatch(/^Next, try Numpad Practice/);
     expect(lines.some((l) => /practiced 2 days in a row/.test(l))).toBe(true);
+  });
+});
+
+describe('"Walang numpad ang keyboard ko"', () => {
+  it('Sensei gives top-number-key tips instead of Num Lock tips', () => {
+    const line = senseiLine({ place: 'numpad', sessions: [], settings: { noNumpad: true } }, seq(0.1, 0));
+    expect(NUMPAD_TOP_TIPS).toContain(line);
+    const en = senseiLine({ place: 'numpad', sessions: [], settings: { noNumpad: true }, lang: 'en' }, seq(0.1, 0));
+    expect(NUMPAD_TOP_TIPS_EN).toContain(en);
+    expect([...NUMPAD_TOP_TIPS, ...NUMPAD_TOP_TIPS_EN].some((t) => /Num Lock/.test(t))).toBe(false);
+  });
+
+  it('the setting is saved and loaded like the others', () => {
+    const data = defaultData();
+    expect(isAppData({ ...data, settings: { ...data.settings, noNumpad: true } })).toBe(true);
+    expect(isAppData({ ...data, settings: { ...data.settings, noNumpad: 'yes' } })).toBe(false);
   });
 });

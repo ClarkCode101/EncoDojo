@@ -119,6 +119,18 @@ export const TIPS_EN: Record<SenseiPlace, string[]> = {
   ],
 };
 
+/** Numpad tips for "Walang numpad ang keyboard ko" (Settings): the number keys above the letters. */
+export const NUMPAD_TOP_TIPS = [
+  'Walang numpad? Ang number keys sa itaas ng mga letra ang gamitin. Masasanay din ang mga daliri.',
+  'Sa number keys sa itaas: 1-2-3-4-5 sa kaliwang kamay, 6-7-8-9-0 sa kanan.',
+  'Kung may hiring test na kailangan ng 10-key, magandang bumili ng murang USB numpad.',
+];
+export const NUMPAD_TOP_TIPS_EN = [
+  'No numpad? Use the number keys above the letters. Your fingers will get used to it.',
+  'On the top number keys: 1-2-3-4-5 with the left hand, 6-7-8-9-0 with the right.',
+  'If a hiring test needs 10-key, a cheap USB numpad is a good buy.',
+];
+
 export const CHEERS: string[] = [
   'Normal lang magkamali. Dito ka natututo.',
   'Bawat ensayo, isang hakbang palapit sa trabaho.',
@@ -140,7 +152,7 @@ export const BACKUP_LINE_EN =
   'You have not made a backup in a while. Go to Settings and download a backup so you never lose your progress.';
 
 /** The Settings choices Sensei looks at. */
-export type SenseiSettings = { lastBackupAt?: string };
+export type SenseiSettings = { lastBackupAt?: string; noNumpad?: boolean };
 
 export const WELCOME = 'Maligayang pagdating sa dojo! Simulan natin sa Typing Practice.';
 export const WELCOME_EN = "Welcome to the dojo! Let's start with Typing Practice.";
@@ -191,7 +203,9 @@ export function senseiLine(
   rand: () => number = Math.random,
 ): string {
   const en = lang === 'en';
-  const tips = en ? TIPS_EN : TIPS;
+  const base = en ? TIPS_EN : TIPS;
+  // "Walang numpad ang keyboard ko": no Num Lock tips, the top number keys instead.
+  const tips = settings.noNumpad ? { ...base, numpad: en ? NUMPAD_TOP_TIPS_EN : NUMPAD_TOP_TIPS } : base;
   const cheers = en ? CHEERS_EN : CHEERS;
   const personal = personalLines(sessions, new Date(), lang);
   if (place === 'home' && sessions.length === 0) return en ? WELCOME_EN : WELCOME;

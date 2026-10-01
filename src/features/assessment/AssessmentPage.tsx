@@ -294,6 +294,7 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
 export default function AssessmentPage() {
   const data = useAppData();
   const { sound } = data.settings;
+  const settings = data.settings;
   const [step, setStep] = useState<Step>({ name: 'intro' });
   const [seed, setSeed] = useState(randomSeed);
   // TEMPORARY (DevJump): a test run started from the jump buttons is not saved.
@@ -430,15 +431,28 @@ export default function AssessmentPage() {
         />
         <Section title="Susunod: Bahagi 2, Numpad (1 minuto)" className="mt-6">
           <ol className="mb-5 list-decimal space-y-1 pl-6 text-lg text-stone-800">
-            <li>
-              Siguraduhing naka-ON ang <strong>Num Lock</strong>.
-            </li>
-            <li>Ilagay ang mga daliri sa 4-5-6 ng numpad.</li>
+            {/* Settings -> "Walang numpad ang keyboard ko": the number keys above the letters. */}
+            {settings.noNumpad ? (
+              <li>
+                Gamitin ang <strong>number keys sa itaas</strong> ng mga letra. Ang tuldok ay ang . sa kanan ng M.
+              </li>
+            ) : (
+              <>
+                <li>
+                  Siguraduhing naka-ON ang <strong>Num Lock</strong>.
+                </li>
+                <li>Ilagay ang mga daliri sa 4-5-6 ng numpad.</li>
+              </>
+            )}
             <li>
               I-type ang bawat numero at pindutin ang <strong>Enter</strong>. Hindi kailangan ang comma.
             </li>
           </ol>
-          <HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>
+          {settings.noNumpad ? (
+            <HelpTip label="Walang numpad?">{HELP.numpadTop}</HelpTip>
+          ) : (
+            <HelpTip label="Nasaan ang numpad?">{HELP.numpad}</HelpTip>
+          )}
           <div className="mt-6">
             <Button size="lg" autoFocus onClick={() => setStep({ name: 'numpad', typing: step.typing })}>
               Simulan ang Bahagi 2 <ArrowRightIcon className="h-5 w-5" />

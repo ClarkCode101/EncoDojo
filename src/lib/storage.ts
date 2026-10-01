@@ -85,7 +85,6 @@ export type Settings = {
   englishOnly?: boolean;
   /** The app's language (owner's decision 2026-09-30): 'tl' Taglish (default when missing) or 'en' English. */
   language?: 'tl' | 'en';
-  /** Practices per day the user wants to do (3, 5 or 10). Missing or 0 = no daily goal. */
   /** OLD (removed 2026-10-01): the daily goal. Kept so older data and backups still load; unused. */
   dailyGoal?: number;
   /** true = bigger text in the passage, the number to type, and the documents (only what you read from). */
@@ -94,6 +93,11 @@ export type Settings = {
   reduceMotion?: boolean;
   /** true = a soft sound when an entry or record is correct. */
   soundCorrect?: boolean;
+  /**
+   * true = "Walang numpad ang keyboard ko" (2026-10-01): the numpad practice and tips teach the
+   * number keys above the letters instead of the numpad (and never say "turn on Num Lock").
+   */
+  noNumpad?: boolean;
 };
 
 /** The daily goals the user can pick in Settings (0 = none). */
@@ -147,6 +151,7 @@ function hasValidExtraSettings(settings: Record<string, unknown>): boolean {
     isBooleanOrMissing(settings.bigSource) &&
     isBooleanOrMissing(settings.reduceMotion) &&
     isBooleanOrMissing(settings.soundCorrect) &&
+    isBooleanOrMissing(settings.noNumpad) &&
     (settings.language === undefined || settings.language === 'tl' || settings.language === 'en')
   );
 }

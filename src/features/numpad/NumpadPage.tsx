@@ -26,7 +26,7 @@ type Result = { session: Session; finishedEarly: boolean };
 
 export default function NumpadPage() {
   const data = useAppData();
-  const { numpadMode: mode, sound } = data.settings;
+  const { numpadMode: mode, sound, noNumpad } = data.settings;
   const difficulty = NUMPAD_MODES[mode].difficulty;
   const lang = useLang();
   const t = useT();
@@ -112,17 +112,29 @@ export default function NumpadPage() {
           </>
         }
         howTo={[
-          t(
-            'I-ON ang Num Lock at ilagay ang mga daliri sa 4-5-6 ng numpad.',
-            'Turn ON Num Lock and rest your fingers on 4-5-6 of the numpad.',
-          ),
+          // Settings -> "Walang numpad ang keyboard ko": the number keys above the letters instead.
+          noNumpad
+            ? t(
+                'Gamitin ang number keys sa itaas ng mga letra (1 hanggang 0). Ang tuldok ay ang . sa kanan ng M.',
+                'Use the number keys above the letters (1 to 0). The period is the . right of M.',
+              )
+            : t(
+                'I-ON ang Num Lock at ilagay ang mga daliri sa 4-5-6 ng numpad.',
+                'Turn ON Num Lock and rest your fingers on 4-5-6 of the numpad.',
+              ),
           t(
             'I-type ang numerong lalabas at pindutin ang Enter. Hindi kailangan ang comma.',
             'Type the number you see and press Enter. No commas needed.',
           ),
           t('Magsisimula ang oras sa unang numero na ita-type mo.', 'The timer starts at the first number you type.'),
         ]}
-        extra={<HelpTip label={t('Nasaan ang numpad?', 'Where is the numpad?')}>{help.numpad}</HelpTip>}
+        extra={
+          noNumpad ? (
+            <HelpTip label={t('Walang numpad?', 'No numpad?')}>{help.numpadTop}</HelpTip>
+          ) : (
+            <HelpTip label={t('Nasaan ang numpad?', 'Where is the numpad?')}>{help.numpad}</HelpTip>
+          )
+        }
         onStart={() => setScreen('practice')}
       />
     );
