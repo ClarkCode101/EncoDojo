@@ -8,7 +8,10 @@ import { adjustRefs } from './formulas';
 
 const DEFAULT_WIDTH = 'w-24 min-w-[6rem]';
 
-const NEED_WHOLE = 'Piliin muna ang buong row (Shift + Space) o ang buong column (Ctrl + Space).';
+const NEED_WHOLE = {
+  tl: 'Piliin muna ang buong row (Shift + Space) o ang buong column (Ctrl + Space).',
+  en: 'First select the whole row (Shift + Space) or the whole column (Ctrl + Space).',
+};
 
 /** Formats by "row,col" after rows/columns moved: `map` gives the new index, or null (deleted). */
 function moveFormats(s: Sheet, axis: 'row' | 'col', map: (i: number) => number | null): Record<string, CellFormat> {

@@ -579,7 +579,7 @@ describe('Paste Values, Flash Fill, Text to Columns (Aralin 9)', () => {
     let t = press(s, 'x');
     t = press(typeInCell(t, 'Bayad'), 'Enter');
     expect(t.editing?.value).toBe('Bayad');
-    expect(t.alert).toMatch(/Hindi puwede/);
+    expect(t.alert?.tl).toMatch(/Hindi puwede/);
     t = press(t, 'Escape');
     expect(t.alert).toBeNull();
     t = press(typeInCell(press(t, 'u'), 'UNPAID'), 'Enter');
@@ -653,7 +653,7 @@ describe('rows and columns: insert, delete, hide, freeze (Aralin 12)', () => {
     expect(s.cells).toHaveLength(6);
     const t = press(table(), 'ArrowDown', ctrl('-'));
     expect(t.cells).toEqual(table().cells);
-    expect(t.alert).toMatch(/Shift \+ Space/);
+    expect(t.alert?.en).toMatch(/Shift \+ Space/);
   });
 
   it('Ctrl+Space then Ctrl + + / Ctrl + - on columns; the widths move along', () => {

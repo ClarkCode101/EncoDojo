@@ -8,6 +8,7 @@
  * zeros); Daily Rate is a plain number. Each task has its own row or column,
  * so the tasks never get in each other's way, in any order (tested).
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits, nameParts } from '../typing/generatePassage';
@@ -20,13 +21,16 @@ const EXTRA_ROWS = 8;
 const SHEET_COLS = 7;
 
 /** Short names of the task kinds, for the results table. */
-export const TASK_LABEL_3: Record<string, string> = {
-  leadingZero: 'Mag-type ng numerong may zero sa unahan',
-  fixZeros: 'Ibalik ang nawalang zero',
-  numberFormat: 'Lagyan ng comma at 2 decimal ang halaga',
-  typeFormatted: 'Mag-type sa cell na naka-format na',
-  boldHeader: 'I-bold ang header',
-  boldCell: 'I-bold ang isang cell',
+export const taskLabels3 = (lang: Lang = 'tl'): Record<string, string> => {
+  const t = translator(lang);
+  return {
+    leadingZero: t('Mag-type ng numerong may zero sa unahan', 'Type a number with zeros in front'),
+    fixZeros: t('Ibalik ang nawalang zero', 'Bring back the lost zeros'),
+    numberFormat: t('Lagyan ng comma at 2 decimal ang halaga', 'Give the amounts a comma and 2 decimals'),
+    typeFormatted: t('Mag-type sa cell na naka-format na', 'Type into a cell that is already formatted'),
+    boldHeader: t('I-bold ang header', 'Make the header bold'),
+    boldCell: t('I-bold ang isang cell', 'Make one cell bold'),
+  };
 };
 
 const empNo = (rng: Rng) => `00${intBetween(rng, 100, 999)}`;
@@ -57,7 +61,7 @@ function typedEntry(s: Sheet, p: Pos, raw: string): Sheet {
   return { ...done, active: p, anchor: p };
 }
 
-function allTasks3(rng: Rng, table: string[][]): Record<string, ExcelTask> {
+function allTasks3(rng: Rng, table: string[][], t: T): Record<string, ExcelTask> {
   const last = table.length - 1;
   const [r1, r2, r3] = shuffle(
     rng,
@@ -75,9 +79,15 @@ function allTasks3(rng: Rng, table: string[][]): Record<string, ExcelTask> {
   const tasks: ExcelTask[] = [
     {
       id: 'leadingZero',
-      text: `Ilagay ang Emp No. ng bagong empleyado sa ${cellName(at(newRow, COL.emp))}: ${newEmp}. Dapat manatili ang mga zero.`,
-      tip: "' (apostrophe) sa unahan, tapos Enter",
-      hint: `Kapag ${newEmp} lang ang tinype, magiging ${Number(newEmp)} ito. I-type muna ang apostrophe ('), tapos ang numero.`,
+      text: t(
+        `Ilagay ang Emp No. ng bagong empleyado sa ${cellName(at(newRow, COL.emp))}: ${newEmp}. Dapat manatili ang mga zero.`,
+        `Put the new employee's Emp No. in ${cellName(at(newRow, COL.emp))}: ${newEmp}. The zeros must stay.`,
+      ),
+      tip: t("' (apostrophe) sa unahan, tapos Enter", "' (apostrophe) in front, then Enter"),
+      hint: t(
+        `Kapag ${newEmp} lang ang tinype, magiging ${Number(newEmp)} ito. I-type muna ang apostrophe ('), tapos ang numero.`,
+        `If you type just ${newEmp}, it becomes ${Number(newEmp)}. Type the apostrophe (') first, then the number.`,
+      ),
       solution: [...typeValue(`'${newEmp}`), key('Enter')],
       start: at(newRow, COL.emp),
       check: (s) => !s.editing && s.cells[newRow][COL.emp] === newEmp && isText(s, at(newRow, COL.emp)),
@@ -85,9 +95,15 @@ function allTasks3(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'fixZeros',
-      text: `Nawala ang mga zero sa Account No. ng ${cellName(at(r1, COL.account))}. Dapat "${account}". Ayusin ito.`,
-      tip: "' (apostrophe) sa unahan, tapos Enter",
-      hint: "I-type ulit ang buong Account No., pero may apostrophe (') sa unahan para hindi mawala ang zero.",
+      text: t(
+        `Nawala ang mga zero sa Account No. ng ${cellName(at(r1, COL.account))}. Dapat "${account}". Ayusin ito.`,
+        `The zeros of the Account No. in ${cellName(at(r1, COL.account))} were lost. It should be "${account}". Fix it.`,
+      ),
+      tip: t("' (apostrophe) sa unahan, tapos Enter", "' (apostrophe) in front, then Enter"),
+      hint: t(
+        "I-type ulit ang buong Account No., pero may apostrophe (') sa unahan para hindi mawala ang zero.",
+        "Type the whole Account No. again, but with an apostrophe (') in front so the zeros stay.",
+      ),
       solution: [...typeValue(`'${account}`), key('Enter')],
       start: at(r1, COL.account),
       prepare: (s) => typedEntry(s, at(r1, COL.account), account), // typed without the apostrophe: the zeros go
@@ -97,9 +113,15 @@ function allTasks3(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'numberFormat',
-      text: `Lagyan ng comma at 2 decimal ang lahat ng Daily Rate (E2 hanggang E${last + 1}).`,
-      tip: 'Ctrl + Shift + ↓, tapos Ctrl + Shift + 1',
-      hint: 'Piliin muna ang buong column ng Daily Rate, tapos Ctrl + Shift + 1 para sa format na 1,500.00.',
+      text: t(
+        `Lagyan ng comma at 2 decimal ang lahat ng Daily Rate (E2 hanggang E${last + 1}).`,
+        `Give every Daily Rate a comma and 2 decimals (E2 to E${last + 1}).`,
+      ),
+      tip: t('Ctrl + Shift + ↓, tapos Ctrl + Shift + 1', 'Ctrl + Shift + ↓, then Ctrl + Shift + 1'),
+      hint: t(
+        'Piliin muna ang buong column ng Daily Rate, tapos Ctrl + Shift + 1 para sa format na 1,500.00.',
+        'First select the whole Daily Rate column, then Ctrl + Shift + 1 for the 1,500.00 format.',
+      ),
       solution: [key('ArrowDown', { ctrl: true, shift: true }), key('!', { ctrl: true, shift: true })],
       start: at(1, COL.rate),
       check: (s) =>
@@ -108,9 +130,15 @@ function allTasks3(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'typeFormatted',
-      text: `Naka-format na ang ${cellName(at(r2, COL.rate))} (may comma at 2 decimal). Palitan ito ng ${Number(newRate).toLocaleString('en-US')}.00.`,
-      tip: 'I-type ang numero lang, tapos Enter',
-      hint: `I-type lang ang ${newRate}, walang comma at walang .00. Ang format na ang maglalagay ng mga iyon.`,
+      text: t(
+        `Naka-format na ang ${cellName(at(r2, COL.rate))} (may comma at 2 decimal). Palitan ito ng ${Number(newRate).toLocaleString('en-US')}.00.`,
+        `${cellName(at(r2, COL.rate))} is already formatted (comma and 2 decimals). Change it to ${Number(newRate).toLocaleString('en-US')}.00.`,
+      ),
+      tip: t('I-type ang numero lang, tapos Enter', 'Type just the number, then Enter'),
+      hint: t(
+        `I-type lang ang ${newRate}, walang comma at walang .00. Ang format na ang maglalagay ng mga iyon.`,
+        `Just type ${newRate}, no comma and no .00. The format adds those.`,
+      ),
       solution: [...typeValue(newRate), key('Enter')],
       start: at(r2, COL.rate),
       // The cell already has the number format (as if someone set it before).
@@ -124,9 +152,12 @@ function allTasks3(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'boldHeader',
-      text: 'Gawing bold ang buong header (A1 hanggang E1).',
-      tip: 'Ctrl + Shift + →, tapos Ctrl + B',
-      hint: 'Piliin ang header mula A1 pakanan (Ctrl + Shift + →), tapos Ctrl + B para sa bold.',
+      text: t('Gawing bold ang buong header (A1 hanggang E1).', 'Make the whole header bold (A1 to E1).'),
+      tip: t('Ctrl + Shift + →, tapos Ctrl + B', 'Ctrl + Shift + →, then Ctrl + B'),
+      hint: t(
+        'Piliin ang header mula A1 pakanan (Ctrl + Shift + →), tapos Ctrl + B para sa bold.',
+        'Select the header from A1 to the right (Ctrl + Shift + →), then Ctrl + B for bold.',
+      ),
       solution: [key('ArrowRight', { ctrl: true, shift: true }), key('b', { ctrl: true })],
       start: at(0, 0),
       check: (s) => !s.editing && HEADERS_3.every((_, c) => formatOf(s, at(0, c)).bold),
@@ -134,20 +165,26 @@ function allTasks3(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'boldCell',
-      text: `Gawing bold ang pangalan sa ${cellName(at(r3, COL.name))}.`,
+      text: t(
+        `Gawing bold ang pangalan sa ${cellName(at(r3, COL.name))}.`,
+        `Make the name in ${cellName(at(r3, COL.name))} bold.`,
+      ),
       tip: 'Ctrl + B',
-      hint: 'Nasa tamang cell ka na. Ctrl + B lang (B para sa "Bold").',
+      hint: t(
+        'Nasa tamang cell ka na. Ctrl + B lang (B para sa "Bold").',
+        'You are already in the right cell. Just Ctrl + B (B for "Bold").',
+      ),
       solution: [key('b', { ctrl: true })],
       start: at(r3, COL.name),
       check: (s) => !s.editing && formatOf(s, at(r3, COL.name)).bold === true,
       maxKeys: 1,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new payroll sheet (Excel's formatting rules on) with one task of every Aralin 3 kind. */
-export function makeTaskSet3(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet3(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const table = makeTable3(rng);
   // Emp No. and Account No. were typed with an apostrophe: text that keeps its zeros.
   const formats: Record<string, CellFormat> = {};
@@ -156,11 +193,11 @@ export function makeTaskSet3(rng: Rng): { sheet: Sheet; tasks: Record<string, Ex
     formats[formatKey({ r, c: COL.account })] = { text: true };
   }
   const sheet = makeSheet(table, table.length + EXTRA_ROWS, SHEET_COLS, { formatting: true, formats });
-  return { sheet, tasks: allTasks3(rng, table) };
+  return { sheet, tasks: allTasks3(rng, table, translator(lang)) };
 }
 
 /** The Aralin 3 Pagsusulit: a new sheet and all 6 task kinds in random order. */
-export function makeQuiz3(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet3(rng);
+export function makeQuiz3(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet3(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)) };
 }

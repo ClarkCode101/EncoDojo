@@ -42,7 +42,10 @@ export function renameTab(s: Sheet, i: number, name: string): Sheet {
   if (!clean || clean.length > 31 || /[\\/?*[\]:']/.test(clean) || taken) {
     return {
       ...s,
-      alert: `Hindi puwede ang pangalang "${name}". Iba sa ibang tab, hindi blangko, walang / \\ ? * [ ] : '.`,
+      alert: {
+        tl: `Hindi puwede ang pangalang "${name}". Iba sa ibang tab, hindi blangko, walang / \\ ? * [ ] : '.`,
+        en: `The name "${name}" is not allowed. It must differ from the other tabs, not be blank, and have no / \\ ? * [ ] : '.`,
+      },
     };
   }
   const names = s.tabs.names.map((n, j) => (j === i ? clean : n));

@@ -13,6 +13,7 @@
  * really cleans the text passes. Each task's `prepare` sets up what it needs,
  * so the tasks work in any order (tested).
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits } from '../typing/generatePassage';
@@ -77,7 +78,7 @@ function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
   return { ...s, cells };
 }
 
-function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
+function allTasks8(table: string[][], rng: Rng, t: T): Record<string, ExcelTask> {
   const n = table.length - 1; // records are rows 1..n
   const rows = Array.from({ length: n }, (_, i) => i + 1);
   const last = n + 1; // Excel row number of the last record
@@ -108,9 +109,15 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
   const tasks: ExcelTask[] = [
     {
       id: 'trim',
-      text: `Sa ${cellName(b2)}, tanggalin ang sobrang space ng pangalan sa A2 (sa unahan, sa hulihan, at sa gitna).`,
-      tip: '=TRIM(A2), tapos Enter',
-      hint: 'Ang =TRIM(cell) ay nagtatanggal ng sobrang space. Isang space na lang ang natitira sa pagitan ng mga salita.',
+      text: t(
+        `Sa ${cellName(b2)}, tanggalin ang sobrang space ng pangalan sa A2 (sa unahan, sa hulihan, at sa gitna).`,
+        `In ${cellName(b2)}, remove the extra spaces of the name in A2 (at the start, at the end, and in between).`,
+      ),
+      tip: t('=TRIM(A2), tapos Enter', '=TRIM(A2), then Enter'),
+      hint: t(
+        'Ang =TRIM(cell) ay nagtatanggal ng sobrang space. Isang space na lang ang natitira sa pagitan ng mga salita.',
+        '=TRIM(cell) removes extra spaces. Only one space stays between the words.',
+      ),
       solution: typeFormula('=TRIM(A2)'),
       start: b2,
       prepare: (s) => setCells(s, [[b2, '']]),
@@ -119,9 +126,15 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
     },
     {
       id: 'proper',
-      text: `Sa ${cellName(b2)}, ayusin din ang malaki at maliit na titik: Juan Dela Cruz. Isama ang TRIM.`,
-      tip: '=PROPER(TRIM(A2)), tapos Enter',
-      hint: 'Ang PROPER ay naglalagay ng malaking titik sa simula ng bawat salita. Ilagay ang TRIM sa loob: =PROPER(TRIM(A2)).',
+      text: t(
+        `Sa ${cellName(b2)}, ayusin din ang malaki at maliit na titik: Juan Dela Cruz. Isama ang TRIM.`,
+        `In ${cellName(b2)}, also fix the capital and small letters: Juan Dela Cruz. Keep the TRIM.`,
+      ),
+      tip: t('=PROPER(TRIM(A2)), tapos Enter', '=PROPER(TRIM(A2)), then Enter'),
+      hint: t(
+        'Ang PROPER ay naglalagay ng malaking titik sa simula ng bawat salita. Ilagay ang TRIM sa loob: =PROPER(TRIM(A2)).',
+        'PROPER puts a capital letter at the start of every word. Put the TRIM inside: =PROPER(TRIM(A2)).',
+      ),
       solution: typeFormula(nameFormula(1)),
       start: b2,
       // The step before: B2 only trims.
@@ -131,9 +144,15 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
     },
     {
       id: 'fillName',
-      text: `Kopyahin ang formula ng B2 pababa hanggang B${last}, para malinis ang lahat ng pangalan.`,
-      tip: `Shift + ↓ hanggang B${last}, tapos Ctrl + D`,
-      hint: `Nasa B2 ka. Shift + ↓ hanggang B${last} para mapili, tapos Ctrl + D.`,
+      text: t(
+        `Kopyahin ang formula ng B2 pababa hanggang B${last}, para malinis ang lahat ng pangalan.`,
+        `Copy the formula in B2 down to B${last}, so every name is clean.`,
+      ),
+      tip: t(`Shift + ↓ hanggang B${last}, tapos Ctrl + D`, `Shift + ↓ to B${last}, then Ctrl + D`),
+      hint: t(
+        `Nasa B2 ka. Shift + ↓ hanggang B${last} para mapili, tapos Ctrl + D.`,
+        `You are in B2. Shift + ↓ to B${last} to select, then Ctrl + D.`,
+      ),
       solution: [...Array.from({ length: n - 1 }, () => key('ArrowDown', { shift: true })), key('d', { ctrl: true })],
       start: b2,
       prepare: (s) =>
@@ -153,9 +172,15 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
     },
     {
       id: 'upper',
-      text: `Sa ${cellName(d2)}, isulat ang Ref No. ng C2 sa malalaking titik (TN-00457).`,
-      tip: '=UPPER(C2), tapos Enter',
-      hint: 'Ang =UPPER(cell) ay ginagawang malalaking titik lahat. (Ang =LOWER(cell) naman, maliliit.)',
+      text: t(
+        `Sa ${cellName(d2)}, isulat ang Ref No. ng C2 sa malalaking titik (TN-00457).`,
+        `In ${cellName(d2)}, write the Ref No. of C2 in capital letters (TN-00457).`,
+      ),
+      tip: t('=UPPER(C2), tapos Enter', '=UPPER(C2), then Enter'),
+      hint: t(
+        'Ang =UPPER(cell) ay ginagawang malalaking titik lahat. (Ang =LOWER(cell) naman, maliliit.)',
+        '=UPPER(cell) makes every letter a capital. (=LOWER(cell) makes them small.)',
+      ),
       solution: typeFormula(refFormula(1)),
       start: d2,
       prepare: (s) => setCells(s, [[d2, '']]),
@@ -164,9 +189,15 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
     },
     {
       id: 'left',
-      text: `Sa ${cellName(e2)}, kunin ang Branch: ang unang 2 titik ng Ref No. sa D2.`,
-      tip: '=LEFT(D2,2), tapos Enter',
-      hint: 'Ang =LEFT(cell, ilan) ay kumukuha ng mga titik mula sa kaliwa. Dito: 2 titik mula sa D2.',
+      text: t(
+        `Sa ${cellName(e2)}, kunin ang Branch: ang unang 2 titik ng Ref No. sa D2.`,
+        `In ${cellName(e2)}, take the Branch: the first 2 letters of the Ref No. in D2.`,
+      ),
+      tip: t('=LEFT(D2,2), tapos Enter', '=LEFT(D2,2), then Enter'),
+      hint: t(
+        'Ang =LEFT(cell, ilan) ay kumukuha ng mga titik mula sa kaliwa. Dito: 2 titik mula sa D2.',
+        '=LEFT(cell, how many) takes letters from the left. Here: 2 letters from D2.',
+      ),
       solution: typeFormula('=LEFT(D2,2)'),
       start: e2,
       prepare: (s) =>
@@ -179,9 +210,15 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
     },
     {
       id: 'right',
-      text: `Sa ${cellName(f2)}, kunin ang No.: ang huling 5 numero ng Ref No. sa D2.`,
-      tip: '=RIGHT(D2,5), tapos Enter',
-      hint: 'Ang =RIGHT(cell, ilan) ay kumukuha mula sa kanan. Dito: 5 mula sa D2. Mananatili ang 0 sa unahan (00457).',
+      text: t(
+        `Sa ${cellName(f2)}, kunin ang No.: ang huling 5 numero ng Ref No. sa D2.`,
+        `In ${cellName(f2)}, take the No.: the last 5 digits of the Ref No. in D2.`,
+      ),
+      tip: t('=RIGHT(D2,5), tapos Enter', '=RIGHT(D2,5), then Enter'),
+      hint: t(
+        'Ang =RIGHT(cell, ilan) ay kumukuha mula sa kanan. Dito: 5 mula sa D2. Mananatili ang 0 sa unahan (00457).',
+        '=RIGHT(cell, how many) takes from the right. Here: 5 from D2. The 0 in front stays (00457).',
+      ),
       solution: typeFormula('=RIGHT(D2,5)'),
       start: f2,
       prepare: (s) =>
@@ -193,19 +230,19 @@ function allTasks8(table: string[][], rng: Rng): Record<string, ExcelTask> {
       maxKeys: 1,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new messy customer list (Excel's number rules on) with one task of every Aralin 8 kind. */
-export function makeTaskSet8(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet8(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const table = makeTable8(rng);
   // No extra empty column: all 6 columns fit a 1366px screen (sheetLayout.ts).
   const sheet = makeSheet(table, table.length + EXTRA_ROWS, HEADERS_8.length, { formatting: true });
-  return { sheet, tasks: allTasks8(table, rng) };
+  return { sheet, tasks: allTasks8(table, rng, translator(lang)) };
 }
 
 /** The Aralin 8 Pagsusulit: a new sheet and all 6 task kinds in random order. */
-export function makeQuiz8(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet8(rng);
+export function makeQuiz8(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet8(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)) };
 }

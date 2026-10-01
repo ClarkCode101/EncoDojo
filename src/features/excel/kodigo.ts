@@ -3,7 +3,8 @@
  * the Excel lessons, on one page, to look up again quickly. It is built from the lessons' own
  * `keys` lists, so a new lesson shows up here by itself.
  */
-import type { Lesson } from './lessons';
+import type { Lang } from '../../lib/i18n';
+import { lessonTitle, type Lesson } from './lessons';
 
 /** Shortcut = keys to press; formula = something typed in a cell; tool = a button or menu of Excel. */
 export type KodigoKind = 'shortcut' | 'formula' | 'tool';
@@ -26,11 +27,14 @@ export function kindOf(keys: string): KodigoKind {
 }
 
 /** The ready lessons, each with its items in the lesson's order (an item listed twice in a lesson only once). */
-export function kodigoByLesson(lessons: Lesson[]): { level: number; title: string; items: KodigoItem[] }[] {
+export function kodigoByLesson(
+  lessons: Lesson[],
+  lang: Lang = 'tl',
+): { level: number; title: string; items: KodigoItem[] }[] {
   return lessons
     .filter((l) => l.topics !== null)
     .map((l) => {
-      const taught = l.topics!.flatMap((t) => t.keys);
+      const taught = l.topics!(lang).flatMap((t) => t.keys);
       const seen = new Set<string>();
       const items: KodigoItem[] = [];
       for (const k of taught) {
@@ -38,14 +42,14 @@ export function kodigoByLesson(lessons: Lesson[]): { level: number; title: strin
         seen.add(k.keys);
         items.push({ keys: k.keys, what: k.what, kind: kindOf(k.keys), lessons: [l.level] });
       }
-      return { level: l.level, title: l.title, items };
+      return { level: l.level, title: lessonTitle(l, lang), items };
     });
 }
 
 /** Every item of one kind, once (the first lesson's description; all the lessons that teach it). */
-export function kodigoOfKind(lessons: Lesson[], kind: KodigoKind): KodigoItem[] {
+export function kodigoOfKind(lessons: Lesson[], kind: KodigoKind, lang: Lang = 'tl'): KodigoItem[] {
   const byKeys = new Map<string, KodigoItem>();
-  for (const group of kodigoByLesson(lessons)) {
+  for (const group of kodigoByLesson(lessons, lang)) {
     for (const item of group.items) {
       if (item.kind !== kind) continue;
       const known = byKeys.get(item.keys);

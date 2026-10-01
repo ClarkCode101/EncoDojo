@@ -10,6 +10,7 @@
  * data imported from another system). Formula checks compare with the lesson's
  * own formula (`sameResult`) on the sheet and on a copy with another date.
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, shuffle, type Rng } from '../../lib/random';
 import { digits } from '../typing/generatePassage';
 import { computeSheet, sameResult } from './formulaEngine';
@@ -97,7 +98,7 @@ function parseTyped(v: string): Day | null {
   return { y, m, d };
 }
 
-function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng): Record<string, ExcelTask> {
+function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng, t: T): Record<string, ExcelTask> {
   const at = (r: number, c: number): Pos => ({ r, c });
   const todayRow = n + 2; // two rows under the table
   const b2 = at(1, COL.date);
@@ -125,9 +126,15 @@ function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng)
   const tasks: ExcelTask[] = [
     {
       id: 'typeDate',
-      text: `Sa ${cellName(blank)}, i-type ang Date ng invoice na ito: ${longDate(target)}. Gamitin ang mm/dd/yyyy.`,
-      tip: `${mmddyyyy(target)}, tapos Enter`,
-      hint: `Buwan muna, tapos araw, tapos taon: ${mmddyyyy(target)}. Kapag tama, mapupunta ito sa kanan ng cell: totoong petsa.`,
+      text: t(
+        `Sa ${cellName(blank)}, i-type ang Date ng invoice na ito: ${longDate(target)}. Gamitin ang mm/dd/yyyy.`,
+        `In ${cellName(blank)}, type the Date of this invoice: ${longDate(target)}. Use mm/dd/yyyy.`,
+      ),
+      tip: t(`${mmddyyyy(target)}, tapos Enter`, `${mmddyyyy(target)}, then Enter`),
+      hint: t(
+        `Buwan muna, tapos araw, tapos taon: ${mmddyyyy(target)}. Kapag tama, mapupunta ito sa kanan ng cell: totoong petsa.`,
+        `Month first, then day, then year: ${mmddyyyy(target)}. When it is right, it goes to the right of the cell: a real date.`,
+      ),
       solution: [key(mmddyyyy(target)[0]), { type: mmddyyyy(target) }, key('Enter')],
       start: blank,
       prepare: (s) => setCells(s, [[blank, '']]),
@@ -139,9 +146,15 @@ function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng)
     },
     {
       id: 'today',
-      text: `Sa ${cellName(today)}, ilagay ang petsa ngayon gamit ang formula, para kusang magbago bukas.`,
-      tip: '=TODAY(), tapos Enter',
-      hint: 'Ang =TODAY() ay laging ang petsa ngayon. (Petsa rin ang Ctrl + ;, pero hindi na ito nagbabago.)',
+      text: t(
+        `Sa ${cellName(today)}, ilagay ang petsa ngayon gamit ang formula, para kusang magbago bukas.`,
+        `In ${cellName(today)}, put today's date with a formula, so it changes by itself tomorrow.`,
+      ),
+      tip: t('=TODAY(), tapos Enter', '=TODAY(), then Enter'),
+      hint: t(
+        'Ang =TODAY() ay laging ang petsa ngayon. (Petsa rin ang Ctrl + ;, pero hindi na ito nagbabago.)',
+        "=TODAY() is always today's date. (Ctrl + ; gives a date too, but it never changes.)",
+      ),
       solution: typeFormula('=TODAY()'),
       start: today,
       prepare: (s) => setCells(s, [[today, '']]),
@@ -154,9 +167,15 @@ function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng)
     },
     {
       id: 'dueDate',
-      text: `Sa ${cellName(c2)}, kuwentahin ang Due Date: ${TERMS} araw pagkatapos ng Date (B2).`,
-      tip: `=B2+${TERMS}, tapos Enter`,
-      hint: `Numero ang petsa, kaya puwedeng dagdagan: =B2+${TERMS} ay ${TERMS} araw pagkatapos ng B2.`,
+      text: t(
+        `Sa ${cellName(c2)}, kuwentahin ang Due Date: ${TERMS} araw pagkatapos ng Date (B2).`,
+        `In ${cellName(c2)}, work out the Due Date: ${TERMS} days after the Date (B2).`,
+      ),
+      tip: t(`=B2+${TERMS}, tapos Enter`, `=B2+${TERMS}, then Enter`),
+      hint: t(
+        `Numero ang petsa, kaya puwedeng dagdagan: =B2+${TERMS} ay ${TERMS} araw pagkatapos ng B2.`,
+        `A date is a number, so you can add to it: =B2+${TERMS} is ${TERMS} days after B2.`,
+      ),
       solution: typeFormula(`=B2+${TERMS}`),
       start: c2,
       prepare: (s) => setCells(s, [[c2, '']]),
@@ -165,9 +184,15 @@ function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng)
     },
     {
       id: 'age',
-      text: `Sa ${cellName(d2)}, ilang araw na mula sa Date (B2) hanggang ngayon?`,
-      tip: '=TODAY()-B2, tapos Enter',
-      hint: 'Ang bawas ng dalawang petsa ay bilang ng araw: =TODAY()-B2.',
+      text: t(
+        `Sa ${cellName(d2)}, ilang araw na mula sa Date (B2) hanggang ngayon?`,
+        `In ${cellName(d2)}, how many days is it from the Date (B2) until today?`,
+      ),
+      tip: t('=TODAY()-B2, tapos Enter', '=TODAY()-B2, then Enter'),
+      hint: t(
+        'Ang bawas ng dalawang petsa ay bilang ng araw: =TODAY()-B2.',
+        'One date minus another is a number of days: =TODAY()-B2.',
+      ),
       solution: typeFormula('=TODAY()-B2'),
       start: d2,
       prepare: (s) => setCells(s, [[d2, '']]),
@@ -176,9 +201,15 @@ function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng)
     },
     {
       id: 'textMonth',
-      text: `Sa ${cellName(e2)}, isulat ang pangalan ng buwan ng Date (B2), halimbawa ${MONTHS[dates[0].m - 1]}.`,
-      tip: '=TEXT(B2,"mmmm"), tapos Enter',
-      hint: 'Ang =TEXT(petsa, "anyo") ay nagpapakita ng petsa sa ibang anyo. Ang "mmmm" ay buong pangalan ng buwan.',
+      text: t(
+        `Sa ${cellName(e2)}, isulat ang pangalan ng buwan ng Date (B2), halimbawa ${MONTHS[dates[0].m - 1]}.`,
+        `In ${cellName(e2)}, write the month name of the Date (B2), for example ${MONTHS[dates[0].m - 1]}.`,
+      ),
+      tip: t('=TEXT(B2,"mmmm"), tapos Enter', '=TEXT(B2,"mmmm"), then Enter'),
+      hint: t(
+        'Ang =TEXT(petsa, "anyo") ay nagpapakita ng petsa sa ibang anyo. Ang "mmmm" ay buong pangalan ng buwan.',
+        '=TEXT(date, "format") shows a date in another format. "mmmm" is the full month name.',
+      ),
       solution: typeFormula('=TEXT(B2,"mmmm")'),
       start: e2,
       prepare: (s) => setCells(s, [[e2, '']]),
@@ -187,9 +218,18 @@ function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng)
     },
     {
       id: 'fixDate',
-      text: `Ang Supplier Date (F2) ay dd/mm/yyyy at text. Sa ${cellName(g2)}, gawin itong totoong petsa.`,
-      tip: '=DATE(RIGHT(F2,4),MID(F2,4,2),LEFT(F2,2)), tapos Enter',
-      hint: 'Ang =DATE(taon, buwan, araw) ay gumagawa ng petsa. Taon: RIGHT(F2,4). Buwan: MID(F2,4,2), 2 titik mula sa ika-4. Araw: LEFT(F2,2).',
+      text: t(
+        `Ang Supplier Date (F2) ay dd/mm/yyyy at text. Sa ${cellName(g2)}, gawin itong totoong petsa.`,
+        `The Supplier Date (F2) is dd/mm/yyyy and text. In ${cellName(g2)}, make it a real date.`,
+      ),
+      tip: t(
+        '=DATE(RIGHT(F2,4),MID(F2,4,2),LEFT(F2,2)), tapos Enter',
+        '=DATE(RIGHT(F2,4),MID(F2,4,2),LEFT(F2,2)), then Enter',
+      ),
+      hint: t(
+        'Ang =DATE(taon, buwan, araw) ay gumagawa ng petsa. Taon: RIGHT(F2,4). Buwan: MID(F2,4,2), 2 titik mula sa ika-4. Araw: LEFT(F2,2).',
+        '=DATE(year, month, day) makes a date. Year: RIGHT(F2,4). Month: MID(F2,4,2), 2 characters from the 4th. Day: LEFT(F2,2).',
+      ),
       solution: typeFormula('=DATE(RIGHT(F2,4),MID(F2,4,2),LEFT(F2,2))'),
       start: g2,
       prepare: (s) => setCells(s, [[g2, '']]),
@@ -197,11 +237,11 @@ function allTasks11({ dates, supplier, blankRow }: Table11, n: number, rng: Rng)
       maxKeys: 1,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new invoice list (Excel's number rules on) with one task of every Aralin 11 kind. */
-export function makeTaskSet11(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet11(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const t = makeTable11(rng);
   const n = t.table.length - 1;
   const table = [...t.table, Array(HEADERS_11.length).fill(''), ['Today', '', '', '', '', '', '']];
@@ -212,11 +252,11 @@ export function makeTaskSet11(rng: Rng): { sheet: Sheet; tasks: Record<string, E
     formats,
     compute: computeSheet,
   });
-  return { sheet, tasks: allTasks11(t, n, rng) };
+  return { sheet, tasks: allTasks11(t, n, rng, translator(lang)) };
 }
 
 /** The Aralin 11 Pagsusulit: a new sheet and all 6 task kinds in random order. */
-export function makeQuiz11(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet11(rng);
+export function makeQuiz11(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet11(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)) };
 }

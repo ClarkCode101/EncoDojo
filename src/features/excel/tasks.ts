@@ -12,6 +12,7 @@
  * and by the Pagsusulit (6 random task kinds, no hints). No timer: this is
  * a learning track (owner's decision, 2026-09-27).
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { addMistake } from '../qc/qcItems';
@@ -41,23 +42,27 @@ export const QUIZ_TASKS = 6;
 export const QUIZ_PASS = 5;
 
 /** Short names of the task kinds, for the results table. */
-export const TASK_LABEL: Record<string, string> = {
-  goto: 'Pumunta sa isang cell',
-  lastRow: 'Pumunta sa huling record',
-  home: 'Bumalik sa A1',
-  lastCell: 'Pumunta sa huling cell na may data',
-  rowEnd: 'Pumunta sa dulo ng row',
-  rowStart: 'Bumalik sa simula ng row',
-  selectColumn: 'Piliin ang buong column ng data',
-  selectAll: 'Piliin ang buong table',
-  edit: 'Palitan ang laman ng cell',
-  fix: 'Ayusin ang mali sa cell',
-  clear: 'Burahin ang laman ng cell',
-  copy: 'Kopyahin sa cell sa ilalim',
-  undo: 'Ibalik ang nabura',
+export const taskLabels = (lang: Lang = 'tl'): Record<string, string> => {
+  const t = translator(lang);
+  return {
+    goto: t('Pumunta sa isang cell', 'Go to a cell'),
+    lastRow: t('Pumunta sa huling record', 'Go to the last record'),
+    home: t('Bumalik sa A1', 'Go back to A1'),
+    lastCell: t('Pumunta sa huling cell na may data', 'Go to the last cell with data'),
+    rowEnd: t('Pumunta sa dulo ng row', 'Go to the end of the row'),
+    rowStart: t('Bumalik sa simula ng row', 'Go back to the start of the row'),
+    selectColumn: t('Piliin ang buong column ng data', 'Select the whole data column'),
+    selectAll: t('Piliin ang buong table', 'Select the whole table'),
+    edit: t('Palitan ang laman ng cell', 'Replace the content of a cell'),
+    fix: t('Ayusin ang mali sa cell', 'Fix the mistake in a cell'),
+    clear: t('Burahin ang laman ng cell', 'Delete the content of a cell'),
+    copy: t('Kopyahin sa cell sa ilalim', 'Copy into the cell below'),
+    undo: t('Ibalik ang nabura', 'Bring back what was deleted'),
+  };
 };
 
-export type TaskId = keyof typeof TASK_LABEL;
+/** The Aralin 1 task kinds (the keys of `taskLabels()`). */
+export type TaskId = string;
 
 /** One step of a solution: press a key, type text into the cell being edited, or use a data tool (Aralin 4). */
 export type SolutionStep = { press: KeyPress } | { type: string } | { command: SheetCommand };
@@ -65,7 +70,7 @@ export type SolutionStep = { press: KeyPress } | { type: string } | { command: S
 export type ExcelTask = {
   /** The task kind (Aralin 1: a TaskId; other lessons have their own). */
   id: string;
-  /** What to do, in Taglish (cell names in English, like Excel). */
+  /** What to do, in Taglish or English (cell names in English, like Excel). */
   text: string;
   /** The shortcut, e.g. "Ctrl + ↓". */
   tip: string;
@@ -129,7 +134,7 @@ const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): Solutio
 });
 
 /** Every task kind on this table. Every task gets its OWN row, so one never gets in the way of another. */
-function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
+function allTasks(rng: Rng, table: string[][], t: T): Record<TaskId, ExcelTask> {
   const last = table.length - 1;
   // (e.g. a cleared cell would stop Ctrl+→ early, just like in Excel)
   const candidates = shuffle(
@@ -151,9 +156,12 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
   const tasks: ExcelTask[] = [
     {
       id: 'goto',
-      text: `Pumunta sa cell ${cellName(target)}.`,
-      tip: '↓ at →',
-      hint: `Ang ${cellName(target).replace(/\d+/, '')} ay ang column (letra sa itaas), ang ${target.r + 1} ay ang row (numero sa kaliwa).`,
+      text: t(`Pumunta sa cell ${cellName(target)}.`, `Go to cell ${cellName(target)}.`),
+      tip: t('↓ at →', '↓ and →'),
+      hint: t(
+        `Ang ${cellName(target).replace(/\d+/, '')} ay ang column (letra sa itaas), ang ${target.r + 1} ay ang row (numero sa kaliwa).`,
+        `${cellName(target).replace(/\d+/, '')} is the column (the letter at the top), ${target.r + 1} is the row (the number on the left).`,
+      ),
       solution: [
         ...Array.from({ length: target.r }, () => key('ArrowDown')),
         ...Array.from({ length: target.c }, () => key('ArrowRight')),
@@ -164,9 +172,12 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'lastRow',
-      text: 'Pumunta sa HULING record ng table (column A).',
+      text: t('Pumunta sa HULING record ng table (column A).', 'Go to the LAST record of the table (column A).'),
       tip: 'Ctrl + ↓',
-      hint: 'Pindutin nang sabay ang Ctrl at ang arrow pababa. Tatalon ito sa dulo ng data.',
+      hint: t(
+        'Pindutin nang sabay ang Ctrl at ang arrow pababa. Tatalon ito sa dulo ng data.',
+        'Press Ctrl and the down arrow together. It jumps to the end of the data.',
+      ),
       solution: [key('ArrowDown', { ctrl: true })],
       start: { r: 0, c: 0 },
       check: activeIs({ r: last, c: 0 }),
@@ -174,9 +185,12 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'home',
-      text: 'Bumalik sa pinakaunang cell, A1.',
+      text: t('Bumalik sa pinakaunang cell, A1.', 'Go back to the very first cell, A1.'),
       tip: 'Ctrl + Home',
-      hint: 'Ctrl at Home nang sabay: laging bumabalik sa A1, kahit nasaan ka.',
+      hint: t(
+        'Ctrl at Home nang sabay: laging bumabalik sa A1, kahit nasaan ka.',
+        'Ctrl and Home together: always goes back to A1, wherever you are.',
+      ),
       solution: [key('Home', { ctrl: true })],
       start: { r: mid, c: 3 },
       check: activeIs({ r: 0, c: 0 }),
@@ -184,9 +198,15 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'lastCell',
-      text: 'Pumunta sa huling cell na may data (pinakababa at pinakakanan).',
+      text: t(
+        'Pumunta sa huling cell na may data (pinakababa at pinakakanan).',
+        'Go to the last cell with data (bottom right).',
+      ),
       tip: 'Ctrl + End',
-      hint: 'Ctrl at End nang sabay: pupunta sa pinakadulong cell ng data.',
+      hint: t(
+        'Ctrl at End nang sabay: pupunta sa pinakadulong cell ng data.',
+        'Ctrl and End together: goes to the very last cell of the data.',
+      ),
       solution: [key('End', { ctrl: true })],
       start: { r: 0, c: 0 },
       check: activeIs({ r: last, c: COL.amount }),
@@ -194,9 +214,12 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'rowEnd',
-      text: `Pumunta sa dulo ng row ${mid + 1} (ang Amount).`,
+      text: t(`Pumunta sa dulo ng row ${mid + 1} (ang Amount).`, `Go to the end of row ${mid + 1} (the Amount).`),
       tip: 'Ctrl + →',
-      hint: 'Katulad ng Ctrl + ↓, pero pakanan: Ctrl at arrow pakanan nang sabay.',
+      hint: t(
+        'Katulad ng Ctrl + ↓, pero pakanan: Ctrl at arrow pakanan nang sabay.',
+        'Like Ctrl + ↓, but to the right: Ctrl and the right arrow together.',
+      ),
       solution: [key('ArrowRight', { ctrl: true })],
       start: { r: mid, c: 0 },
       check: activeIs({ r: mid, c: COL.amount }),
@@ -204,9 +227,12 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'rowStart',
-      text: `Bumalik sa simula ng row ${r2 + 1} (column A).`,
+      text: t(`Bumalik sa simula ng row ${r2 + 1} (column A).`, `Go back to the start of row ${r2 + 1} (column A).`),
       tip: 'Home',
-      hint: 'Ang Home key lang (walang Ctrl): babalik sa column A ng parehong row.',
+      hint: t(
+        'Ang Home key lang (walang Ctrl): babalik sa column A ng parehong row.',
+        'Just the Home key (no Ctrl): goes back to column A of the same row.',
+      ),
       solution: [key('Home')],
       start: { r: r2, c: COL.amount },
       check: activeIs({ r: r2, c: 0 }),
@@ -214,9 +240,15 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'selectColumn',
-      text: `Piliin ang lahat ng Amount, mula E2 hanggang E${last + 1}.`,
+      text: t(
+        `Piliin ang lahat ng Amount, mula E2 hanggang E${last + 1}.`,
+        `Select all the Amounts, from E2 to E${last + 1}.`,
+      ),
       tip: 'Ctrl + Shift + ↓',
-      hint: 'Idagdag ang Shift sa Ctrl + ↓: pipiliin ang lahat ng dadaanan.',
+      hint: t(
+        'Idagdag ang Shift sa Ctrl + ↓: pipiliin ang lahat ng dadaanan.',
+        'Add Shift to Ctrl + ↓: everything it passes gets selected.',
+      ),
       solution: [key('ArrowDown', { ctrl: true, shift: true })],
       start: { r: 1, c: COL.amount },
       check: (s) => !s.editing && selectionName(s) === `E2:E${last + 1}`,
@@ -224,9 +256,9 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'selectAll',
-      text: 'Piliin ang buong table, kasama ang header.',
+      text: t('Piliin ang buong table, kasama ang header.', 'Select the whole table, header included.'),
       tip: 'Ctrl + A',
-      hint: 'Ctrl at A (para sa "All") nang sabay.',
+      hint: t('Ctrl at A (para sa "All") nang sabay.', 'Ctrl and A (for "All") together.'),
       solution: [key('a', { ctrl: true })],
       start: { r: mid, c: 1 },
       check: (s) => !s.editing && selectionName(s) === `A1:E${last + 1}`,
@@ -234,9 +266,15 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'edit',
-      text: `Palitan ang Branch sa ${cellName({ r: r1, c: COL.branch })}: gawing "${newBranch}".`,
-      tip: 'I-type, tapos Enter',
-      hint: 'Nasa tamang cell ka na. I-type lang ang bago (papalitan nito ang luma), tapos Enter.',
+      text: t(
+        `Palitan ang Branch sa ${cellName({ r: r1, c: COL.branch })}: gawing "${newBranch}".`,
+        `Change the Branch in ${cellName({ r: r1, c: COL.branch })} to "${newBranch}".`,
+      ),
+      tip: t('I-type, tapos Enter', 'Type it, then Enter'),
+      hint: t(
+        'Nasa tamang cell ka na. I-type lang ang bago (papalitan nito ang luma), tapos Enter.',
+        'You are already in the right cell. Just type the new one (it replaces the old one), then Enter.',
+      ),
       solution: [key(newBranch[0]), { type: newBranch }, key('Enter')],
       start: { r: r1, c: COL.branch },
       check: cellIs({ r: r1, c: COL.branch }, newBranch),
@@ -244,9 +282,15 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'fix',
-      text: `May mali sa ${cellName({ r: r3, c: COL.customer })}. Dapat "${original}". Ayusin ito.`,
-      tip: 'F2 para i-edit, tapos Enter',
-      hint: 'Pindutin ang F2 para ma-edit ang laman nang hindi binubura lahat. Ayusin ang mali, tapos Enter.',
+      text: t(
+        `May mali sa ${cellName({ r: r3, c: COL.customer })}. Dapat "${original}". Ayusin ito.`,
+        `There is a mistake in ${cellName({ r: r3, c: COL.customer })}. It should be "${original}". Fix it.`,
+      ),
+      tip: t('F2 para i-edit, tapos Enter', 'F2 to edit, then Enter'),
+      hint: t(
+        'Pindutin ang F2 para ma-edit ang laman nang hindi binubura lahat. Ayusin ang mali, tapos Enter.',
+        'Press F2 to edit the content without erasing all of it. Fix the mistake, then Enter.',
+      ),
       solution: [key('F2'), { type: original }, key('Enter')],
       start: { r: r3, c: COL.customer },
       prepare: (s) => setValue(s, { r: r3, c: COL.customer }, typo),
@@ -256,9 +300,15 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'clear',
-      text: `Burahin ang laman ng ${cellName({ r: r4, c: COL.date })}.`,
+      text: t(
+        `Burahin ang laman ng ${cellName({ r: r4, c: COL.date })}.`,
+        `Delete the content of ${cellName({ r: r4, c: COL.date })}.`,
+      ),
       tip: 'Delete',
-      hint: 'Ang Delete key ang bumubura sa laman ng napiling cell.',
+      hint: t(
+        'Ang Delete key ang bumubura sa laman ng napiling cell.',
+        'The Delete key erases the content of the selected cell.',
+      ),
       solution: [key('Delete')],
       start: { r: r4, c: COL.date },
       check: cellIs({ r: r4, c: COL.date }, ''),
@@ -266,9 +316,15 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'copy',
-      text: `Kopyahin ang Branch ng ${cellName({ r: mid, c: COL.branch })} papunta sa cell sa ilalim nito.`,
+      text: t(
+        `Kopyahin ang Branch ng ${cellName({ r: mid, c: COL.branch })} papunta sa cell sa ilalim nito.`,
+        `Copy the Branch in ${cellName({ r: mid, c: COL.branch })} into the cell below it.`,
+      ),
       tip: 'Ctrl + C, ↓, Ctrl + V',
-      hint: 'Ctrl + C para kopyahin, bumaba ng isang cell, tapos Ctrl + V para i-paste.',
+      hint: t(
+        'Ctrl + C para kopyahin, bumaba ng isang cell, tapos Ctrl + V para i-paste.',
+        'Ctrl + C to copy, go down one cell, then Ctrl + V to paste.',
+      ),
       solution: [key('c', { ctrl: true }), key('ArrowDown'), key('v', { ctrl: true })],
       start: { r: mid, c: COL.branch },
       // Make sure the cell below is different first, so the task is never "already done".
@@ -288,9 +344,15 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
     },
     {
       id: 'undo',
-      text: `Aksidenteng nabura ang ${cellName({ r: r5, c: COL.branch })}. Ibalik ito.`,
+      text: t(
+        `Aksidenteng nabura ang ${cellName({ r: r5, c: COL.branch })}. Ibalik ito.`,
+        `${cellName({ r: r5, c: COL.branch })} was deleted by accident. Bring it back.`,
+      ),
       tip: 'Ctrl + Z',
-      hint: 'Ctrl + Z ang "undo": ibinabalik ang huling binago mo.',
+      hint: t(
+        'Ctrl + Z ang "undo": ibinabalik ang huling binago mo.',
+        'Ctrl + Z is "undo": it takes back your last change.',
+      ),
       solution: [key('z', { ctrl: true })],
       start: { r: r5, c: COL.branch },
       prepare: (s) => setValue(s, { r: r5, c: COL.branch }, ''),
@@ -298,19 +360,19 @@ function allTasks(rng: Rng, table: string[][]): Record<TaskId, ExcelTask> {
       maxKeys: 1,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t])) as Record<TaskId, ExcelTask>;
+  return Object.fromEntries(tasks.map((task) => [task.id, task])) as Record<TaskId, ExcelTask>;
 }
 
-/** A new sheet with one task of every kind on it. */
-export function makeTaskSet(rng: Rng): TaskSet {
+/** A new sheet with one task of every kind on it (task texts in `lang`). */
+export function makeTaskSet(rng: Rng, lang: Lang = 'tl'): TaskSet {
   const table = makeTable(rng);
   const sheet = makeSheet(table, table.length + EXTRA_ROWS, SHEET_COLS);
-  return { sheet, tasks: allTasks(rng, table), lastRow: table.length - 1 };
+  return { sheet, tasks: allTasks(rng, table, translator(lang)), lastRow: table.length - 1 };
 }
 
 /** The Pagsusulit: a new sheet and 6 random task kinds (not the easy "go to a cell"). */
-export function makeQuiz(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet(rng);
+export function makeQuiz(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet(rng, lang);
   const kinds = Object.values(set.tasks).filter((t) => t.id !== 'goto');
   return { sheet: set.sheet, tasks: shuffle(rng, kinds).slice(0, QUIZ_TASKS) };
 }

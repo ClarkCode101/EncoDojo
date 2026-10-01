@@ -4,16 +4,16 @@
  * app never downloads the formula engine.
  */
 import { computeSheet } from './formulaEngine';
-import { LESSON_7, TASK_LABEL_7 } from './lesson7';
+import { lesson7, taskLabels7 } from './lesson7';
 import type { LessonContent } from './lessons';
 import { COLUMN_WIDTHS_7 } from './sheetLayout';
 import { makeQuiz7, makeTaskSet7 } from './tasks7';
 
 export const CONTENT_7: LessonContent = {
-  topics: LESSON_7,
+  topics: lesson7,
   makeSet: makeTaskSet7,
   makeQuiz: makeQuiz7,
   columnWidths: COLUMN_WIDTHS_7,
-  labels: TASK_LABEL_7,
+  labels: taskLabels7,
   compute: computeSheet,
 };

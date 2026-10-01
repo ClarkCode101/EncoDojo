@@ -12,6 +12,7 @@
 import type { ReactNode } from 'react';
 import { ExcelIcon } from '../../components/icons';
 import { useFocusMode } from '../../lib/focusMode';
+import { useT } from '../../lib/i18n';
 
 export default function LessonLayout({
   eyebrow,
@@ -31,10 +32,11 @@ export default function LessonLayout({
   sheet: ReactNode;
 }) {
   useFocusMode(true);
+  const t = useT();
   return (
     <div className="grid min-h-0 flex-1 gap-5 md:grid-cols-[18rem_minmax(0,1fr)]">
       {/* overflow-wrap: anywhere, so a long formula in the guide wraps instead of scrolling sideways. */}
-      <aside aria-label="Gabay" className="flex min-h-0 flex-col gap-3 pb-2 [overflow-wrap:anywhere]">
+      <aside aria-label={t('Gabay', 'Guide')} className="flex min-h-0 flex-col gap-3 pb-2 [overflow-wrap:anywhere]">
         {/* The explanation: it shrinks and scrolls by itself when it is long; the footer never does. */}
         <div className="flex min-h-0 shrink flex-col gap-4 overflow-y-auto overflow-x-hidden pr-1">
           <div>
@@ -43,7 +45,7 @@ export default function LessonLayout({
               onClick={onBack}
               className="mb-2 inline-flex min-h-[2.25rem] items-center rounded-lg border-[1.5px] border-stone-400 bg-white px-3 text-sm font-semibold text-stone-800 hover:border-stone-600 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600"
             >
-              ‹ Mga aralin
+              ‹ {t('Mga aralin', 'Lessons')}
             </button>
             <div className="flex items-center gap-2 text-sm font-semibold text-stone-600">
               <ExcelIcon className="h-4 w-4 text-brand-700" />

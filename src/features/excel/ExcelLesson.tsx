@@ -20,6 +20,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRightIcon } from '../../components/icons';
 import { Button } from '../../components/ui';
+import { useLang, useT } from '../../lib/i18n';
 import { makeRng, randomSeed } from '../../lib/random';
 import { correctTick } from '../../lib/sound';
 import { useAppData } from '../../lib/useAppData';
@@ -78,9 +79,6 @@ function doneCells(before: Sheet, after: Sheet): Set<string> {
   return out;
 }
 
-/** The help button's words, by how much help was already given. */
-const HELP_LABELS = ['Kailangan ng tulong?', 'Ipakita ang key', 'Ipakita kung paano', 'Ipakita ulit kung paano'];
-
 export default function ExcelLesson({
   level,
   title,
@@ -97,9 +95,21 @@ export default function ExcelLesson({
   onDone: () => void;
   onExit: () => void;
 }) {
-  const { topics } = content;
-  const [set] = useState(() => content.makeSet(makeRng(randomSeed())));
-  const steps = useMemo<Step[]>(() => topics.flatMap((t, i) => t.tasks.map((task) => ({ topic: i, task }))), [topics]);
+  const lang = useLang();
+  const t = useT();
+  const topics = useMemo(() => content.topics(lang), [content, lang]);
+  const [set] = useState(() => content.makeSet(makeRng(randomSeed()), lang));
+  /** The help button's words, by how much help was already given. */
+  const helpLabels = [
+    t('Kailangan ng tulong?', 'Need help?'),
+    t('Ipakita ang key', 'Show the keys'),
+    t('Ipakita kung paano', 'Show me how'),
+    t('Ipakita ulit kung paano', 'Show me again'),
+  ];
+  const steps = useMemo<Step[]>(
+    () => topics.flatMap((tp, i) => tp.tasks.map((task) => ({ topic: i, task }))),
+    [topics],
+  );
   /** The first task of a topic. */
   const firstStepOf = (topicIndex: number) =>
     Math.max(
@@ -136,10 +146,10 @@ export default function ExcelLesson({
   const tasksInTopic = steps.filter((s) => s.topic === step.topic);
   const nthInTopic = tasksInTopic.findIndex((s) => s.task === step.task) + 1;
 
-  useEffect(() => () => timersRef.current.forEach((t) => window.clearTimeout(t)), []);
+  useEffect(() => () => timersRef.current.forEach((id) => window.clearTimeout(id)), []);
 
   function goTo(next: number, from: Sheet) {
-    timersRef.current.forEach((t) => window.clearTimeout(t));
+    timersRef.current.forEach((id) => window.clearTimeout(id));
     timersRef.current = [];
     if (next >= steps.length) {
       onDone();
@@ -235,21 +245,21 @@ export default function ExcelLesson({
   const panel = (
     <>
       {/* The topics, as a list: where you are, and a jump to any of them (back or ahead). */}
-      <nav aria-label="Mga bahagi ng aralin">
+      <nav aria-label={t('Mga bahagi ng aralin', 'Parts of the lesson')}>
         <div className="mb-1.5 text-sm font-semibold text-stone-600">
-          Bahagi {step.topic + 1} sa {topics.length}
+          {t(`Bahagi ${step.topic + 1} sa ${topics.length}`, `Part ${step.topic + 1} of ${topics.length}`)}
         </div>
         {/* One small numbered circle per topic (the title shows on hover): compact, so the task stays in view. */}
         <ol className="flex flex-wrap gap-1.5">
-          {topics.map((t, i) => {
+          {topics.map((tp, i) => {
             const current = i === step.topic;
             const finished = steps.every((s, si) => s.topic !== i || doneSteps.has(si));
             return (
-              <li key={t.title}>
+              <li key={tp.title}>
                 <button
                   type="button"
-                  title={t.title}
-                  aria-label={`${i + 1}: ${t.title}${finished ? ' (tapos na)' : ''}`}
+                  title={tp.title}
+                  aria-label={`${i + 1}: ${tp.title}${finished ? t(' (tapos na)', ' (done)') : ''}`}
                   aria-current={current ? 'step' : undefined}
                   disabled={demo === 'playing'}
                   onClick={() => goTo(firstStepOf(i), sheet)}
@@ -293,14 +303,17 @@ export default function ExcelLesson({
   // What to do now, on the sheet: pinned at the bottom of the guide (LessonLayout `footer`), always in view.
   const gawin = (
     <section
-      aria-label="Gawin"
+      aria-label={t('Gawin', 'Do this')}
       className={
         'rounded-r-lg border-l-4 px-4 py-3 shadow-sm transition-colors ' +
         (done ? 'border-green-600 bg-green-50' : 'border-brand-700 bg-white')
       }
     >
       <div className={'text-sm font-bold ' + (done ? 'text-green-800' : 'text-brand-700')}>
-        Gawin{tasksInTopic.length > 1 ? ` (${nthInTopic} sa ${tasksInTopic.length})` : ''}
+        {t('Gawin', 'Do this')}
+        {tasksInTopic.length > 1
+          ? t(` (${nthInTopic} sa ${tasksInTopic.length})`, ` (${nthInTopic} of ${tasksInTopic.length})`)
+          : ''}
       </div>
       <p className="font-bold text-stone-900">{task.text}</p>
       {task.record && <TaskRecord record={task.record} />}
@@ -308,26 +321,37 @@ export default function ExcelLesson({
       <div role="status" className="mt-2 text-sm text-stone-800">
         {done ? (
           <span className="block">
-            <span className="block text-lg font-bold text-green-800">✓ Tama!{done.shortcut ? ' Ang galing.' : ''}</span>
+            <span className="block text-lg font-bold text-green-800">
+              ✓ {t('Tama!', 'Correct!')}
+              {done.shortcut ? t(' Ang galing.', ' Well done.') : ''}
+            </span>
             {!done.shortcut && (
               <span className="text-stone-700">
-                Mas mabilis kung <TipKeys tip={task.tip} /> ang gagamitin.
+                {lang === 'en' ? (
+                  <>
+                    Faster with <TipKeys tip={task.tip} />.
+                  </>
+                ) : (
+                  <>
+                    Mas mabilis kung <TipKeys tip={task.tip} /> ang gagamitin.
+                  </>
+                )}
               </span>
             )}
           </span>
         ) : demo === 'playing' ? (
           <span>
-            Pinapakita: <TipKeys tip={task.tip} />
+            {t('Pinapakita', 'Showing')}: <TipKeys tip={task.tip} />
           </span>
         ) : demo === 'shown' ? (
           <span className="font-semibold">
-            Ikaw naman ngayon: <TipKeys tip={task.tip} />
+            {t('Ikaw naman ngayon', 'Your turn now')}: <TipKeys tip={task.tip} />
           </span>
         ) : help === 1 ? (
           <span>{task.hint}</span>
         ) : help >= 2 ? (
           <span>
-            Gamitin: <TipKeys tip={task.tip} />
+            {t('Gamitin', 'Use')}: <TipKeys tip={task.tip} />
           </span>
         ) : null}
       </div>
@@ -335,12 +359,13 @@ export default function ExcelLesson({
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         {done ? (
           <Button autoFocus onClick={() => goTo(index + 1, sheet)}>
-            {isLast ? 'Tapusin ang aralin' : 'Susunod'} <ArrowRightIcon className="h-5 w-5" />
+            {isLast ? t('Tapusin ang aralin', 'Finish the lesson') : t('Susunod', 'Next')}{' '}
+            <ArrowRightIcon className="h-5 w-5" />
           </Button>
         ) : (
           <>
             <Button variant="secondary" disabled={demo === 'playing'} onClick={moreHelp}>
-              {HELP_LABELS[help]}
+              {helpLabels[help]}
             </Button>
             <button
               type="button"
@@ -348,7 +373,7 @@ export default function ExcelLesson({
               onClick={() => goTo(index + 1, sheet)}
               className="rounded text-sm text-stone-600 underline decoration-dotted underline-offset-2 hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 disabled:opacity-50"
             >
-              Laktawan
+              {t('Laktawan', 'Skip')}
             </button>
           </>
         )}
@@ -358,7 +383,7 @@ export default function ExcelLesson({
 
   return (
     <LessonLayout
-      eyebrow={`Aralin ${level}`}
+      eyebrow={t(`Aralin ${level}`, `Lesson ${level}`)}
       title={title}
       onBack={onExit}
       panel={panel}

@@ -22,6 +22,7 @@ import {
   type Dialog,
   type ToolName,
 } from './DataTools';
+import { useLang, useT } from '../../lib/i18n';
 import { focusSheet } from './focusSheet';
 import {
   alignsRight,
@@ -113,6 +114,8 @@ export default function ExcelSheetView({
   /** Cells colored by Conditional Formatting (Aralin 10). */
   const highlighted = highlightedCells(sheet);
   const activeList = listFor(sheet, sheet.active);
+  const lang = useLang();
+  const t = useT();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [toolMessage, setToolMessage] = useState<string | null>(null);
   // A new task starts with no dialog open (like closing it after finishing).
@@ -189,7 +192,7 @@ export default function ExcelSheetView({
           role="alert"
           className="shrink-0 border-b border-red-300 border-l-4 border-l-red-700 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-900"
         >
-          {sheet.alert}
+          {sheet.alert[lang]}
         </div>
       )}
       {hasTools && (
@@ -267,7 +270,7 @@ export default function ExcelSheetView({
         ref={gridRef}
         tabIndex={0}
         role="grid"
-        aria-label={`Spreadsheet. Active cell ${cellName(sheet.active)}: ${sheet.cells[sheet.active.r][sheet.active.c] || 'walang laman'}`}
+        aria-label={`Spreadsheet. Active cell ${cellName(sheet.active)}: ${sheet.cells[sheet.active.r][sheet.active.c] || t('walang laman', 'empty')}`}
         onKeyDown={(e) => {
           if (sheet.editing) return; // the edit box handles its own keys
           // Alt+↓ on a dropdown cell: its list (Data Validation, Aralin 10).
@@ -401,7 +404,7 @@ export default function ExcelSheetView({
                         {active && sheet.editing ? (
                           <input
                             autoFocus
-                            aria-label={`I-edit ang ${cellName({ r, c })}`}
+                            aria-label={t(`I-edit ang ${cellName({ r, c })}`, `Edit ${cellName({ r, c })}`)}
                             value={sheet.editing.value}
                             onChange={(e) => onEditChange(e.target.value)}
                             onKeyDown={(e) => {
@@ -425,7 +428,10 @@ export default function ExcelSheetView({
                         {active && activeList && !sheet.editing && (
                           <button
                             type="button"
-                            aria-label={`Mga pagpipilian para sa ${cellName({ r, c })}`}
+                            aria-label={t(
+                              `Mga pagpipilian para sa ${cellName({ r, c })}`,
+                              `Choices for ${cellName({ r, c })}`,
+                            )}
                             onMouseDown={(e) => {
                               e.preventDefault();
                               e.stopPropagation(); // not a click on the cell
@@ -439,7 +445,7 @@ export default function ExcelSheetView({
                         {hasTools && sheet.filterOn && r === 0 && c < tableCols && (
                           <button
                             type="button"
-                            aria-label={`Filter ng ${sheet.cells[0][c]}`}
+                            aria-label={t(`Filter ng ${sheet.cells[0][c]}`, `Filter of ${sheet.cells[0][c]}`)}
                             onMouseDown={(e) => {
                               e.preventDefault();
                               e.stopPropagation(); // not a click on the cell
@@ -488,6 +494,7 @@ function ToolDialog({
  * renames it (Enter or a click elsewhere saves, Esc cancels). The keyboard: Ctrl+Shift+PgDn / PgUp.
  */
 function TabBar({ tabs, onCommand }: { tabs: Tabs; onCommand: (cmd: SheetCommand) => void }) {
+  const t = useT();
   const [renaming, setRenaming] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
   const save = (i: number) => {
@@ -512,7 +519,7 @@ function TabBar({ tabs, onCommand }: { tabs: Tabs; onCommand: (cmd: SheetCommand
           >
             <input
               autoFocus
-              aria-label="Bagong pangalan ng tab"
+              aria-label={t('Bagong pangalan ng tab', 'New tab name')}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onBlur={() => save(i)}
@@ -533,7 +540,7 @@ function TabBar({ tabs, onCommand }: { tabs: Tabs; onCommand: (cmd: SheetCommand
             type="button"
             role="tab"
             aria-selected={i === tabs.index}
-            title="I-double-click para palitan ang pangalan"
+            title={t('I-double-click para palitan ang pangalan', 'Double-click to rename')}
             onMouseDown={(e) => e.preventDefault()} // keep the keyboard on the sheet
             onClick={() => onCommand({ kind: 'tab', index: i })}
             onDoubleClick={() => {

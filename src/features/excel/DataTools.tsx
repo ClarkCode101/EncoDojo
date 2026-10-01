@@ -10,6 +10,7 @@
  */
 import { useState, type ReactNode } from 'react';
 import { EnTl } from '../../components/ui';
+import { useT } from '../../lib/i18n';
 import {
   cellName,
   columnValues,
@@ -148,6 +149,7 @@ export function FindReplaceDialog({
   onCommand: (cmd: SheetCommand) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [find, setFind] = useState('');
   const [replaceWith, setReplaceWith] = useState('');
   const [message, setMessage] = useState('');
@@ -157,10 +159,10 @@ export function FindReplaceDialog({
     if (replace) {
       const n = countMatches(sheet, find);
       onCommand({ kind: 'replaceAll', find, replace: replaceWith });
-      setMessage(n === 0 ? 'Walang nakita.' : `Napalitan: ${n}.`);
+      setMessage(n === 0 ? t('Walang nakita.', 'Nothing found.') : t(`Napalitan: ${n}.`, `Replaced: ${n}.`));
     } else {
       onCommand({ kind: 'find', text: find });
-      setMessage(countMatches(sheet, find) === 0 ? 'Walang nakita.' : '');
+      setMessage(countMatches(sheet, find) === 0 ? t('Walang nakita.', 'Nothing found.') : '');
     }
   }
 
@@ -211,10 +213,14 @@ export function DedupeDialog({
   onClose: () => void;
   onDone: (message: string) => void;
 }) {
+  const t = useT();
   return (
     <Box title="Remove Duplicates" onClose={onClose}>
       <p className="text-sm text-stone-700">
-        Tatanggalin ang mga row na magkapareho ang LAHAT ng column. Ang una ay maiiwan. May header ang data.
+        {t(
+          'Tatanggalin ang mga row na magkapareho ang LAHAT ng column. Ang una ay maiiwan. May header ang data.',
+          'Removes the rows where ALL the columns are the same. The first one stays. The data has a header.',
+        )}
       </p>
       <div className="mt-3 flex gap-2">
         <button
@@ -224,7 +230,11 @@ export function DedupeDialog({
           onClick={() => {
             const n = countDuplicates(sheet);
             onCommand({ kind: 'removeDuplicates' });
-            onDone(n === 0 ? 'Walang dobleng row.' : `${n} dobleng row ang natanggal.`);
+            onDone(
+              n === 0
+                ? t('Walang dobleng row.', 'No duplicate rows.')
+                : t(`${n} dobleng row ang natanggal.`, `${n} duplicate row${n === 1 ? '' : 's'} removed.`),
+            );
           }}
         >
           <EnTl en="OK" tl="Sige" />
@@ -258,6 +268,7 @@ export function TextToColumnsDialog({
   onClose: () => void;
   onDone: (message: string) => void;
 }) {
+  const t = useT();
   const { top, left, bottom } = selectionRange(sheet);
   const [delimiter, setDelimiter] = useState(',');
   const [dest, setDest] = useState(`$${cellName({ r: top, c: left })}`.replace(/(\d+)$/, '$$$1'));
@@ -266,11 +277,11 @@ export function TextToColumnsDialog({
   function finish() {
     const p = parseCellName(dest);
     if (!p || p.r >= sheet.cells.length || p.c >= sheet.cells[0].length) {
-      setError('Hindi kilalang cell. Halimbawa: B2');
+      setError(t('Hindi kilalang cell. Halimbawa: B2', 'Unknown cell. For example: B2'));
       return;
     }
     onCommand({ kind: 'textToColumns', delimiter, dest: p });
-    onDone(`Nahati ang ${bottom - top + 1} cell.`);
+    onDone(t(`Nahati ang ${bottom - top + 1} cell.`, `Split ${bottom - top + 1} cells.`));
   }
 
   return (
@@ -282,7 +293,9 @@ export function TextToColumnsDialog({
         }}
       >
         <fieldset>
-          <legend className="text-sm font-semibold text-stone-800">Delimiter (pangharang)</legend>
+          <legend className="text-sm font-semibold text-stone-800">
+            <EnTl en="Delimiter" tl="pangharang" />
+          </legend>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
             {DELIMITERS.map((d, i) => (
               <label key={d.value} className="flex items-center gap-1.5 text-sm">
@@ -300,7 +313,7 @@ export function TextToColumnsDialog({
           </div>
         </fieldset>
         <label className="mt-3 block text-sm font-semibold text-stone-800">
-          Destination (saan ilalagay)
+          <EnTl en="Destination" tl="saan ilalagay" />
           <input
             value={dest}
             onChange={(e) => {
@@ -340,6 +353,7 @@ export function CondFormatDialog({
   onClose: () => void;
   onDone: (message: string) => void;
 }) {
+  const t = useT();
   const [rule, setRule] = useState<'duplicates' | 'blanks'>('duplicates');
   const { top, left, bottom, right } = selectionRange(sheet);
   const range = `${cellName({ r: top, c: left })}:${cellName({ r: bottom, c: right })}`;
@@ -349,11 +363,15 @@ export function CondFormatDialog({
         onSubmit={(e) => {
           e.preventDefault();
           onCommand({ kind: 'condFormat', rule });
-          onDone(`May kulay na ang ${rule === 'duplicates' ? 'mga doble' : 'mga blangko'} sa ${range}.`);
+          onDone(
+            rule === 'duplicates'
+              ? t(`May kulay na ang mga doble sa ${range}.`, `The duplicates in ${range} are colored now.`)
+              : t(`May kulay na ang mga blangko sa ${range}.`, `The blanks in ${range} are colored now.`),
+          );
         }}
       >
         <p className="text-sm text-stone-700">
-          Highlight Cells Rules, sa <span className="font-mono">{range}</span> (Light Red Fill):
+          Highlight Cells Rules, {t('sa', 'in')} <span className="font-mono">{range}</span> (Light Red Fill):
         </p>
         <div className="mt-2 space-y-1">
           {(
@@ -387,7 +405,7 @@ export function CondFormatDialog({
               type="button"
               onClick={() => {
                 onCommand({ kind: 'clearRules' });
-                onDone('Natanggal ang lahat ng kulay.');
+                onDone(t('Natanggal ang lahat ng kulay.', 'All the colors were removed.'));
               }}
               className={toolBtn}
             >
@@ -412,6 +430,7 @@ export function ValidationDialog({
   onClose: () => void;
   onDone: (message: string) => void;
 }) {
+  const t = useT();
   const [source, setSource] = useState('');
   const [error, setError] = useState('');
   const { top, left, bottom, right } = selectionRange(sheet);
@@ -426,18 +445,24 @@ export function ValidationDialog({
             .map((v) => v.trim())
             .filter((v) => v !== '');
           if (list.length === 0) {
-            setError('Isulat ang mga pagpipilian, hiwalay sa comma. Halimbawa: Paid,Unpaid');
+            setError(
+              t(
+                'Isulat ang mga pagpipilian, hiwalay sa comma. Halimbawa: Paid,Unpaid',
+                'Write the choices, separated by commas. For example: Paid,Unpaid',
+              ),
+            );
             return;
           }
           onCommand({ kind: 'validation', list });
-          onDone(`May dropdown na ang ${range}.`);
+          onDone(t(`May dropdown na ang ${range}.`, `${range} has a dropdown now.`));
         }}
       >
         <p className="text-sm text-stone-700">
-          Para sa <span className="font-mono">{range}</span>. Allow: <span className="font-semibold">List</span>
+          {t('Para sa', 'For')} <span className="font-mono">{range}</span>. Allow:{' '}
+          <span className="font-semibold">List</span>
         </p>
         <label className="mt-2 block text-sm font-semibold text-stone-800">
-          Source (mga pagpipilian, hiwalay sa comma)
+          <EnTl en="Source" tl="mga pagpipilian, hiwalay sa comma" />
           <input
             autoFocus
             value={source}
@@ -488,6 +513,7 @@ export function PivotDialog({
   onCommand: (cmd: SheetCommand) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const { headers, rows } = tableOf(sheet);
   const numeric = (c: number) => rows.length > 0 && rows.every((r) => r[c] === '' || isNumberText(r[c]));
   const firstText = Math.max(
@@ -513,10 +539,11 @@ export function PivotDialog({
         }}
       >
         <p className="text-sm text-stone-700">
-          Table/Range: <span className="font-mono">{range}</span>. Location: New Worksheet (bagong tab).
+          Table/Range: <span className="font-mono">{range}</span>. Location: <EnTl en="New Worksheet" tl="bagong tab" />
+          .
         </p>
         <label className="mt-2 block text-sm font-semibold text-stone-800">
-          Rows (ano ang ililista)
+          <EnTl en="Rows" tl="ano ang ililista" />
           <select
             autoFocus
             value={rowField}
@@ -530,10 +557,12 @@ export function PivotDialog({
             ))}
           </select>
         </label>
-        <div className="mt-2 text-sm font-semibold text-stone-800">Values (ano ang kukuwentahin)</div>
+        <div className="mt-2 text-sm font-semibold text-stone-800">
+          <EnTl en="Values" tl="ano ang kukuwentahin" />
+        </div>
         <div className="mt-1 flex gap-2">
           <select
-            aria-label="Paano kukuwentahin"
+            aria-label={t('Paano kukuwentahin', 'How to count')}
             value={fn}
             onChange={(e) => setFn(e.target.value as PivotFn)}
             className={select}
@@ -546,7 +575,7 @@ export function PivotDialog({
           </select>
           <span className="self-center text-sm">of</span>
           <select
-            aria-label="Aling column"
+            aria-label={t('Aling column', 'Which column')}
             value={valueField}
             onChange={(e) => setValueField(Number(e.target.value))}
             className={`${select} flex-1`}
@@ -577,6 +606,7 @@ export function PivotDialog({
  * PivotTable again from its source.
  */
 export function PivotFields({ sheet, onCommand }: { sheet: Sheet; onCommand: (cmd: SheetCommand) => void }) {
+  const t = useT();
   const def = sheet.pivot!;
   const source = pivotSource(sheet);
   if (!source) return null;
@@ -590,7 +620,7 @@ export function PivotFields({ sheet, onCommand }: { sheet: Sheet; onCommand: (cm
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         className={select}
       >
-        {none && <option value="">(wala)</option>}
+        {none && <option value="">{t('(wala)', '(none)')}</option>}
         {headers.map((h, i) => (
           <option key={i} value={i}>
             {h}
@@ -622,7 +652,7 @@ export function PivotFields({ sheet, onCommand }: { sheet: Sheet; onCommand: (cm
           value={def.values}
           onChange={(e) => set({ values: Number(e.target.value) })}
           className={select}
-          aria-label="Values: aling column"
+          aria-label={t('Values: aling column', 'Values: which column')}
         >
           {headers.map((h, i) => (
             <option key={i} value={i}>
@@ -639,7 +669,7 @@ export function PivotFields({ sheet, onCommand }: { sheet: Sheet; onCommand: (cm
       )}
       {def.filter && (
         <select
-          aria-label="Filter: aling value"
+          aria-label={t('Filter: aling value', 'Filter: which value')}
           value={def.filter.value}
           onChange={(e) => set({ filter: { col: def.filter!.col, value: e.target.value } })}
           className={select}
@@ -678,6 +708,7 @@ export function FreezeDialog({
   onClose: () => void;
   onDone: (message: string) => void;
 }) {
+  const t = useT();
   const { r, c } = sheet.active;
   const options: { en: string; tl: string; rows: number; cols: number }[] = [
     { en: 'Freeze Panes', tl: `sa itaas at kaliwa ng ${cellName(sheet.active)}`, rows: r, cols: c },
@@ -695,7 +726,11 @@ export function FreezeDialog({
             autoFocus={i === 0}
             onClick={() => {
               onCommand({ kind: 'freeze', rows: o.rows, cols: o.cols });
-              onDone(o.rows + o.cols === 0 ? 'Wala nang naka-freeze.' : `Naka-freeze: ${o.en}.`);
+              onDone(
+                o.rows + o.cols === 0
+                  ? t('Wala nang naka-freeze.', 'Nothing is frozen now.')
+                  : t(`Naka-freeze: ${o.en}.`, `Frozen: ${o.en}.`),
+              );
             }}
             className="block w-full rounded border border-stone-300 px-3 py-1.5 text-left text-sm hover:bg-green-50 focus-visible:bg-green-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700"
           >
@@ -717,12 +752,16 @@ export function ListPopup({
   onCommand: (cmd: SheetCommand) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const list = listFor(sheet, sheet.active) ?? [];
   return (
-    <Box title={`Pumili para sa ${cellName(sheet.active)}`} onClose={onClose}>
+    <Box
+      title={t(`Pumili para sa ${cellName(sheet.active)}`, `Choose for ${cellName(sheet.active)}`)}
+      onClose={onClose}
+    >
       <div
         role="listbox"
-        aria-label="Mga pagpipilian"
+        aria-label={t('Mga pagpipilian', 'Choices')}
         onKeyDown={(e) => {
           if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
           e.preventDefault();

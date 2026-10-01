@@ -7,6 +7,7 @@
  * It does NOT save anything; it builds a Session and hands it to `onFinish`.
  */
 import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLang, useT } from '../../lib/i18n';
 import { makeRng, randomSeed } from '../../lib/random';
 import { correctTick } from '../../lib/sound';
 import type { Session } from '../../lib/storage';
@@ -29,7 +30,7 @@ import {
   type SheetCommand,
 } from './sheet';
 import type { LessonContent } from './lessons';
-import { QUIZ_TASKS, startTask } from './tasks';
+import { QUIZ_PASS, QUIZ_TASKS, startTask } from './tasks';
 import LessonLayout from './LessonLayout';
 import TaskRecord from './TaskRecord';
 import TipKeys from './TipKeys';
@@ -49,7 +50,9 @@ export default function ExcelQuiz({
   onFinish: (session: Session) => void;
   onExit: () => void;
 }) {
-  const [quiz] = useState(() => content.makeQuiz(makeRng(randomSeed())));
+  const lang = useLang();
+  const t = useT();
+  const [quiz] = useState(() => content.makeQuiz(makeRng(randomSeed()), lang));
   const [sheet, setSheet] = useState<Sheet>(() => startTask(quiz.sheet, quiz.tasks[0]));
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -91,15 +94,17 @@ export default function ExcelQuiz({
     if (done && soundCorrect) correctTick();
 
     const n = index + 1;
-    if (!done) setFeedback({ n, good: false, text: 'Nilaktawan.' });
-    else if (shortcut) setFeedback({ n, good: true, text: 'Tama.' });
+    if (!done) setFeedback({ n, good: false, text: t('Nilaktawan.', 'Skipped.') });
+    else if (shortcut) setFeedback({ n, good: true, text: t('Tama.', 'Correct.') });
     else
       setFeedback({
         n,
         good: true,
         text: (
           <>
-            Tama. <span className="font-normal text-stone-700">Mas mabilis gamit ang</span> <TipKeys tip={task.tip} />
+            {t('Tama.', 'Correct.')}{' '}
+            <span className="font-normal text-stone-700">{t('Mas mabilis gamit ang', 'Faster with')}</span>{' '}
+            <TipKeys tip={task.tip} />
           </>
         ),
       });
@@ -149,7 +154,7 @@ export default function ExcelQuiz({
 
   return (
     <LessonLayout
-      eyebrow={`Pagsusulit, Aralin ${level}`}
+      eyebrow={t(`Pagsusulit, Aralin ${level}`, `Quiz, Lesson ${level}`)}
       title={title}
       onBack={onExit}
       panel={
@@ -157,18 +162,26 @@ export default function ExcelQuiz({
           {/* Progress: one dot per question. */}
           <div>
             <div className="mb-1.5 text-sm font-semibold text-stone-700">
-              Tanong {index + 1} sa {QUIZ_TASKS}
+              {t(`Tanong ${index + 1} sa ${QUIZ_TASKS}`, `Question ${index + 1} of ${QUIZ_TASKS}`)}
             </div>
             <div className="flex gap-1" aria-hidden="true">
               {Array.from({ length: QUIZ_TASKS }, (_, i) => (
                 <div key={i} className={'h-1.5 flex-1 rounded-full ' + (i <= index ? 'bg-belt-400' : 'bg-stone-300')} />
               ))}
             </div>
-            <p className="mt-2 text-sm text-stone-600">Walang hint at walang oras. Pasado kapag 5 ang tama.</p>
+            <p className="mt-2 text-sm text-stone-600">
+              {t(
+                `Walang hint at walang oras. Pasado kapag ${QUIZ_PASS} ang tama.`,
+                `No hints and no time limit. You pass with ${QUIZ_PASS} correct.`,
+              )}
+            </p>
           </div>
 
-          <section aria-label="Gawin" className="rounded-r-lg border-l-4 border-belt-400 bg-white px-4 py-3">
-            <div className="text-sm font-bold text-stone-600">Gawin</div>
+          <section
+            aria-label={t('Gawin', 'Do this')}
+            className="rounded-r-lg border-l-4 border-belt-400 bg-white px-4 py-3"
+          >
+            <div className="text-sm font-bold text-stone-600">{t('Gawin', 'Do this')}</div>
             <p className="font-bold text-stone-900">{task.text}</p>
             {task.record && <TaskRecord record={task.record} />}
             <div className="mt-3">
@@ -177,7 +190,7 @@ export default function ExcelQuiz({
                 onClick={() => endTask(sheet, false)}
                 className="rounded text-sm text-stone-600 underline decoration-dotted underline-offset-2 hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
               >
-                Laktawan
+                {t('Laktawan', 'Skip')}
               </button>
             </div>
           </section>
@@ -185,7 +198,7 @@ export default function ExcelQuiz({
           <p role="status" className="min-h-[1.5rem] text-sm font-semibold">
             {feedback && (
               <span className={feedback.good ? 'text-green-800' : 'text-amber-800'}>
-                {feedback.good ? '✓' : '•'} Tanong {feedback.n}: {feedback.text}
+                {feedback.good ? '✓' : '•'} {t('Tanong', 'Question')} {feedback.n}: {feedback.text}
               </span>
             )}
           </p>

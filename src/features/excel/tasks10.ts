@@ -10,6 +10,7 @@
  * up what it needs, so the tasks work in any order (tested). Formula checks
  * compare with the lesson's own formula, on the sheet and on a changed copy.
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits } from '../typing/generatePassage';
@@ -93,7 +94,7 @@ function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
   return { ...s, cells };
 }
 
-function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTask> {
+function allTasks10({ table, counted, summed }: Table10, t: T): Record<string, ExcelTask> {
   const n = table.length - 1; // records are rows 1..n
   const rows = Array.from({ length: n }, (_, i) => i + 1);
   const last = n + 1; // Excel row number of the last record
@@ -124,9 +125,15 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
   const tasks: ExcelTask[] = [
     {
       id: 'cfDuplicates',
-      text: `Kulayan ang mga dobleng Ref No.: piliin ang A2 hanggang A${last}, tapos Conditional Formatting > Duplicate Values.`,
+      text: t(
+        `Kulayan ang mga dobleng Ref No.: piliin ang A2 hanggang A${last}, tapos Conditional Formatting > Duplicate Values.`,
+        `Color the duplicate Ref Nos.: select A2 to A${last}, then Conditional Formatting > Duplicate Values.`,
+      ),
       tip: 'Ctrl + Shift + ↓, Conditional Formatting, Duplicate Values',
-      hint: `Nasa A2 ka. Ctrl + Shift + ↓ para mapili hanggang A${last}. Sa toolbar: Conditional Formatting, piliin ang Duplicate Values, OK.`,
+      hint: t(
+        `Nasa A2 ka. Ctrl + Shift + ↓ para mapili hanggang A${last}. Sa toolbar: Conditional Formatting, piliin ang Duplicate Values, OK.`,
+        `You are in A2. Ctrl + Shift + ↓ selects down to A${last}. On the toolbar: Conditional Formatting, choose Duplicate Values, OK.`,
+      ),
       solution: [
         key('ArrowDown', { ctrl: true, shift: true }),
         { command: { kind: 'condFormat', rule: 'duplicates' } },
@@ -138,9 +145,18 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
     },
     {
       id: 'cfBlanks',
-      text: `Kulayan ang mga blangkong cell ng table: piliin ang A2 hanggang E${last}, tapos Conditional Formatting > Blanks.`,
-      tip: 'Ctrl + Shift + ↓, Shift + → (4 beses), Conditional Formatting, Blanks',
-      hint: `Walang blangko ang Ref No., kaya Ctrl + Shift + ↓ muna (hanggang A${last}), tapos Shift + → hanggang E. Conditional Formatting, piliin ang Blanks, OK.`,
+      text: t(
+        `Kulayan ang mga blangkong cell ng table: piliin ang A2 hanggang E${last}, tapos Conditional Formatting > Blanks.`,
+        `Color the blank cells of the table: select A2 to E${last}, then Conditional Formatting > Blanks.`,
+      ),
+      tip: t(
+        'Ctrl + Shift + ↓, Shift + → (4 beses), Conditional Formatting, Blanks',
+        'Ctrl + Shift + ↓, Shift + → (4 times), Conditional Formatting, Blanks',
+      ),
+      hint: t(
+        `Walang blangko ang Ref No., kaya Ctrl + Shift + ↓ muna (hanggang A${last}), tapos Shift + → hanggang E. Conditional Formatting, piliin ang Blanks, OK.`,
+        `The Ref No. has no blanks, so Ctrl + Shift + ↓ first (down to A${last}), then Shift + → to E. Conditional Formatting, choose Blanks, OK.`,
+      ),
       solution: [
         key('ArrowDown', { ctrl: true, shift: true }),
         ...Array.from({ length: 4 }, () => key('ArrowRight', { shift: true })),
@@ -154,9 +170,15 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
     },
     {
       id: 'countBlank',
-      text: `Sa ${cellName(h2)}, bilangin kung ilan ang blangkong cell sa table (A2 hanggang E${last}).`,
-      tip: `=COUNTBLANK(A2:E${last}), tapos Enter`,
-      hint: `Ang =COUNTBLANK(saan) ay bumibilang ng walang laman. Ang buong table: A2:E${last}.`,
+      text: t(
+        `Sa ${cellName(h2)}, bilangin kung ilan ang blangkong cell sa table (A2 hanggang E${last}).`,
+        `In ${cellName(h2)}, count how many blank cells the table has (A2 to E${last}).`,
+      ),
+      tip: t(`=COUNTBLANK(A2:E${last}), tapos Enter`, `=COUNTBLANK(A2:E${last}), then Enter`),
+      hint: t(
+        `Ang =COUNTBLANK(saan) ay bumibilang ng walang laman. Ang buong table: A2:E${last}.`,
+        `=COUNTBLANK(where) counts the empty cells. The whole table: A2:E${last}.`,
+      ),
       solution: typeFormula(`=COUNTBLANK(A2:E${last})`),
       start: h2,
       prepare: (s) => setCells(reset(s), [[h2, '']]),
@@ -165,9 +187,18 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
     },
     {
       id: 'countifs',
-      text: `Sa ${cellName(h3)}, bilangin kung ilan ang Unpaid sa ${counted}.`,
-      tip: `=COUNTIFS(C2:C${last},"${counted}",E2:E${last},"Unpaid"), tapos Enter`,
-      hint: `Gaya ng COUNTIF, pero pares-pares: (saan, ano, saan, ano). Branch (C) = "${counted}", Status (E) = "Unpaid".`,
+      text: t(
+        `Sa ${cellName(h3)}, bilangin kung ilan ang Unpaid sa ${counted}.`,
+        `In ${cellName(h3)}, count how many are Unpaid in ${counted}.`,
+      ),
+      tip: t(
+        `=COUNTIFS(C2:C${last},"${counted}",E2:E${last},"Unpaid"), tapos Enter`,
+        `=COUNTIFS(C2:C${last},"${counted}",E2:E${last},"Unpaid"), then Enter`,
+      ),
+      hint: t(
+        `Gaya ng COUNTIF, pero pares-pares: (saan, ano, saan, ano). Branch (C) = "${counted}", Status (E) = "Unpaid".`,
+        `Like COUNTIF, but in pairs: (where, what, where, what). Branch (C) = "${counted}", Status (E) = "Unpaid".`,
+      ),
       solution: typeFormula(`=COUNTIFS(C2:C${last},"${counted}",E2:E${last},"Unpaid")`),
       start: h3,
       prepare: (s) => setCells(reset(s), [[h3, '']]),
@@ -181,9 +212,18 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
     },
     {
       id: 'sumifs',
-      text: `Sa ${cellName(h4)}, kuwentahin ang kabuuang Amount ng Paid sa ${summed}.`,
-      tip: `=SUMIFS(D2:D${last},C2:C${last},"${summed}",E2:E${last},"Paid"), tapos Enter`,
-      hint: `Sa SUMIFS, UNA ang idadagdag (Amount, D), tapos ang mga pares: Branch (C) = "${summed}", Status (E) = "Paid".`,
+      text: t(
+        `Sa ${cellName(h4)}, kuwentahin ang kabuuang Amount ng Paid sa ${summed}.`,
+        `In ${cellName(h4)}, work out the total Amount of Paid in ${summed}.`,
+      ),
+      tip: t(
+        `=SUMIFS(D2:D${last},C2:C${last},"${summed}",E2:E${last},"Paid"), tapos Enter`,
+        `=SUMIFS(D2:D${last},C2:C${last},"${summed}",E2:E${last},"Paid"), then Enter`,
+      ),
+      hint: t(
+        `Sa SUMIFS, UNA ang idadagdag (Amount, D), tapos ang mga pares: Branch (C) = "${summed}", Status (E) = "Paid".`,
+        `In SUMIFS, what to add up comes FIRST (Amount, D), then the pairs: Branch (C) = "${summed}", Status (E) = "Paid".`,
+      ),
       solution: typeFormula(`=SUMIFS(D2:D${last},C2:C${last},"${summed}",E2:E${last},"Paid")`),
       start: h4,
       prepare: (s) => setCells(reset(s), [[h4, '']]),
@@ -197,9 +237,18 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
     },
     {
       id: 'dropdown',
-      text: `Gawing dropdown ang Status (E2 hanggang E${last}): Data Validation, Source: Paid,Unpaid.`,
-      tip: `Shift + ↓ hanggang E${last}, Data Validation, Paid,Unpaid`,
-      hint: `May blangko ang Status, kaya Shift + ↓ hanggang E${last} (o i-click ang E2 at Shift + click ang E${last}). Data Validation, sa Source isulat ang Paid,Unpaid, OK.`,
+      text: t(
+        `Gawing dropdown ang Status (E2 hanggang E${last}): Data Validation, Source: Paid,Unpaid.`,
+        `Make the Status (E2 to E${last}) a dropdown: Data Validation, Source: Paid,Unpaid.`,
+      ),
+      tip: t(
+        `Shift + ↓ hanggang E${last}, Data Validation, Paid,Unpaid`,
+        `Shift + ↓ to E${last}, Data Validation, Paid,Unpaid`,
+      ),
+      hint: t(
+        `May blangko ang Status, kaya Shift + ↓ hanggang E${last} (o i-click ang E2 at Shift + click ang E${last}). Data Validation, sa Source isulat ang Paid,Unpaid, OK.`,
+        `The Status has blanks, so Shift + ↓ to E${last} (or click E2 and Shift + click E${last}). Data Validation, in Source write Paid,Unpaid, OK.`,
+      ),
       solution: [
         ...Array.from({ length: n - 1 }, () => key('ArrowDown', { shift: true })),
         { command: { kind: 'validation', list: STATUS } },
@@ -222,9 +271,15 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
     },
     {
       id: 'useDropdown',
-      text: `Walang Status ang E${blankStatusRow + 1}. Piliin ang Paid sa dropdown.`,
-      tip: 'Alt + ↓, tapos Paid at Enter',
-      hint: 'Alt + ↓ (o ang ▼ sa gilid ng cell) para lumabas ang listahan. Subukan ding mag-type ng "Bayad": hindi ito tatanggapin.',
+      text: t(
+        `Walang Status ang E${blankStatusRow + 1}. Piliin ang Paid sa dropdown.`,
+        `E${blankStatusRow + 1} has no Status. Choose Paid from the dropdown.`,
+      ),
+      tip: t('Alt + ↓, tapos Paid at Enter', 'Alt + ↓, then Paid and Enter'),
+      hint: t(
+        'Alt + ↓ (o ang ▼ sa gilid ng cell) para lumabas ang listahan. Subukan ding mag-type ng "Bayad": hindi ito tatanggapin.',
+        'Alt + ↓ (or the ▼ beside the cell) shows the list. Also try typing "Bayad": it will be refused.',
+      ),
       solution: [{ command: { kind: 'pick', value: 'Paid' } }],
       start: at(blankStatusRow, COL.status),
       prepare: (s) => ({ ...reset(s), lists: [{ range: statusRange, list: STATUS }] }),
@@ -232,11 +287,11 @@ function allTasks10({ table, counted, summed }: Table10): Record<string, ExcelTa
       maxKeys: 2,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new collection log (Excel's number rules on) with one task of every Aralin 10 kind. */
-export function makeTaskSet10(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet10(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const t = makeTable10(rng);
   const rowsN = t.table.length + EXTRA_ROWS;
   // Amounts look like money: 1,250.50 (the numbers themselves are unchanged).
@@ -246,11 +301,11 @@ export function makeTaskSet10(rng: Rng): { sheet: Sheet; tasks: Record<string, E
     ]),
   );
   const sheet = makeSheet(t.table, rowsN, HEADERS_10.length, { formatting: true, formats, compute: computeSheet });
-  return { sheet, tasks: allTasks10(t) };
+  return { sheet, tasks: allTasks10(t, translator(lang)) };
 }
 
 /** The Aralin 10 Pagsusulit: a new sheet and 6 of the 7 task kinds in random order. */
-export function makeQuiz10(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet10(rng);
+export function makeQuiz10(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet10(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)).slice(0, QUIZ_TASKS) };
 }

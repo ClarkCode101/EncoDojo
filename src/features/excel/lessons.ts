@@ -6,42 +6,48 @@
  * A lesson is "pasado" when any saved round of it reached the targets. It can
  * always be done again (no lesson is ever locked or "finished for good").
  */
+import type { Lang } from '../../lib/i18n';
 import type { Rng } from '../../lib/random';
 import { display } from '../../lib/scoring';
 import type { Session } from '../../lib/storage';
 import { JOB_READY_EXCEL } from '../../lib/targets';
-import { LESSON_1, type LessonTopic } from './lesson1';
-import { LESSON_2 } from './lesson2';
-import { LESSON_3 } from './lesson3';
-import { LESSON_4 } from './lesson4';
-import { LESSON_5, TASK_LABEL_5 } from './lesson5';
-import { LESSON_6, TASK_LABEL_6 } from './lesson6';
-import { LESSON_7, TASK_LABEL_7 } from './lesson7';
-import { LESSON_8, TASK_LABEL_8 } from './lesson8';
-import { LESSON_9, TASK_LABEL_9 } from './lesson9';
-import { LESSON_10, TASK_LABEL_10 } from './lesson10';
-import { LESSON_11, TASK_LABEL_11 } from './lesson11';
-import { LESSON_12, TASK_LABEL_12 } from './lesson12';
-import { LESSON_13, TASK_LABEL_13 } from './lesson13';
-import { LESSON_14, TASK_LABEL_14 } from './lesson14';
+import { lesson1, type LessonTopic } from './lesson1';
+import { lesson2 } from './lesson2';
+import { lesson3 } from './lesson3';
+import { lesson4 } from './lesson4';
+import { lesson5, taskLabels5 } from './lesson5';
+import { lesson6, taskLabels6 } from './lesson6';
+import { lesson7, taskLabels7 } from './lesson7';
+import { lesson8, taskLabels8 } from './lesson8';
+import { lesson9, taskLabels9 } from './lesson9';
+import { lesson10, taskLabels10 } from './lesson10';
+import { lesson11, taskLabels11 } from './lesson11';
+import { lesson12, taskLabels12 } from './lesson12';
+import { lesson13, taskLabels13 } from './lesson13';
+import { lesson14, taskLabels14 } from './lesson14';
 import type { ToolName } from './DataTools';
 import type { Sheet, TabCells } from './sheet';
 import { COLUMN_WIDTHS, COLUMN_WIDTHS_2, COLUMN_WIDTHS_3 } from './sheetLayout';
-import { TASK_LABEL, makeQuiz, makeTaskSet, type ExcelTask } from './tasks';
-import { TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
-import { TASK_LABEL_3, makeQuiz3, makeTaskSet3 } from './tasks3';
-import { TASK_LABEL_4, makeQuiz4, makeTaskSet4 } from './tasks4';
+import { makeQuiz, makeTaskSet, taskLabels, type ExcelTask } from './tasks';
+import { makeQuiz2, makeTaskSet2, taskLabels2 } from './tasks2';
+import { makeQuiz3, makeTaskSet3, taskLabels3 } from './tasks3';
+import { makeQuiz4, makeTaskSet4, taskLabels4 } from './tasks4';
 
-/** What a ready lesson needs: its topics, its sheet + tasks, its quiz, and how to show it. */
+/** The topics of a lesson in a language. */
+export type TopicsOf = (lang: Lang) => LessonTopic[];
+/** Short names of the task kinds in a language (results table). */
+export type LabelsOf = (lang: Lang) => Record<string, string>;
+
+/** What a ready lesson needs: its topics, its sheet + tasks, its quiz, and how to show it. All texts in `lang`. */
 export type LessonContent = {
-  topics: LessonTopic[];
+  topics: TopicsOf;
   /** A sheet with one task of every kind the topics use. */
-  makeSet: (rng: Rng) => { sheet: Sheet; tasks: Record<string, ExcelTask> };
+  makeSet: (rng: Rng, lang: Lang) => { sheet: Sheet; tasks: Record<string, ExcelTask> };
   /** The Pagsusulit: a new sheet and its tasks. */
-  makeQuiz: (rng: Rng) => { sheet: Sheet; tasks: ExcelTask[] };
+  makeQuiz: (rng: Rng, lang: Lang) => { sheet: Sheet; tasks: ExcelTask[] };
   columnWidths: string[];
   /** Short names of the task kinds (results table). */
-  labels: Record<string, string>;
+  labels: LabelsOf;
   /** Show the tools toolbar and dialogs (Aralin 4+): true = all tools, or only the ones the lesson teaches. */
   tools?: boolean | ToolName[];
   /** Formula lessons: computes the formulas for the view and the checks. */
@@ -59,67 +65,77 @@ export type ComputeSheet = (cells: string[][], tabs?: TabCells) => string[][];
  */
 export type Lesson = {
   level: number;
+  /** Taglish title; `en.title` is the English one (see `lessonTitle`). */
   title: string;
-  topics: LessonTopic[] | null;
-  labels: Record<string, string>;
+  en: { title: string };
+  topics: TopicsOf | null;
+  labels: LabelsOf;
   content: LessonContent | null;
   load?: () => Promise<LessonContent>;
 };
+
+/** The lesson's title in a language. */
+export const lessonTitle = (lesson: Lesson, lang: Lang) => (lang === 'en' ? lesson.en.title : lesson.title);
 
 /** The lessons, in the suggested order (never locked). `content: null` = parating pa. */
 export const LESSONS: Lesson[] = [
   {
     level: 1,
     title: 'Navigation at shortcuts',
-    topics: LESSON_1,
-    labels: TASK_LABEL,
-    content: { topics: LESSON_1, makeSet: makeTaskSet, makeQuiz, columnWidths: COLUMN_WIDTHS, labels: TASK_LABEL },
+    en: { title: 'Navigation and shortcuts' },
+    topics: lesson1,
+    labels: taskLabels,
+    content: { topics: lesson1, makeSet: makeTaskSet, makeQuiz, columnWidths: COLUMN_WIDTHS, labels: taskLabels },
   },
   {
     level: 2,
     title: 'Pag-encode ng data',
-    topics: LESSON_2,
-    labels: TASK_LABEL_2,
+    en: { title: 'Entering data' },
+    topics: lesson2,
+    labels: taskLabels2,
     content: {
-      topics: LESSON_2,
+      topics: lesson2,
       makeSet: makeTaskSet2,
       makeQuiz: makeQuiz2,
       columnWidths: COLUMN_WIDTHS_2,
-      labels: TASK_LABEL_2,
+      labels: taskLabels2,
     },
   },
   {
     level: 3,
     title: 'Formatting',
-    topics: LESSON_3,
-    labels: TASK_LABEL_3,
+    en: { title: 'Formatting' },
+    topics: lesson3,
+    labels: taskLabels3,
     content: {
-      topics: LESSON_3,
+      topics: lesson3,
       makeSet: makeTaskSet3,
       makeQuiz: makeQuiz3,
       columnWidths: COLUMN_WIDTHS_3,
-      labels: TASK_LABEL_3,
+      labels: taskLabels3,
     },
   },
   {
     level: 4,
     title: 'Sort, filter, find & replace',
-    topics: LESSON_4,
-    labels: TASK_LABEL_4,
+    en: { title: 'Sort, filter, find & replace' },
+    topics: lesson4,
+    labels: taskLabels4,
     content: {
-      topics: LESSON_4,
+      topics: lesson4,
       makeSet: makeTaskSet4,
       makeQuiz: makeQuiz4,
       columnWidths: COLUMN_WIDTHS,
-      labels: TASK_LABEL_4,
+      labels: taskLabels4,
       tools: true,
     },
   },
   {
     level: 5,
     title: 'Unang formulas',
-    topics: LESSON_5,
-    labels: TASK_LABEL_5,
+    en: { title: 'First formulas' },
+    topics: lesson5,
+    labels: taskLabels5,
     content: null,
     // HyperFormula comes with this lesson only.
     load: () => import('./lesson5Content').then((m) => m.CONTENT_5),
@@ -127,72 +143,81 @@ export const LESSONS: Lesson[] = [
   {
     level: 6,
     title: 'IF, COUNTIF at SUMIF',
-    topics: LESSON_6,
-    labels: TASK_LABEL_6,
+    en: { title: 'IF, COUNTIF and SUMIF' },
+    topics: lesson6,
+    labels: taskLabels6,
     content: null,
     load: () => import('./lesson6Content').then((m) => m.CONTENT_6),
   },
   {
     level: 7,
     title: 'VLOOKUP',
-    topics: LESSON_7,
-    labels: TASK_LABEL_7,
+    en: { title: 'VLOOKUP' },
+    topics: lesson7,
+    labels: taskLabels7,
     content: null,
     load: () => import('./lesson7Content').then((m) => m.CONTENT_7),
   },
   {
     level: 8,
     title: 'Paglinis ng text (TRIM, PROPER)',
-    topics: LESSON_8,
-    labels: TASK_LABEL_8,
+    en: { title: 'Cleaning up text (TRIM, PROPER)' },
+    topics: lesson8,
+    labels: taskLabels8,
     content: null,
     load: () => import('./lesson8Content').then((m) => m.CONTENT_8),
   },
   {
     level: 9,
     title: 'Pagdugtong at paghiwalay',
-    topics: LESSON_9,
-    labels: TASK_LABEL_9,
+    en: { title: 'Joining and splitting' },
+    topics: lesson9,
+    labels: taskLabels9,
     content: null,
     load: () => import('./lesson9Content').then((m) => m.CONTENT_9),
   },
   {
     level: 10,
     title: 'Pag-check ng trabaho',
-    topics: LESSON_10,
-    labels: TASK_LABEL_10,
+    en: { title: 'Checking your work' },
+    topics: lesson10,
+    labels: taskLabels10,
     content: null,
     load: () => import('./lesson10Content').then((m) => m.CONTENT_10),
   },
   {
     level: 11,
     title: 'Petsa',
-    topics: LESSON_11,
-    labels: TASK_LABEL_11,
+    en: { title: 'Dates' },
+    topics: lesson11,
+    labels: taskLabels11,
     content: null,
     load: () => import('./lesson11Content').then((m) => m.CONTENT_11),
   },
   {
     level: 12,
     title: 'Rows at columns',
-    topics: LESSON_12,
-    labels: TASK_LABEL_12,
+    en: { title: 'Rows and columns' },
+    topics: lesson12,
+    labels: taskLabels12,
     content: null,
     load: () => import('./lesson12Content').then((m) => m.CONTENT_12),
   },
   {
     level: 13,
     title: 'Maraming tab',
-    topics: LESSON_13,
-    labels: TASK_LABEL_13,
+    en: { title: 'Many tabs' },
+    topics: lesson13,
+    labels: taskLabels13,
     content: null,
     load: () => import('./lesson13Content').then((m) => m.CONTENT_13),
   },
   {
     level: 14,
     title: 'Pivot Table',
-    topics: LESSON_14,
-    labels: TASK_LABEL_14,
+    en: { title: 'Pivot Table' },
+    topics: lesson14,
+    labels: taskLabels14,
     content: null,
     load: () => import('./lesson14Content').then((m) => m.CONTENT_14),
   },

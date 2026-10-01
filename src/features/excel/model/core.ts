@@ -73,8 +73,11 @@ export type Sheet = {
   condRules: CondRule[];
   /** Dropdown lists, Data Validation (Aralin 10). */
   lists: ListRule[];
-  /** A message after a refused entry (a value not in the dropdown list); cleared by the next key. */
-  alert: string | null;
+  /**
+   * A message after a refused entry (a value not in the dropdown list, a bad tab name, ...); cleared by
+   * the next key. In both languages (the model does not know the user's language; the view picks one).
+   */
+  alert: { tl: string; en: string } | null;
   /** Shift+Space / Ctrl+Space (Aralin 12): the selection is whole rows / whole columns. */
   whole: 'rows' | 'cols' | null;
   /** Hidden columns (Ctrl+0, Aralin 12). */

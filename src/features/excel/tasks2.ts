@@ -6,6 +6,7 @@
  * blank stretches to fill. Each task has its own stretch of rows, so the
  * tasks never get in each other's way, in any order (tested).
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits, nameParts } from '../typing/generatePassage';
@@ -19,13 +20,16 @@ const EXTRA_ROWS = 8;
 const SHEET_COLS = 8;
 
 /** Short names of the task kinds, for the results table. */
-export const TASK_LABEL_2: Record<string, string> = {
-  newRow: 'I-encode ang isang buong record',
-  enterDown: 'Mag-type pababa sa isang column',
-  fillDown: 'Kopyahin ang nasa itaas (isang cell)',
-  fillRange: 'Kopyahin pababa sa maraming cell',
-  fillSame: 'Parehong laman sa maraming cell',
-  today: 'Ilagay ang petsa ngayon',
+export const taskLabels2 = (lang: Lang = 'tl'): Record<string, string> => {
+  const t = translator(lang);
+  return {
+    newRow: t('I-encode ang isang buong record', 'Encode a whole record'),
+    enterDown: t('Mag-type pababa sa isang column', 'Type down a column'),
+    fillDown: t('Kopyahin ang nasa itaas (isang cell)', 'Copy what is above (one cell)'),
+    fillRange: t('Kopyahin pababa sa maraming cell', 'Copy down into many cells'),
+    fillSame: t('Parehong laman sa maraming cell', 'The same content in many cells'),
+    today: t('Ilagay ang petsa ngayon', "Put in today's date"),
+  };
 };
 
 /**
@@ -65,7 +69,7 @@ const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): Solutio
 const typeValue = (value: string): SolutionStep[] => [key(value[0]), { type: value }];
 const same = (s: Sheet, rows: number[], c: number, value: string) => rows.every((r) => s.cells[r][c] === value);
 
-function allTasks2(rng: Rng, table: string[][]): Record<string, ExcelTask> {
+function allTasks2(rng: Rng, table: string[][], t: T): Record<string, ExcelTask> {
   const last = table.length - 1;
   const newRowAt = last + 1;
   const newValues = record(rng);
@@ -82,10 +86,16 @@ function allTasks2(rng: Rng, table: string[][]): Record<string, ExcelTask> {
   const tasks: ExcelTask[] = [
     {
       id: 'newRow',
-      text: `I-encode ang bagong record na ito sa row ${newRowAt + 1}.`,
+      text: t(
+        `I-encode ang bagong record na ito sa row ${newRowAt + 1}.`,
+        `Encode this new record in row ${newRowAt + 1}.`,
+      ),
       record: newValues.map((value, c) => ({ label: HEADERS_2[c], value })),
-      tip: 'Tab sa bawat cell, Enter sa dulo',
-      hint: 'I-type ang una, Tab para sa susunod na cell. Sa huli, Enter: babalik ka sa column A ng susunod na row.',
+      tip: t('Tab sa bawat cell, Enter sa dulo', 'Tab after each cell, Enter at the end'),
+      hint: t(
+        'I-type ang una, Tab para sa susunod na cell. Sa huli, Enter: babalik ka sa column A ng susunod na row.',
+        'Type the first one, Tab for the next cell. At the end, Enter: you go back to column A of the next row.',
+      ),
       solution: newValues.flatMap((v, i) => [...typeValue(v), key(i < newValues.length - 1 ? 'Tab' : 'Enter')]),
       start: at(newRowAt, 0),
       check: (s) =>
@@ -97,9 +107,15 @@ function allTasks2(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'enterDown',
-      text: `I-type ang Status ng tatlong record, pababa: ${cellName(at(14, F))} "${downValues[0]}", ${cellName(at(15, F))} "${downValues[1]}", ${cellName(at(16, F))} "${downValues[2]}".`,
-      tip: 'I-type, Enter, i-type, Enter',
-      hint: 'Pagkatapos i-type ang isa, Enter: bababa ka sa susunod na cell. Hindi na kailangan ng arrow.',
+      text: t(
+        `I-type ang Status ng tatlong record, pababa: ${cellName(at(14, F))} "${downValues[0]}", ${cellName(at(15, F))} "${downValues[1]}", ${cellName(at(16, F))} "${downValues[2]}".`,
+        `Type the Status of three records, going down: ${cellName(at(14, F))} "${downValues[0]}", ${cellName(at(15, F))} "${downValues[1]}", ${cellName(at(16, F))} "${downValues[2]}".`,
+      ),
+      tip: t('I-type, Enter, i-type, Enter', 'Type, Enter, type, Enter'),
+      hint: t(
+        'Pagkatapos i-type ang isa, Enter: bababa ka sa susunod na cell. Hindi na kailangan ng arrow.',
+        'After typing one, Enter: you go down to the next cell. No arrow needed.',
+      ),
       solution: downValues.flatMap((v) => [...typeValue(v), key('Enter')]),
       start: at(14, F),
       check: (s) =>
@@ -108,9 +124,15 @@ function allTasks2(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'fillDown',
-      text: `Ilagay sa ${cellName(at(4, F))} ang parehong Status ng nasa itaas nito.`,
+      text: t(
+        `Ilagay sa ${cellName(at(4, F))} ang parehong Status ng nasa itaas nito.`,
+        `Put the same Status as the cell above into ${cellName(at(4, F))}.`,
+      ),
       tip: 'Ctrl + D',
-      hint: 'Ctrl + D ("Down"): kinokopya ang laman ng cell sa itaas, papunta sa cell mo.',
+      hint: t(
+        'Ctrl + D ("Down"): kinokopya ang laman ng cell sa itaas, papunta sa cell mo.',
+        'Ctrl + D ("Down"): copies the content of the cell above into your cell.',
+      ),
       solution: [key('d', { ctrl: true })],
       start: at(4, F),
       check: (s) => !s.editing && s.cells[4][F] !== '' && s.cells[4][F] === s.cells[3][F],
@@ -118,9 +140,15 @@ function allTasks2(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'fillRange',
-      text: `Kopyahin ang Status ng ${cellName(at(5, F))} pababa hanggang ${cellName(at(8, F))}.`,
-      tip: 'Shift + ↓ (3 beses), tapos Ctrl + D',
-      hint: 'Piliin muna mula sa cell na may laman pababa (Shift + ↓), tapos Ctrl + D para mapuno lahat.',
+      text: t(
+        `Kopyahin ang Status ng ${cellName(at(5, F))} pababa hanggang ${cellName(at(8, F))}.`,
+        `Copy the Status in ${cellName(at(5, F))} down to ${cellName(at(8, F))}.`,
+      ),
+      tip: t('Shift + ↓ (3 beses), tapos Ctrl + D', 'Shift + ↓ (3 times), then Ctrl + D'),
+      hint: t(
+        'Piliin muna mula sa cell na may laman pababa (Shift + ↓), tapos Ctrl + D para mapuno lahat.',
+        'First select from the filled cell down (Shift + ↓), then Ctrl + D to fill them all.',
+      ),
       solution: [
         key('ArrowDown', { shift: true }),
         key('ArrowDown', { shift: true }),
@@ -133,9 +161,15 @@ function allTasks2(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'fillSame',
-      text: `Ilagay ang "${sameValue}" sa ${cellName(at(10, F))} hanggang ${cellName(at(12, F))} nang sabay-sabay.`,
-      tip: 'Shift + ↓, i-type, Ctrl + Enter',
-      hint: 'Piliin ang tatlong cell (Shift + ↓), i-type ang salita, tapos Ctrl + Enter: mapupunta ito sa lahat ng napili.',
+      text: t(
+        `Ilagay ang "${sameValue}" sa ${cellName(at(10, F))} hanggang ${cellName(at(12, F))} nang sabay-sabay.`,
+        `Put "${sameValue}" into ${cellName(at(10, F))} to ${cellName(at(12, F))} all at once.`,
+      ),
+      tip: t('Shift + ↓, i-type, Ctrl + Enter', 'Shift + ↓, type, Ctrl + Enter'),
+      hint: t(
+        'Piliin ang tatlong cell (Shift + ↓), i-type ang salita, tapos Ctrl + Enter: mapupunta ito sa lahat ng napili.',
+        'Select the three cells (Shift + ↓), type the word, then Ctrl + Enter: it goes into every selected cell.',
+      ),
       solution: [
         key('ArrowDown', { shift: true }),
         key('ArrowDown', { shift: true }),
@@ -148,27 +182,33 @@ function allTasks2(rng: Rng, table: string[][]): Record<string, ExcelTask> {
     },
     {
       id: 'today',
-      text: `Palitan ang Date sa ${cellName(at(todayRow, COL.date))} ng petsa ngayon.`,
-      tip: 'Ctrl + ;, tapos Enter',
-      hint: 'Ctrl + ; (semicolon) ang naglalagay ng petsa ngayon, hindi na kailangang i-type. Tapos Enter.',
+      text: t(
+        `Palitan ang Date sa ${cellName(at(todayRow, COL.date))} ng petsa ngayon.`,
+        `Change the Date in ${cellName(at(todayRow, COL.date))} to today's date.`,
+      ),
+      tip: t('Ctrl + ;, tapos Enter', 'Ctrl + ;, then Enter'),
+      hint: t(
+        'Ctrl + ; (semicolon) ang naglalagay ng petsa ngayon, hindi na kailangang i-type. Tapos Enter.',
+        "Ctrl + ; (semicolon) puts in today's date, no need to type it. Then Enter.",
+      ),
       solution: [key(';', { ctrl: true }), key('Enter')],
       start: at(todayRow, COL.date),
       check: (s) => !s.editing && s.cells[todayRow][COL.date] === todayText(),
       maxKeys: 2,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new sheet with one task of every Aralin 2 kind on it. */
-export function makeTaskSet2(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet2(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const table = makeTable2(rng);
   const sheet = makeSheet(table, table.length + EXTRA_ROWS, SHEET_COLS);
-  return { sheet, tasks: allTasks2(rng, table) };
+  return { sheet, tasks: allTasks2(rng, table, translator(lang)) };
 }
 
 /** The Aralin 2 Pagsusulit: a new sheet and all 6 task kinds in random order. */
-export function makeQuiz2(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet2(rng);
+export function makeQuiz2(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet2(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)) };
 }

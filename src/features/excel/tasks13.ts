@@ -10,6 +10,7 @@
  * tasks work in any order (tested). Formulas are computed with every tab
  * (`tabCells`), and checks compare with the lesson's own formula.
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits } from '../typing/generatePassage';
@@ -99,7 +100,7 @@ const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): Solutio
 });
 const typeFormula = (f: string): SolutionStep[] => [key('='), { type: f }, key('Enter')];
 
-function allTasks13(data: Data13): Record<string, ExcelTask> {
+function allTasks13(data: Data13, t: T): Record<string, ExcelTask> {
   const n = data.orders.length;
   const last = n + 1; // Excel row number of the last order
   const L = data.prices.length + 1; // Excel row number of the last price
@@ -116,9 +117,12 @@ function allTasks13(data: Data13): Record<string, ExcelTask> {
   const tasks: ExcelTask[] = [
     {
       id: 'goTab',
-      text: 'Pumunta sa tab na Prices (ang listahan ng presyo).',
+      text: t('Pumunta sa tab na Prices (ang listahan ng presyo).', 'Go to the Prices tab (the price list).'),
       tip: 'Ctrl + Shift + PgDn',
-      hint: 'Ctrl + Shift + PgDn: ang susunod na tab. (Sa Excel mismo: Ctrl + PgDn.) Puwede ring i-click ang tab sa ibaba.',
+      hint: t(
+        'Ctrl + Shift + PgDn: ang susunod na tab. (Sa Excel mismo: Ctrl + PgDn.) Puwede ring i-click ang tab sa ibaba.',
+        'Ctrl + Shift + PgDn: the next tab. (In Excel itself: Ctrl + PgDn.) You can also click the tab at the bottom.',
+      ),
       solution: [key('PageDown', { ctrl: true, shift: true })],
       start: at(1, 0),
       prepare: () => build(data, 0),
@@ -127,9 +131,12 @@ function allTasks13(data: Data13): Record<string, ExcelTask> {
     },
     {
       id: 'backTab',
-      text: 'Bumalik sa tab na Orders.',
+      text: t('Bumalik sa tab na Orders.', 'Go back to the Orders tab.'),
       tip: 'Ctrl + Shift + PgUp',
-      hint: 'Ctrl + Shift + PgUp: ang naunang tab. (Sa Excel mismo: Ctrl + PgUp.)',
+      hint: t(
+        'Ctrl + Shift + PgUp: ang naunang tab. (Sa Excel mismo: Ctrl + PgUp.)',
+        'Ctrl + Shift + PgUp: the previous tab. (In Excel itself: Ctrl + PgUp.)',
+      ),
       solution: [key('PageUp', { ctrl: true, shift: true })],
       start: at(1, 0),
       prepare: () => build(data, 1),
@@ -138,9 +145,18 @@ function allTasks13(data: Data13): Record<string, ExcelTask> {
     },
     {
       id: 'renameTab',
-      text: `Palitan ang pangalan ng tab na ${TAB_NAMES[2]}: gawin itong ${REPORT}.`,
-      tip: `I-double-click ang tab na ${TAB_NAMES[2]}, i-type ang ${REPORT}, Enter`,
-      hint: `I-double-click ang tab na ${TAB_NAMES[2]} sa ibaba. I-type ang ${REPORT}, tapos Enter. Mas madaling hanapin ang tab na may malinaw na pangalan.`,
+      text: t(
+        `Palitan ang pangalan ng tab na ${TAB_NAMES[2]}: gawin itong ${REPORT}.`,
+        `Rename the ${TAB_NAMES[2]} tab to ${REPORT}.`,
+      ),
+      tip: t(
+        `I-double-click ang tab na ${TAB_NAMES[2]}, i-type ang ${REPORT}, Enter`,
+        `Double-click the ${TAB_NAMES[2]} tab, type ${REPORT}, Enter`,
+      ),
+      hint: t(
+        `I-double-click ang tab na ${TAB_NAMES[2]} sa ibaba. I-type ang ${REPORT}, tapos Enter. Mas madaling hanapin ang tab na may malinaw na pangalan.`,
+        `Double-click the ${TAB_NAMES[2]} tab at the bottom. Type ${REPORT}, then Enter. A tab with a clear name is easier to find.`,
+      ),
       solution: [{ command: { kind: 'renameTab', index: 2, name: REPORT } }],
       start: at(1, 0),
       prepare: () => build(data, 0),
@@ -149,9 +165,15 @@ function allTasks13(data: Data13): Record<string, ExcelTask> {
     },
     {
       id: 'refTab',
-      text: `Nasa tab na ${REPORT} ka. Sa B2, kuwentahin ang Total Qty: ang kabuuan ng Qty (C2 hanggang C${last}) sa tab na Orders.`,
-      tip: `=SUM(Orders!C2:C${last}), tapos Enter`,
-      hint: `Isulat ang pangalan ng tab, tapos !, bago ang mga cell: Orders!C2:C${last} ay C2 hanggang C${last} ng tab na Orders.`,
+      text: t(
+        `Nasa tab na ${REPORT} ka. Sa B2, kuwentahin ang Total Qty: ang kabuuan ng Qty (C2 hanggang C${last}) sa tab na Orders.`,
+        `You are on the ${REPORT} tab. In B2, work out the Total Qty: the total of the Qty (C2 to C${last}) on the Orders tab.`,
+      ),
+      tip: t(`=SUM(Orders!C2:C${last}), tapos Enter`, `=SUM(Orders!C2:C${last}), then Enter`),
+      hint: t(
+        `Isulat ang pangalan ng tab, tapos !, bago ang mga cell: Orders!C2:C${last} ay C2 hanggang C${last} ng tab na Orders.`,
+        `Write the tab name, then !, before the cells: Orders!C2:C${last} is C2 to C${last} on the Orders tab.`,
+      ),
       solution: typeFormula(`=SUM(Orders!C2:C${last})`),
       start: b2,
       prepare: () => build(data, 2, REPORT),
@@ -177,9 +199,15 @@ function allTasks13(data: Data13): Record<string, ExcelTask> {
     },
     {
       id: 'vlookupTab',
-      text: `Sa D2, hanapin ang Item ng code sa B2 mula sa tab na Prices (A2 hanggang C${L}). Lagyan ng $ para puwedeng kopyahin.`,
-      tip: `${itemFormula}, tapos Enter`,
-      hint: `Gaya ng Aralin 7, pero nasa ibang tab ang listahan: Prices!$A$2:$C$${L}. Ang Item ay pang-2 column.`,
+      text: t(
+        `Sa D2, hanapin ang Item ng code sa B2 mula sa tab na Prices (A2 hanggang C${L}). Lagyan ng $ para puwedeng kopyahin.`,
+        `In D2, look up the Item of the code in B2 from the Prices tab (A2 to C${L}). Add $ so it can be copied.`,
+      ),
+      tip: t(`${itemFormula}, tapos Enter`, `${itemFormula}, then Enter`),
+      hint: t(
+        `Gaya ng Aralin 7, pero nasa ibang tab ang listahan: Prices!$A$2:$C$${L}. Ang Item ay pang-2 column.`,
+        `Like Lesson 7, but the list is on another tab: Prices!$A$2:$C$${L}. The Item is the 2nd column.`,
+      ),
       solution: typeFormula(itemFormula),
       start: d2,
       prepare: () => build(data, 0),
@@ -201,9 +229,15 @@ function allTasks13(data: Data13): Record<string, ExcelTask> {
     },
     {
       id: 'fillTab',
-      text: `Kopyahin ang formula ng D2 pababa hanggang D${last}, para may Item ang bawat order.`,
-      tip: `Shift + ↓ hanggang D${last}, tapos Ctrl + D`,
-      hint: `Nasa D2 ka. Shift + ↓ hanggang D${last} para mapili, tapos Ctrl + D. May $ ang listahan, kaya hindi ito gagalaw.`,
+      text: t(
+        `Kopyahin ang formula ng D2 pababa hanggang D${last}, para may Item ang bawat order.`,
+        `Copy the formula in D2 down to D${last}, so every order has an Item.`,
+      ),
+      tip: t(`Shift + ↓ hanggang D${last}, tapos Ctrl + D`, `Shift + ↓ to D${last}, then Ctrl + D`),
+      hint: t(
+        `Nasa D2 ka. Shift + ↓ hanggang D${last} para mapili, tapos Ctrl + D. May $ ang listahan, kaya hindi ito gagalaw.`,
+        `You are in D2. Shift + ↓ to D${last} to select, then Ctrl + D. The list has $, so it stays put.`,
+      ),
       solution: [...Array.from({ length: n - 1 }, () => key('ArrowDown', { shift: true })), key('d', { ctrl: true })],
       start: d2,
       prepare: () => {
@@ -221,17 +255,17 @@ function allTasks13(data: Data13): Record<string, ExcelTask> {
       maxKeys: n + 1,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new workbook (Orders in front) with one task of every Aralin 13 kind. */
-export function makeTaskSet13(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet13(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const data = makeData13(rng);
-  return { sheet: build(data, 0), tasks: allTasks13(data) };
+  return { sheet: build(data, 0), tasks: allTasks13(data, translator(lang)) };
 }
 
 /** The Aralin 13 Pagsusulit: a new workbook and all 6 task kinds in random order. */
-export function makeQuiz13(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet13(rng);
+export function makeQuiz13(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet13(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)) };
 }

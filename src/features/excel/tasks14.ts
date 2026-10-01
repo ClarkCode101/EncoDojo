@@ -9,6 +9,7 @@
  * cells match the Sales tab as it is now. Each task's `prepare` builds the
  * workbook fresh, so the tasks work in any order (tested).
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import {
@@ -98,7 +99,7 @@ function pivotOf(s: Sheet): { def: PivotDef; fresh: boolean } | null {
   return { def: p.def, fresh };
 }
 
-function allTasks14(data: Data14): Record<string, ExcelTask> {
+function allTasks14(data: Data14, t: T): Record<string, ExcelTask> {
   const a1: Pos = { r: 0, c: 0 };
   const same = (d: PivotDef, want: Partial<PivotDef>) =>
     Object.entries(want).every(([k, v]) => JSON.stringify(d[k as keyof PivotDef]) === JSON.stringify(v));
@@ -112,9 +113,15 @@ function allTasks14(data: Data14): Record<string, ExcelTask> {
   const tasks: ExcelTask[] = [
     {
       id: 'createPivot',
-      text: 'Gumawa ng PivotTable mula sa Sales: ang kabuuang Amount bawat Branch.',
+      text: t(
+        'Gumawa ng PivotTable mula sa Sales: ang kabuuang Amount bawat Branch.',
+        'Make a PivotTable from Sales: the total Amount per Branch.',
+      ),
       tip: 'PivotTable, Rows: Branch, Values: Sum of Amount, OK',
-      hint: 'Nasa loob ka ng table. Sa toolbar: PivotTable. Rows: Branch (ililista pababa). Values: Sum of Amount. OK: lalabas ito sa bagong tab.',
+      hint: t(
+        'Nasa loob ka ng table. Sa toolbar: PivotTable. Rows: Branch (ililista pababa). Values: Sum of Amount. OK: lalabas ito sa bagong tab.',
+        'You are inside the table. On the toolbar: PivotTable. Rows: Branch (listed going down). Values: Sum of Amount. OK: it appears on a new tab.',
+      ),
       solution: [{ command: { kind: 'createPivot', def: BASE_PIVOT } }],
       start: { r: 1, c: 0 },
       prepare: () => salesOnly(data),
@@ -123,9 +130,15 @@ function allTasks14(data: Data14): Record<string, ExcelTask> {
     },
     {
       id: 'countPivot',
-      text: 'Ilan ang benta (transactions) bawat branch? Gawing Count ang Values.',
+      text: t(
+        'Ilan ang benta (transactions) bawat branch? Gawing Count ang Values.',
+        'How many sales (transactions) per branch? Make the Values a Count.',
+      ),
       tip: 'PivotTable Fields: Values: Count',
-      hint: 'Sa PivotTable Fields sa itaas ng sheet, palitan ang Sum ng Count. Bibilangin ang mga benta sa halip na idagdag ang Amount.',
+      hint: t(
+        'Sa PivotTable Fields sa itaas ng sheet, palitan ang Sum ng Count. Bibilangin ang mga benta sa halip na idagdag ang Amount.',
+        'In the PivotTable Fields above the sheet, change Sum to Count. It counts the sales instead of adding up the Amount.',
+      ),
       solution: [{ command: { kind: 'pivot', def: def({ fn: 'count' }) } }],
       start: a1,
       prepare: () => withPivot(data),
@@ -134,9 +147,15 @@ function allTasks14(data: Data14): Record<string, ExcelTask> {
     },
     {
       id: 'rowsAgent',
-      text: 'Ipakita ang kabuuang Amount bawat Agent, sa halip na bawat Branch.',
+      text: t(
+        'Ipakita ang kabuuang Amount bawat Agent, sa halip na bawat Branch.',
+        'Show the total Amount per Agent, instead of per Branch.',
+      ),
       tip: 'PivotTable Fields: Rows: Agent',
-      hint: 'Sa PivotTable Fields, palitan ang Rows ng Agent.',
+      hint: t(
+        'Sa PivotTable Fields, palitan ang Rows ng Agent.',
+        'In the PivotTable Fields, change the Rows to Agent.',
+      ),
       solution: [{ command: { kind: 'pivot', def: def({ rows: COL.agent }) } }],
       start: a1,
       prepare: () => withPivot(data),
@@ -145,9 +164,15 @@ function allTasks14(data: Data14): Record<string, ExcelTask> {
     },
     {
       id: 'columnsMonth',
-      text: 'Hatiin pa ang bawat Branch ayon sa buwan: ilagay ang Month sa Columns.',
+      text: t(
+        'Hatiin pa ang bawat Branch ayon sa buwan: ilagay ang Month sa Columns.',
+        'Split each Branch by month too: put Month in Columns.',
+      ),
       tip: 'PivotTable Fields: Columns: Month',
-      hint: 'Sa PivotTable Fields, piliin ang Month sa Columns. Magiging table ito: Branch pababa, buwan pakanan.',
+      hint: t(
+        'Sa PivotTable Fields, piliin ang Month sa Columns. Magiging table ito: Branch pababa, buwan pakanan.',
+        'In the PivotTable Fields, choose Month in Columns. It becomes a table: Branch going down, months going right.',
+      ),
       solution: [{ command: { kind: 'pivot', def: def({ cols: COL.month }) } }],
       start: a1,
       prepare: () => withPivot(data),
@@ -156,9 +181,15 @@ function allTasks14(data: Data14): Record<string, ExcelTask> {
     },
     {
       id: 'filterPaid',
-      text: 'Paid lang ang isama sa kabuuan: gamitin ang Filters (Status = Paid).',
+      text: t(
+        'Paid lang ang isama sa kabuuan: gamitin ang Filters (Status = Paid).',
+        'Include only Paid in the totals: use Filters (Status = Paid).',
+      ),
       tip: 'PivotTable Fields: Filters: Status, Paid',
-      hint: 'Sa PivotTable Fields, piliin ang Status sa Filters, tapos Paid. Hindi na kasama ang Unpaid.',
+      hint: t(
+        'Sa PivotTable Fields, piliin ang Status sa Filters, tapos Paid. Hindi na kasama ang Unpaid.',
+        'In the PivotTable Fields, choose Status in Filters, then Paid. Unpaid is left out.',
+      ),
       solution: [{ command: { kind: 'pivot', def: def({ filter: { col: COL.status, value: 'Paid' } }) } }],
       start: a1,
       prepare: () => withPivot(data),
@@ -167,9 +198,15 @@ function allTasks14(data: Data14): Record<string, ExcelTask> {
     },
     {
       id: 'refresh',
-      text: `May bagong benta sa Sales (row ${newRow}), pero wala pa ito sa PivotTable. I-refresh ang PivotTable.`,
-      tip: 'Alt + F5 (o Refresh)',
-      hint: 'Hindi kusang nag-a-update ang PivotTable. Alt + F5, o ang Refresh sa PivotTable Fields. (Sa Excel: Data > Refresh All.)',
+      text: t(
+        `May bagong benta sa Sales (row ${newRow}), pero wala pa ito sa PivotTable. I-refresh ang PivotTable.`,
+        `There is a new sale in Sales (row ${newRow}), but it is not in the PivotTable yet. Refresh the PivotTable.`,
+      ),
+      tip: t('Alt + F5 (o Refresh)', 'Alt + F5 (or Refresh)'),
+      hint: t(
+        'Hindi kusang nag-a-update ang PivotTable. Alt + F5, o ang Refresh sa PivotTable Fields. (Sa Excel: Data > Refresh All.)',
+        'A PivotTable does not update by itself. Alt + F5, or Refresh in the PivotTable Fields. (In Excel: Data > Refresh All.)',
+      ),
       solution: [{ press: { key: 'F5', alt: true } }],
       start: a1,
       prepare: () => {
@@ -182,17 +219,17 @@ function allTasks14(data: Data14): Record<string, ExcelTask> {
       maxKeys: 1,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new Sales workbook with one task of every Aralin 14 kind. */
-export function makeTaskSet14(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet14(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const data = makeData14(rng);
-  return { sheet: salesOnly(data), tasks: allTasks14(data) };
+  return { sheet: salesOnly(data), tasks: allTasks14(data, translator(lang)) };
 }
 
 /** The Aralin 14 Pagsusulit: a new workbook and all 6 task kinds in random order. */
-export function makeQuiz14(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet14(rng);
+export function makeQuiz14(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet14(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)) };
 }

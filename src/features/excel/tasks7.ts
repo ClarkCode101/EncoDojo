@@ -12,6 +12,7 @@
  * formula that is only right for one cell does not pass. Each task's
  * `prepare` sets up what it needs, so the tasks work in any order (tested).
  */
+import { translator, type Lang, type T } from '../../lib/i18n';
 import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { computeSheet } from './formulaEngine';
@@ -84,7 +85,7 @@ const probe = (s: Sheet, changes: [Pos, string][]) => computeSheet(setCells(s, c
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.toLowerCase();
 const sameNumber = (a: string, b: string) => a !== '' && Math.abs(Number(a) - Number(b)) < 0.005;
 
-function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
+function allTasks7({ table, list, badRow }: Table7, t: T): Record<string, ExcelTask> {
   const n = table.length - 1; // orders are rows 1..n
   const rows = Array.from({ length: n }, (_, i) => i + 1);
   const last = n + 1; // Excel row number of the last order
@@ -119,9 +120,15 @@ function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
   const tasks: ExcelTask[] = [
     {
       id: 'vlookupItem',
-      text: `Sa ${cellName(c2)}, hanapin ang Item ng code sa A2 mula sa Price List (F hanggang H).`,
-      tip: `=VLOOKUP(A2,F2:H${L},2,FALSE), tapos Enter`,
-      hint: `=VLOOKUP(ano ang hahanapin, ang listahan, pang-ilang column, FALSE). Hahanapin: A2. Listahan: F2:H${L}. Ang Item ay pang-2 column ng listahan.`,
+      text: t(
+        `Sa ${cellName(c2)}, hanapin ang Item ng code sa A2 mula sa Price List (F hanggang H).`,
+        `In ${cellName(c2)}, look up the Item of the code in A2 from the Price List (F to H).`,
+      ),
+      tip: t(`=VLOOKUP(A2,F2:H${L},2,FALSE), tapos Enter`, `=VLOOKUP(A2,F2:H${L},2,FALSE), then Enter`),
+      hint: t(
+        `=VLOOKUP(ano ang hahanapin, ang listahan, pang-ilang column, FALSE). Hahanapin: A2. Listahan: F2:H${L}. Ang Item ay pang-2 column ng listahan.`,
+        `=VLOOKUP(what to look for, the list, which column, FALSE). Look for: A2. List: F2:H${L}. The Item is the 2nd column of the list.`,
+      ),
       solution: typeFormula(`=VLOOKUP(A2,F2:H${L},2,FALSE)`),
       start: c2,
       prepare: (s) => setCells(s, [[c2, '']]),
@@ -130,9 +137,15 @@ function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
     },
     {
       id: 'vlookupPrice',
-      text: `Sa ${cellName(d2)}, hanapin ang Price ng code sa A2. Lagyan ng $ ang listahan para puwedeng kopyahin pababa.`,
-      tip: `=VLOOKUP(A2,${listRange},3,FALSE), tapos Enter`,
-      hint: `Gaya ng Item, pero pang-3 column ang Price. Isulat ang listahan na $F$2:$H$${L} para hindi ito gumalaw kapag kinopya.`,
+      text: t(
+        `Sa ${cellName(d2)}, hanapin ang Price ng code sa A2. Lagyan ng $ ang listahan para puwedeng kopyahin pababa.`,
+        `In ${cellName(d2)}, look up the Price of the code in A2. Put $ in the list so it can be copied down.`,
+      ),
+      tip: t(`=VLOOKUP(A2,${listRange},3,FALSE), tapos Enter`, `=VLOOKUP(A2,${listRange},3,FALSE), then Enter`),
+      hint: t(
+        `Gaya ng Item, pero pang-3 column ang Price. Isulat ang listahan na $F$2:$H$${L} para hindi ito gumalaw kapag kinopya.`,
+        `Like the Item, but the Price is the 3rd column. Write the list as $F$2:$H$${L} so it stays put when copied.`,
+      ),
       solution: typeFormula(priceFormula(1)),
       start: d2,
       prepare: (s) => setCells(s, [[d2, '']]),
@@ -152,9 +165,15 @@ function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
     },
     {
       id: 'fillPrice',
-      text: `Kopyahin ang formula ng D2 pababa hanggang D${last}, para may Price ang bawat order.`,
-      tip: `Shift + ↓ hanggang D${last}, tapos Ctrl + D`,
-      hint: `Nasa D2 ka. Shift + ↓ hanggang D${last} para mapili, tapos Ctrl + D. May $ ang listahan, kaya hindi ito gagalaw.`,
+      text: t(
+        `Kopyahin ang formula ng D2 pababa hanggang D${last}, para may Price ang bawat order.`,
+        `Copy the formula in D2 down to D${last}, so every order has a Price.`,
+      ),
+      tip: t(`Shift + ↓ hanggang D${last}, tapos Ctrl + D`, `Shift + ↓ to D${last}, then Ctrl + D`),
+      hint: t(
+        `Nasa D2 ka. Shift + ↓ hanggang D${last} para mapili, tapos Ctrl + D. May $ ang listahan, kaya hindi ito gagalaw.`,
+        `You are in D2. Shift + ↓ to D${last} to select, then Ctrl + D. The list has $, so it stays put.`,
+      ),
       solution: [...Array.from({ length: n - 1 }, () => key('ArrowDown', { shift: true })), key('d', { ctrl: true })],
       start: d2,
       prepare: (s) =>
@@ -172,9 +191,18 @@ function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
     },
     {
       id: 'iferror',
-      text: `Sa ${cellName(cBad)}, #N/A ang lumabas kasi wala sa listahan ang ${badCode}. Palitan ang formula para "${NOT_FOUND}" ang lumabas.`,
-      tip: `=IFERROR(VLOOKUP(A${badRow + 1},${listRange},2,FALSE),"${NOT_FOUND}"), tapos Enter`,
-      hint: `Balutin ang VLOOKUP: =IFERROR(ang VLOOKUP, "${NOT_FOUND}"). Kapag may error, "${NOT_FOUND}" ang ipapakita.`,
+      text: t(
+        `Sa ${cellName(cBad)}, #N/A ang lumabas kasi wala sa listahan ang ${badCode}. Palitan ang formula para "${NOT_FOUND}" ang lumabas.`,
+        `${cellName(cBad)} shows #N/A because ${badCode} is not in the list. Change the formula so it shows "${NOT_FOUND}".`,
+      ),
+      tip: t(
+        `=IFERROR(VLOOKUP(A${badRow + 1},${listRange},2,FALSE),"${NOT_FOUND}"), tapos Enter`,
+        `=IFERROR(VLOOKUP(A${badRow + 1},${listRange},2,FALSE),"${NOT_FOUND}"), then Enter`,
+      ),
+      hint: t(
+        `Balutin ang VLOOKUP: =IFERROR(ang VLOOKUP, "${NOT_FOUND}"). Kapag may error, "${NOT_FOUND}" ang ipapakita.`,
+        `Wrap the VLOOKUP: =IFERROR(the VLOOKUP, "${NOT_FOUND}"). When there is an error, it shows "${NOT_FOUND}".`,
+      ),
       solution: typeFormula(`=IFERROR(VLOOKUP(A${badRow + 1},${listRange},2,FALSE),"${NOT_FOUND}")`),
       start: cBad,
       // Every Item already has its VLOOKUP, so the #N/A shows on the order with the wrong code.
@@ -188,9 +216,18 @@ function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
     },
     {
       id: 'xlookup',
-      text: `Sa ${cellName(c3)}, hanapin ang Item ng code sa A3 gamit ang XLOOKUP.`,
-      tip: `=XLOOKUP(A3,$F$2:$F$${L},$G$2:$G$${L}), tapos Enter`,
-      hint: `=XLOOKUP(ano ang hahanapin, saan hahanapin, ano ang kukunin). Hahanapin ang A3 sa mga Code (F), kukunin ang Item (G).`,
+      text: t(
+        `Sa ${cellName(c3)}, hanapin ang Item ng code sa A3 gamit ang XLOOKUP.`,
+        `In ${cellName(c3)}, look up the Item of the code in A3 with XLOOKUP.`,
+      ),
+      tip: t(
+        `=XLOOKUP(A3,$F$2:$F$${L},$G$2:$G$${L}), tapos Enter`,
+        `=XLOOKUP(A3,$F$2:$F$${L},$G$2:$G$${L}), then Enter`,
+      ),
+      hint: t(
+        `=XLOOKUP(ano ang hahanapin, saan hahanapin, ano ang kukunin). Hahanapin ang A3 sa mga Code (F), kukunin ang Item (G).`,
+        `=XLOOKUP(what to look for, where to look, what to return). Look for A3 in the Codes (F), return the Item (G).`,
+      ),
       solution: typeFormula(`=XLOOKUP(A3,$F$2:$F$${L},$G$2:$G$${L})`),
       start: c3,
       prepare: (s) => setCells(s, [[c3, '']]),
@@ -199,9 +236,18 @@ function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
     },
     {
       id: 'xlookupNotFound',
-      text: `Sa ${cellName(cBad)}, gamitin ang XLOOKUP para sa Item, na "${NOT_FOUND}" ang lalabas kapag wala ang code.`,
-      tip: `=XLOOKUP(A${badRow + 1},$F$2:$F$${L},$G$2:$G$${L},"${NOT_FOUND}"), tapos Enter`,
-      hint: `Gaya ng XLOOKUP kanina, may pang-apat pa: ang ipapakita kapag wala, "${NOT_FOUND}".`,
+      text: t(
+        `Sa ${cellName(cBad)}, gamitin ang XLOOKUP para sa Item, na "${NOT_FOUND}" ang lalabas kapag wala ang code.`,
+        `In ${cellName(cBad)}, use XLOOKUP for the Item, showing "${NOT_FOUND}" when the code is missing.`,
+      ),
+      tip: t(
+        `=XLOOKUP(A${badRow + 1},$F$2:$F$${L},$G$2:$G$${L},"${NOT_FOUND}"), tapos Enter`,
+        `=XLOOKUP(A${badRow + 1},$F$2:$F$${L},$G$2:$G$${L},"${NOT_FOUND}"), then Enter`,
+      ),
+      hint: t(
+        `Gaya ng XLOOKUP kanina, may pang-apat pa: ang ipapakita kapag wala, "${NOT_FOUND}".`,
+        `Like the XLOOKUP before, with a fourth part: what to show when it is missing, "${NOT_FOUND}".`,
+      ),
       solution: typeFormula(`=XLOOKUP(A${badRow + 1},$F$2:$F$${L},$G$2:$G$${L},"${NOT_FOUND}")`),
       start: cBad,
       prepare: (s) => setCells(s, [[cBad, '']]),
@@ -209,11 +255,11 @@ function allTasks7({ table, list, badRow }: Table7): Record<string, ExcelTask> {
       maxKeys: 1,
     },
   ];
-  return Object.fromEntries(tasks.map((t) => [t.id, t]));
+  return Object.fromEntries(tasks.map((x) => [x.id, x]));
 }
 
 /** A new order list + price list (Excel's number rules on) with one task of every Aralin 7 kind. */
-export function makeTaskSet7(rng: Rng): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
+export function makeTaskSet7(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: Record<string, ExcelTask> } {
   const t = makeTable7(rng);
   // No extra empty column: all 8 columns fit a 1366px screen (sheetLayout.ts).
   const rows = t.table.length + EXTRA_ROWS;
@@ -224,11 +270,11 @@ export function makeTaskSet7(rng: Rng): { sheet: Sheet; tasks: Record<string, Ex
     ),
   );
   const sheet = makeSheet(t.table, rows, HEADERS_7.length, { formatting: true, formats });
-  return { sheet, tasks: allTasks7(t) };
+  return { sheet, tasks: allTasks7(t, translator(lang)) };
 }
 
 /** The Aralin 7 Pagsusulit: a new sheet and all 6 task kinds in random order. */
-export function makeQuiz7(rng: Rng): { sheet: Sheet; tasks: ExcelTask[] } {
-  const set = makeTaskSet7(rng);
+export function makeQuiz7(rng: Rng, lang: Lang = 'tl'): { sheet: Sheet; tasks: ExcelTask[] } {
+  const set = makeTaskSet7(rng, lang);
   return { sheet: set.sheet, tasks: shuffle(rng, Object.values(set.tasks)) };
 }

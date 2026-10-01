@@ -48,9 +48,12 @@ export function listMatch(s: Sheet, p: Pos, typed: string): string | null {
 }
 
 /** The message when the value being typed is refused by the cell's dropdown list, or null when it is fine. */
-export function refusal(s: Sheet): string | null {
+export function refusal(s: Sheet): { tl: string; en: string } | null {
   if (!s.editing || s.editing.value.trim() === '') return null;
   const list = listFor(s, s.active);
   if (!list || listMatch(s, s.active, s.editing.value) !== null) return null;
-  return `Hindi puwede ang "${s.editing.value}" dito. Pumili sa listahan: ${list.join(', ')} (Alt + ↓).`;
+  return {
+    tl: `Hindi puwede ang "${s.editing.value}" dito. Pumili sa listahan: ${list.join(', ')} (Alt + ↓).`,
+    en: `"${s.editing.value}" is not allowed here. Choose from the list: ${list.join(', ')} (Alt + ↓).`,
+  };
 }

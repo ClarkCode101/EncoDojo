@@ -1,54 +1,54 @@
 import { describe, expect, it } from 'vitest';
 import { makeRng } from '../../lib/random';
 import type { Session } from '../../lib/storage';
-import { LESSON_1 } from './lesson1';
-import { LESSON_2 } from './lesson2';
+import { lesson1 } from './lesson1';
+import { lesson2 } from './lesson2';
 import { LESSONS, passedLessons } from './lessons';
 import { buildExcelSession, scoreExcel, type TaskResult } from './scoreExcel';
 import { isTypingKey, pressKey, runCommand, type Sheet } from './sheet';
 import {
   HEADERS,
   QUIZ_TASKS,
-  TASK_LABEL,
+  taskLabels,
   makeQuiz,
   makeTaskSet,
   solutionFrames,
   startTask,
   type ExcelTask,
 } from './tasks';
-import { HEADERS_2, TASK_LABEL_2, makeQuiz2, makeTaskSet2 } from './tasks2';
-import { HEADERS_3, TASK_LABEL_3, makeQuiz3, makeTaskSet3 } from './tasks3';
-import { LESSON_3 } from './lesson3';
-import { LESSON_4 } from './lesson4';
-import { HEADERS_4, TASK_LABEL_4, makeQuiz4, makeTaskSet4 } from './tasks4';
+import { HEADERS_2, taskLabels2, makeQuiz2, makeTaskSet2 } from './tasks2';
+import { HEADERS_3, taskLabels3, makeQuiz3, makeTaskSet3 } from './tasks3';
+import { lesson3 } from './lesson3';
+import { lesson4 } from './lesson4';
+import { HEADERS_4, taskLabels4, makeQuiz4, makeTaskSet4 } from './tasks4';
 import { HEADERS_5, makeQuiz5, makeTaskSet5 } from './tasks5';
-import { LESSON_5, TASK_LABEL_5 } from './lesson5';
+import { lesson5, taskLabels5 } from './lesson5';
 import { CONTENT_5 } from './lesson5Content';
 import { computeSheet } from './formulaEngine';
 import { HEADERS_6, QUOTA, makeQuiz6, makeTable6, makeTaskSet6 } from './tasks6';
-import { LESSON_6, TASK_LABEL_6 } from './lesson6';
+import { lesson6, taskLabels6 } from './lesson6';
 import { CONTENT_6 } from './lesson6Content';
 import { HEADERS_7, NOT_FOUND, makeQuiz7, makeTable7, makeTaskSet7 } from './tasks7';
-import { LESSON_7, TASK_LABEL_7 } from './lesson7';
+import { lesson7, taskLabels7 } from './lesson7';
 import { CONTENT_7 } from './lesson7Content';
 import { HEADERS_8, makeQuiz8, makeTable8, makeTaskSet8, messyName } from './tasks8';
-import { LESSON_8, TASK_LABEL_8 } from './lesson8';
+import { lesson8, taskLabels8 } from './lesson8';
 import { CONTENT_8 } from './lesson8Content';
 import { HEADERS_9, makePeople9, makeQuiz9, makeTaskSet9 } from './tasks9';
-import { LESSON_9, TASK_LABEL_9 } from './lesson9';
+import { lesson9, taskLabels9 } from './lesson9';
 import { CONTENT_9 } from './lesson9Content';
 import { HEADERS_10, makeQuiz10, makeTable10, makeTaskSet10 } from './tasks10';
-import { LESSON_10, TASK_LABEL_10 } from './lesson10';
+import { lesson10, taskLabels10 } from './lesson10';
 import { CONTENT_10 } from './lesson10Content';
 import { HEADERS_11, makeQuiz11, makeTable11, makeTaskSet11 } from './tasks11';
-import { LESSON_11, TASK_LABEL_11 } from './lesson11';
+import { lesson11, taskLabels11 } from './lesson11';
 import { HEADERS_12, makeQuiz12, makeTable12, makeTaskSet12 } from './tasks12';
-import { LESSON_12, TASK_LABEL_12 } from './lesson12';
+import { lesson12, taskLabels12 } from './lesson12';
 import { CONTENT_12 } from './lesson12Content';
 import { REPORT, TAB_NAMES, makeData13, makeQuiz13, makeTaskSet13 } from './tasks13';
-import { LESSON_13, TASK_LABEL_13 } from './lesson13';
+import { lesson13, taskLabels13 } from './lesson13';
 import { BASE_PIVOT, HEADERS_14, makeData14, makeQuiz14, makeTaskSet14 } from './tasks14';
-import { LESSON_14, TASK_LABEL_14 } from './lesson14';
+import { lesson14, taskLabels14 } from './lesson14';
 import { CONTENT_14 } from './lesson14Content';
 import { findPivot, pivotCells } from './sheet';
 import { makeSheet as makeSheet13, makeWorkbook, switchTab, tabCells } from './sheet';
@@ -84,7 +84,7 @@ describe('Excel tasks', () => {
       expect(set.sheet.cells[0].slice(0, 5)).toEqual(HEADERS);
       expect(set.lastRow).toBeGreaterThanOrEqual(18);
       expect(set.lastRow).toBeLessThanOrEqual(26);
-      expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL).sort());
+      expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels()).sort());
     }
   });
 
@@ -93,14 +93,18 @@ describe('Excel tasks', () => {
       const set = makeTaskSet(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_1.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson1().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
   });
 
   it('the lesson teaches every task kind once', () => {
-    expect(LESSON_1.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL).sort());
+    expect(
+      lesson1()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels()).sort());
   });
 
   it('the Pagsusulit: 6 different tasks (no "go to"), all doable in any order', () => {
@@ -118,8 +122,12 @@ describe('Excel Aralin 2 tasks', () => {
   it('the sheet has a Status column with blank stretches; every task kind has a label', () => {
     const set = makeTaskSet2(makeRng(1));
     expect(set.sheet.cells[0].slice(0, 6)).toEqual(HEADERS_2);
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_2).sort());
-    expect(LESSON_2.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_2).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels2()).sort());
+    expect(
+      lesson2()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels2()).sort());
   });
 
   it('the lesson order: every task starts not done and is done by its solution', () => {
@@ -127,7 +135,7 @@ describe('Excel Aralin 2 tasks', () => {
       const set = makeTaskSet2(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_2.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson2().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -143,8 +151,8 @@ describe('Excel Aralin 2 tasks', () => {
 
   it('every ready lesson has content for all its topics', () => {
     for (const l of LESSONS.filter((x) => x.content)) {
-      const set = l.content!.makeSet(makeRng(3));
-      for (const id of l.content!.topics.flatMap((t) => t.tasks))
+      const set = l.content!.makeSet(makeRng(3), 'tl');
+      for (const id of l.content!.topics('tl').flatMap((t) => t.tasks))
         expect(set.tasks[id], `${l.level}: ${id}`).toBeDefined();
     }
   });
@@ -158,8 +166,12 @@ describe('Excel Aralin 3 tasks', () => {
     expect(formatOf(set.sheet, { r: 1, c: 0 }).text).toBe(true);
     expect(alignsRight(set.sheet, { r: 1, c: 4 })).toBe(true);
     expect(displayValue(set.sheet, { r: 1, c: 4 })).not.toContain(',');
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_3).sort());
-    expect(LESSON_3.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_3).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels3()).sort());
+    expect(
+      lesson3()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels3()).sort());
   });
 
   it('the lesson order: every task starts not done and is done by its solution', () => {
@@ -167,7 +179,7 @@ describe('Excel Aralin 3 tasks', () => {
       const set = makeTaskSet3(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_3.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson3().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -199,7 +211,11 @@ describe('Excel Aralin 4 tasks', () => {
       expect(countMatches(set.sheet, 'Cty')).toBe(4);
       expect(countDuplicates(set.sheet)).toBe(3);
     }
-    expect(LESSON_4.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_4).sort());
+    expect(
+      lesson4()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels4()).sort());
   });
 
   it('the lesson order: every task starts not done and is done by its solution', () => {
@@ -207,7 +223,7 @@ describe('Excel Aralin 4 tasks', () => {
       const set = makeTaskSet4(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_4.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson4().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -227,8 +243,12 @@ describe('Excel Aralin 5 tasks (formulas, with HyperFormula)', () => {
     const set = makeTaskSet5(makeRng(1));
     expect(set.sheet.cells[0]).toEqual([...HEADERS_5, '']);
     expect(set.sheet.cells[1][3]).toBe('');
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_5).sort());
-    expect(LESSON_5.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_5).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels5()).sort());
+    expect(
+      lesson5()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels5()).sort());
     expect(CONTENT_5.compute).toBe(computeSheet);
   });
 
@@ -237,7 +257,7 @@ describe('Excel Aralin 5 tasks (formulas, with HyperFormula)', () => {
       const set = makeTaskSet5(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_5.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson5().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -286,10 +306,14 @@ describe('Excel Aralin 6 tasks (IF, COUNTIF, SUMIF)', () => {
       expect(table[4][5]).toBe(branches[2]);
     }
     const set = makeTaskSet6(makeRng(1));
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_6).sort());
-    expect(LESSON_6.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_6).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels6()).sort());
+    expect(
+      lesson6()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels6()).sort());
     expect(CONTENT_6.compute).toBe(computeSheet);
-    expect(LESSONS.find((l) => l.level === 6)?.topics).toBe(LESSON_6);
+    expect(LESSONS.find((l) => l.level === 6)?.topics).toBe(lesson6);
   });
 
   it('the lesson order: every task starts not done and is done by its solution', () => {
@@ -297,7 +321,7 @@ describe('Excel Aralin 6 tasks (IF, COUNTIF, SUMIF)', () => {
       const set = makeTaskSet6(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_6.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson6().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -349,8 +373,12 @@ describe('Excel Aralin 7 tasks (VLOOKUP, IFERROR, XLOOKUP)', () => {
       expect(onSheet.map((row) => [row[5], [row[6], row[7]]])).toEqual([...list.entries()]);
     }
     const set = makeTaskSet7(makeRng(1));
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_7).sort());
-    expect(LESSON_7.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_7).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels7()).sort());
+    expect(
+      lesson7()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels7()).sort());
     expect(CONTENT_7.compute).toBe(computeSheet);
   });
 
@@ -359,7 +387,7 @@ describe('Excel Aralin 7 tasks (VLOOKUP, IFERROR, XLOOKUP)', () => {
       const set = makeTaskSet7(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_7.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson7().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -415,8 +443,12 @@ describe('Excel Aralin 8 tasks (TRIM, PROPER, UPPER, LEFT, RIGHT)', () => {
     }
     expect(messyName(makeRng(1), 'Ana Reyes')).not.toBe('Ana Reyes');
     const set = makeTaskSet8(makeRng(1));
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_8).sort());
-    expect(LESSON_8.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_8).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels8()).sort());
+    expect(
+      lesson8()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels8()).sort());
     expect(CONTENT_8.compute).toBe(computeSheet);
   });
 
@@ -425,7 +457,7 @@ describe('Excel Aralin 8 tasks (TRIM, PROPER, UPPER, LEFT, RIGHT)', () => {
       const set = makeTaskSet8(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_8.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson8().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -473,8 +505,12 @@ describe('Excel Aralin 9 tasks (Flash Fill, Text to Columns, &, Paste Values)', 
     const set = makeTaskSet9(makeRng(1));
     expect(set.sheet.cells[0]).toEqual(HEADERS_9);
     expect(set.sheet.compute).toBe(computeSheet);
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_9).sort());
-    expect(LESSON_9.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_9).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels9()).sort());
+    expect(
+      lesson9()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels9()).sort());
     expect(CONTENT_9.tools).toBe(true);
   });
 
@@ -483,7 +519,7 @@ describe('Excel Aralin 9 tasks (Flash Fill, Text to Columns, &, Paste Values)', 
       const set = makeTaskSet9(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_9.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson9().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -526,8 +562,12 @@ describe('Excel Aralin 10 tasks (Conditional Formatting, COUNTBLANK, COUNTIFS, S
       expect(body.filter((row) => row[4] === '').length).toBe(2);
     }
     const set = makeTaskSet10(makeRng(1));
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_10).sort());
-    expect(LESSON_10.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_10).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels10()).sort());
+    expect(
+      lesson10()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels10()).sort());
     expect(CONTENT_10.tools).toEqual(['cond', 'validation']);
   });
 
@@ -536,7 +576,7 @@ describe('Excel Aralin 10 tasks (Conditional Formatting, COUNTBLANK, COUNTIFS, S
       const set = makeTaskSet10(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_10.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson10().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -559,7 +599,7 @@ describe('Excel Aralin 10 tasks (Conditional Formatting, COUNTBLANK, COUNTIFS, S
     const d = startTask(set.sheet, set.tasks.useDropdown);
     const refused = pressKey({ ...d, editing: { value: 'Bayad', mode: 'enter' } }, { key: 'Enter' });
     expect(refused.editing?.value).toBe('Bayad');
-    expect(refused.alert).toContain('Paid, Unpaid');
+    expect(refused.alert?.tl).toContain('Paid, Unpaid');
     // Typed in small letters: accepted, saved as the list spells it.
     const typed = pressKey({ ...d, editing: { value: 'paid', mode: 'enter' } }, { key: 'Enter' });
     expect(set.tasks.useDropdown.check(typed)).toBe(true);
@@ -580,8 +620,12 @@ describe('Excel Aralin 11 tasks (dates)', () => {
     expect(alignsRight11(s, { r: 2, c: 1 })).toBe(true); // a real date: right
     expect(alignsRight11(s, { r: 1, c: 5 })).toBe(false); // the supplier's text date: left
     expect(cellsForCompute(s)[1][5].startsWith("'")).toBe(true);
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_11).sort());
-    expect(LESSON_11.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_11).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels11()).sort());
+    expect(
+      lesson11()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels11()).sort());
   });
 
   it('the lesson order: every task starts not done and is done by its solution', () => {
@@ -589,7 +633,7 @@ describe('Excel Aralin 11 tasks (dates)', () => {
       const set = makeTaskSet11(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_11.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson11().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -649,8 +693,12 @@ describe('Excel Aralin 12 tasks (rows and columns)', () => {
     const set = makeTaskSet12(makeRng(1));
     expect(set.sheet.freeze).toEqual({ rows: 0, cols: 0 });
     expect(set.sheet.colWidths).toHaveLength(set.sheet.cells[0].length);
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_12).sort());
-    expect(LESSON_12.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_12).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels12()).sort());
+    expect(
+      lesson12()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels12()).sort());
     expect(CONTENT_12.tools).toEqual(['freeze']);
   });
 
@@ -659,7 +707,7 @@ describe('Excel Aralin 12 tasks (rows and columns)', () => {
       const set = makeTaskSet12(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_12.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson12().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -692,8 +740,12 @@ describe('Excel Aralin 13 tasks (tabs)', () => {
     const set = makeTaskSet13(makeRng(1));
     expect(set.sheet.tabs?.names).toEqual(TAB_NAMES);
     expect(set.sheet.tabs?.index).toBe(0);
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_13).sort());
-    expect(LESSON_13.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_13).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels13()).sort());
+    expect(
+      lesson13()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels13()).sort());
   });
 
   it('the lesson order: every task starts not done and is done by its solution', () => {
@@ -701,7 +753,7 @@ describe('Excel Aralin 13 tasks (tabs)', () => {
       const set = makeTaskSet13(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_13.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson13().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
@@ -748,7 +800,7 @@ describe('Excel Aralin 13 tasks (tabs)', () => {
     w = switchTab(w, 0);
     expect(w.active).toEqual({ r: 1, c: 0 });
     expect(switchTab(w, 5).tabs?.index).toBe(1); // clamped
-    expect(runCommand(w, { kind: 'renameTab', index: 1, name: 'one' }).alert).toMatch(/Hindi puwede/);
+    expect(runCommand(w, { kind: 'renameTab', index: 1, name: 'one' }).alert?.tl).toMatch(/Hindi puwede/);
   });
 });
 
@@ -767,8 +819,12 @@ describe('Excel Aralin 14 tasks (PivotTable)', () => {
     const set = makeTaskSet14(makeRng(1));
     expect(set.sheet.tabs?.names).toEqual(['Sales']);
     expect(set.sheet.cells[0].slice(0, 5)).toEqual(HEADERS_14);
-    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(TASK_LABEL_14).sort());
-    expect(LESSON_14.flatMap((t) => t.tasks).sort()).toEqual(Object.keys(TASK_LABEL_14).sort());
+    expect(Object.keys(set.tasks).sort()).toEqual(Object.keys(taskLabels14()).sort());
+    expect(
+      lesson14()
+        .flatMap((t) => t.tasks)
+        .sort(),
+    ).toEqual(Object.keys(taskLabels14()).sort());
     expect(CONTENT_14.tools).toEqual(['pivot']);
   });
 
@@ -777,7 +833,7 @@ describe('Excel Aralin 14 tasks (PivotTable)', () => {
       const set = makeTaskSet14(makeRng(seed));
       runAll(
         set.sheet,
-        LESSON_14.flatMap((t) => t.tasks.map((id) => set.tasks[id])),
+        lesson14().flatMap((t) => t.tasks.map((id) => set.tasks[id])),
         seed,
       );
     }
