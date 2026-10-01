@@ -37,7 +37,9 @@ export default function SenseiArt({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 16 18" shapeRendering="crispEdges" aria-hidden="true" className={className}>
       {PIXELS.flatMap((row, y) =>
-        [...row].map((c, x) => (c === '.' ? null : <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={PALETTE[c]} />)),
+        [...row].map((c, x) =>
+          c === '.' ? null : <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={PALETTE[c]} />,
+        ),
       )}
     </svg>
   );

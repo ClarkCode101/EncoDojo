@@ -15,6 +15,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { langOf, translator } from '../../lib/i18n';
 import { updateSettings, useAppData } from '../../lib/useAppData';
 import { placeFromPath, senseiLine } from './lines';
 import { useIsSenseiQuiet } from './quiet';
@@ -33,6 +34,8 @@ export default function Sensei() {
   const mode = settings.sensei ?? 'on';
   const quiet = useIsSenseiQuiet();
   const { pathname } = useLocation();
+  const lang = langOf(settings);
+  const t = translator(lang);
 
   // The bubble text and the page it belongs to (so an old line never shows on a new page).
   const [line, setLine] = useState<{ text: string; path: string; id: number } | null>(null);
@@ -49,6 +52,7 @@ export default function Sensei() {
         sessions: sessionsRef.current,
         afterPractice,
         settings: { dailyGoal, lastBackupAt },
+        lang: langOf(settingsRef.current),
       });
       setLine((old) => ({ text, path: pathname, id: (old?.id ?? 0) + 1 }));
     },
@@ -103,8 +107,8 @@ export default function Sensei() {
       <button
         type="button"
         onClick={() => updateSettings({ sensei: 'on' })}
-        aria-label="Ipakita si Sensei"
-        title="Ipakita si Sensei"
+        aria-label={t('Ipakita si Sensei', 'Show Sensei')}
+        title={t('Ipakita si Sensei', 'Show Sensei')}
         className={`fixed bottom-4 right-4 z-40 rounded-full border-2 border-brand-800 bg-white p-1.5 shadow-md transition-transform hover:scale-105 motion-reduce:transition-none ${focusRing}`}
       >
         <SenseiArt className="h-[34px] w-[30px]" />
@@ -129,7 +133,7 @@ export default function Sensei() {
             <button
               type="button"
               onClick={() => setLine(null)}
-              aria-label="Isara ang sinabi ni Sensei"
+              aria-label={t('Isara ang sinabi ni Sensei', "Close Sensei's message")}
               className={`pointer-events-auto -mr-1 rounded px-1 text-stone-500 hover:text-stone-900 ${focusRing}`}
             >
               ✕
@@ -141,7 +145,7 @@ export default function Sensei() {
             onClick={() => updateSettings({ sensei: 'small' })}
             className={`pointer-events-auto mt-2 rounded text-sm text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-900 ${focusRing}`}
           >
-            Itago si Sensei
+            {t('Itago si Sensei', 'Hide Sensei')}
           </button>
           {/* The bubble's little tail, pointing down at Sensei. */}
           <span
@@ -153,8 +157,8 @@ export default function Sensei() {
       <button
         type="button"
         onClick={() => say(false)}
-        aria-label="Si Sensei: pindutin para sa bagong tip"
-        title="Pindutin para sa bagong tip"
+        aria-label={t('Si Sensei: pindutin para sa bagong tip', 'Sensei: press for a new tip')}
+        title={t('Pindutin para sa bagong tip', 'Press for a new tip')}
         className={`pointer-events-auto shrink-0 rounded-2xl p-1 transition-transform hover:-translate-y-0.5 motion-reduce:transition-none ${focusRing}`}
       >
         <SenseiArt className="h-[64px] w-[57px] drop-shadow-md sm:h-[80px] sm:w-[71px]" />

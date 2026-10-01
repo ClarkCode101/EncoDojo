@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { Session } from '../../lib/storage';
-import { BACKUP_LINE, CHEERS, TIPS, WELCOME, personalLines, placeFromPath, senseiLine } from './lines';
+import {
+  BACKUP_LINE,
+  BACKUP_LINE_EN,
+  CHEERS,
+  CHEERS_EN,
+  TIPS,
+  TIPS_EN,
+  WELCOME,
+  WELCOME_EN,
+  personalLines,
+  placeFromPath,
+  senseiLine,
+} from './lines';
 
 const typing = (ago = 0): Session => ({
   id: `t${ago}`,
@@ -78,5 +90,35 @@ describe('reminders from Settings', () => {
     const lines = personalLines(five, new Date(), { dailyGoal: 10 });
     expect(lines[0]).toContain('Ngayong araw: 5 sa 10 practice.');
     expect(personalLines(five, new Date(), { dailyGoal: 3 })[0]).toContain('Naabot mo na');
+  });
+});
+
+describe('Sensei in English', () => {
+  const five = [0, 1, 2, 3, 4].map((i) => typing(i * 1000));
+
+  it('every page has as many English tips as Taglish ones', () => {
+    for (const place of Object.keys(TIPS) as (keyof typeof TIPS)[]) {
+      expect(TIPS_EN[place].length, place).toBe(TIPS[place].length);
+    }
+    expect(CHEERS_EN.length).toBe(CHEERS.length);
+  });
+
+  it('speaks English when English is chosen', () => {
+    expect(senseiLine({ place: 'home', sessions: [], lang: 'en' }, seq(0.9))).toBe(WELCOME_EN);
+    expect(TIPS_EN.numpad).toContain(senseiLine({ place: 'numpad', sessions: [], lang: 'en' }, seq(0.1, 0)));
+    expect(CHEERS_EN).toContain(senseiLine({ place: 'numpad', sessions: [], lang: 'en' }, seq(0.9, 0)));
+    expect(senseiLine({ place: 'home', sessions: five, lang: 'en' }, seq(0.1))).toBe(BACKUP_LINE_EN);
+    expect(senseiLine({ place: 'typing', sessions: [typing()], afterPractice: true, lang: 'en' }, seq(0.1, 0))).toMatch(
+      /^Next, try Numpad Practice/,
+    );
+  });
+
+  it('the lines about your results are English too', () => {
+    const lines = personalLines([typing(0), typing(24 * 3600 * 1000)], new Date(), { dailyGoal: 10 }, 'en');
+    expect(lines[0]).toBe('Today: 1 of 10 practices. You can do it!'); // the other one was yesterday
+    expect(lines.some((l) => /practiced 2 days in a row/.test(l))).toBe(true);
+    expect(personalLines(five, new Date(), { dailyGoal: 3 }, 'en')[0]).toBe(
+      'You reached 3 practices today. Great job!',
+    );
   });
 });

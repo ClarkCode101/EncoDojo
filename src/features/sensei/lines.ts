@@ -4,9 +4,11 @@
  * - lines about YOUR results (what to do next, how close the next belt is,
  *   your streak), taken from the saved sessions,
  * - encouragement.
- * Short Taglish lines, easy to read in a small speech bubble.
+ * Short lines, easy to read in a small speech bubble, in Taglish (TIPS, CHEERS, ...)
+ * or English (the `_EN` lists), following Settings -> "Wika / Language".
  */
 import { beltStatus } from '../../lib/belts';
+import { translator, type Lang } from '../../lib/i18n';
 import { dailyGoalText, doneToday, needsBackup } from '../../lib/reminders';
 import type { Session } from '../../lib/storage';
 import { nextFocus } from '../dashboard/coach';
@@ -69,6 +71,54 @@ export const TIPS: Record<SenseiPlace, string[]> = {
   ],
 };
 
+export const TIPS_EN: Record<SenseiPlace, string[]> = {
+  home: [
+    '10 minutes every day is better than one hour once a week.',
+    'Be correct first, then fast. The speed comes by itself.',
+    'When you are ready, take the Assessment to earn the next belt.',
+  ],
+  typing: [
+    'Look at the text, not the keyboard. Your fingers will learn.',
+    'Put your fingers on A-S-D-F and J-K-L-; before you start.',
+    'Being correct matters more than speed. Every mistake lowers your Net WPM.',
+  ],
+  numpad: [
+    'Turn ON Num Lock before using the numpad.',
+    'Rest your middle finger on 5. It has a small bump you can feel.',
+    'No commas on the numpad. Just keep typing the digits.',
+  ],
+  copy: [
+    'Read the whole field before you type it.',
+    'Watch out for "Ma.", "Jr." and "Dela Cruz". They must be exact, periods too.',
+    'Use Tab to move between fields, like in real software.',
+  ],
+  encoding: [
+    'The date is always mm/dd/yyyy, even when it looks different on paper.',
+    'Amounts: no ₱ and no commas. ₱5,115.25 → 5115.25',
+    'Find the 5 details on the paper before you type.',
+  ],
+  qc: [
+    'Read every field letter by letter. Mistakes often hide in periods and digits.',
+    'Compare the numbers first (date, contact, ID). Swapped digits are common there.',
+    'When a record has no mistake, mark nothing. Just Enter.',
+  ],
+  excel: [
+    'Ctrl + ↓ is the fastest way to the end of a long list.',
+    'Made a mistake on the sheet? Ctrl + Z right away. Nothing breaks.',
+    'F2 lets you fix a cell without erasing all of it.',
+    'Forgot a shortcut? Open the Cheat sheet: everything you learned is there, and you can print it.',
+  ],
+  assessment: [
+    'Take a deep breath first. It is just like practice.',
+    'There is no "Finish" in the Assessment, so keep going until the time is up.',
+    'There is a break between the parts. Use it.',
+  ],
+  settings: [
+    'If the text is small for you, turn on "Larger text".',
+    'Download a backup now and then so you never lose your progress.',
+  ],
+};
+
 export const CHEERS: string[] = [
   'Normal lang magkamali. Dito ka natututo.',
   'Bawat ensayo, isang hakbang palapit sa trabaho.',
@@ -76,27 +126,60 @@ export const CHEERS: string[] = [
   'Ang galing mo. Ituloy mo lang!',
 ];
 
+export const CHEERS_EN: string[] = [
+  'Making mistakes is normal. That is how you learn.',
+  'Every practice is one step closer to the job.',
+  'Even 5 minutes today helps a lot.',
+  'You are doing great. Keep going!',
+];
+
 /** The backup reminder (progress lives only in this browser). */
 export const BACKUP_LINE =
   'Matagal ka nang walang backup. Pumunta sa Settings at i-download ang backup para hindi mawala ang progress mo.';
+export const BACKUP_LINE_EN =
+  'You have not made a backup in a while. Go to Settings and download a backup so you never lose your progress.';
 
 /** The Settings choices Sensei looks at. */
 export type SenseiSettings = { dailyGoal?: number; lastBackupAt?: string };
 
 export const WELCOME = 'Maligayang pagdating sa dojo! Simulan natin sa Typing Practice.';
+export const WELCOME_EN = "Welcome to the dojo! Let's start with Typing Practice.";
 
 /** Lines about the user's own results (empty for a brand-new user). */
-export function personalLines(sessions: Session[], today: Date = new Date(), settings: SenseiSettings = {}): string[] {
+export function personalLines(
+  sessions: Session[],
+  today: Date = new Date(),
+  settings: SenseiSettings = {},
+  lang: Lang = 'tl',
+): string[] {
   if (sessions.length === 0) return [];
+  const t = translator(lang);
   const lines: string[] = [];
-  const goal = dailyGoalText(settings.dailyGoal, doneToday(sessions, today));
-  if (goal) lines.push(goal.startsWith('Naabot') ? `${goal} Ang galing!` : `${goal} Kaya mo 'yan!`);
-  const f = nextFocus(sessions);
-  lines.push(f.skill === 'assessment' ? f.reason : `Susunod, subukan ang ${f.label}: ${f.reason}`);
-  const b = beltStatus(sessions);
-  if (b.next && b.progress >= 0.5) lines.push(`Malapit na ang ${b.next.label}! ${b.nextHint}`);
+  const done = doneToday(sessions, today);
+  const goal = dailyGoalText(settings.dailyGoal, done, lang);
+  if (goal) {
+    const reached = done >= (settings.dailyGoal ?? 0);
+    lines.push(
+      reached ? `${goal} ${t('Ang galing!', 'Great job!')}` : `${goal} ${t("Kaya mo 'yan!", 'You can do it!')}`,
+    );
+  }
+  const f = nextFocus(sessions, lang);
+  lines.push(
+    f.skill === 'assessment'
+      ? f.reason
+      : t(`Susunod, subukan ang ${f.label}: ${f.reason}`, `Next, try ${f.label}: ${f.reason}`),
+  );
+  const b = beltStatus(sessions, lang);
+  if (b.next && b.progress >= 0.5)
+    lines.push(t(`Malapit na ang ${b.next.label}! ${b.nextHint}`, `${b.next.label} is close! ${b.nextHint}`));
   const streak = currentStreak(sessions, today);
-  if (streak >= 2) lines.push(`${streak} araw ka nang sunod-sunod na nag-e-ensayo. Ituloy mo!`);
+  if (streak >= 2)
+    lines.push(
+      t(
+        `${streak} araw ka nang sunod-sunod na nag-e-ensayo. Ituloy mo!`,
+        `You have practiced ${streak} days in a row. Keep it up!`,
+      ),
+    );
   return lines;
 }
 
@@ -116,20 +199,24 @@ export function senseiLine(
     sessions,
     afterPractice = false,
     settings = {},
-  }: { place: SenseiPlace; sessions: Session[]; afterPractice?: boolean; settings?: SenseiSettings },
+    lang = 'tl',
+  }: { place: SenseiPlace; sessions: Session[]; afterPractice?: boolean; settings?: SenseiSettings; lang?: Lang },
   rand: () => number = Math.random,
 ): string {
-  const personal = personalLines(sessions, new Date(), settings);
-  if (place === 'home' && sessions.length === 0) return WELCOME;
+  const en = lang === 'en';
+  const tips = en ? TIPS_EN : TIPS;
+  const cheers = en ? CHEERS_EN : CHEERS;
+  const personal = personalLines(sessions, new Date(), settings, lang);
+  if (place === 'home' && sessions.length === 0) return en ? WELCOME_EN : WELCOME;
   const r = rand();
   // The backup reminder comes first on Home and Settings (often, not every time).
   if (!afterPractice && (place === 'home' || place === 'settings') && r < 0.5) {
-    if (needsBackup(settings.lastBackupAt, sessions)) return BACKUP_LINE;
+    if (needsBackup(settings.lastBackupAt, sessions)) return en ? BACKUP_LINE_EN : BACKUP_LINE;
   }
-  if (afterPractice) return personal.length ? pick(personal, rand) : pick(CHEERS, rand);
+  if (afterPractice) return personal.length ? pick(personal, rand) : pick(cheers, rand);
   if (place === 'home') {
     if (r < 0.5 && personal.length) return pick(personal, rand);
-    return r < 0.75 ? pick(CHEERS, rand) : pick(TIPS.home, rand);
+    return r < 0.75 ? pick(cheers, rand) : pick(tips.home, rand);
   }
-  return r < 0.7 ? pick(TIPS[place], rand) : pick(CHEERS, rand);
+  return r < 0.7 ? pick(tips[place], rand) : pick(cheers, rand);
 }
