@@ -54,10 +54,6 @@ export const HELP = {
   numpad:
     'Ang numpad ay ang mga number key sa KANAN ng keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +
     'Siguraduhing naka-ON ang Num Lock. Kung laptop na walang numpad, puwede ang number keys sa itaas.',
-  numpadTop:
-    'Walang numpad ang keyboard mo, kaya ang number keys sa ITAAS ng mga letra ang gamitin (1 hanggang 0). ' +
-    'Ang tuldok ay ang key na . sa kanan ng M. Mas mabagal ito kaysa sa numpad, kaya kung may hiring test na ' +
-    'kailangan ng 10-key, magandang bumili ng murang USB numpad.',
 };
 
 export type HelpTexts = Record<keyof typeof HELP, string>;
@@ -108,10 +104,6 @@ export const HELP_EN: HelpTexts = {
   numpad:
     'The numpad is the number keys on the RIGHT of the keyboard (7-8-9, 4-5-6, 1-2-3, 0). ' +
     'Make sure Num Lock is ON. On a laptop without a numpad, the number keys at the top work too.',
-  numpadTop:
-    'Your keyboard has no numpad, so use the number keys ABOVE the letters (1 to 0). ' +
-    'The period is the . key right of M. This is slower than a numpad, so if a hiring test needs 10-key, ' +
-    'a cheap USB numpad is a good buy.',
 };
 
 /** The explanations in a language. */

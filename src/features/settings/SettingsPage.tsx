@@ -274,19 +274,6 @@ export default function SettingsPage() {
             />
           </SettingRow>
           <SettingRow
-            label={t('Walang numpad ang keyboard ko', 'My keyboard has no numpad')}
-            description={t(
-              'Para sa laptop: ituturo ng Numpad Practice ang number keys sa itaas ng mga letra.',
-              'For laptops: Numpad Practice teaches the number keys above the letters instead.',
-            )}
-          >
-            <Toggle
-              label={t('Walang numpad ang keyboard ko', 'My keyboard has no numpad')}
-              checked={s.noNumpad === true}
-              onChange={(v) => updateSettings({ noNumpad: v })}
-            />
-          </SettingRow>
-          <SettingRow
             label={t('Tunog kapag nagkamali', 'Sound on a mistake')}
             description={t('Mahinang beep tuwing may mali.', 'A soft beep on every mistake.')}
           >

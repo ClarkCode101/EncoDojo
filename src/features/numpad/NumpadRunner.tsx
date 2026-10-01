@@ -7,7 +7,7 @@
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { KeyboardGuide, NumpadGuide } from '../../components/KeyGuide';
+import { NumpadGuide } from '../../components/KeyGuide';
 import { Button, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { nextNumpadKey } from '../../lib/keyGuide';
 import { makeRng, randomSeed } from '../../lib/random';
@@ -35,7 +35,6 @@ export default function NumpadRunner({
   allowFinishEarly,
   sound,
   keyGuide = false,
-  noNumpad = false,
   onStart,
   onFinish,
 }: {
@@ -44,10 +43,8 @@ export default function NumpadRunner({
   showLiveStats: boolean;
   allowFinishEarly: boolean;
   sound: boolean;
-  /** Settings -> "Gabay sa keyboard": the numpad (or keyboard, with noNumpad) with the next key lit. Practice only. */
+  /** Settings -> "Gabay sa keyboard": the numpad with the next key lit. Practice only. */
   keyGuide?: boolean;
-  /** Settings -> "Walang numpad ang keyboard ko": the guide shows the keyboard's top number keys. */
-  noNumpad?: boolean;
   onStart?: () => void;
   onFinish: (session: Session, finishedEarly: boolean) => void;
 }) {
@@ -197,11 +194,7 @@ export default function NumpadRunner({
 
         {keyGuide && (
           <div className="mt-4">
-            {noNumpad ? (
-              <KeyboardGuide next={nextNumpadKey(current, input)} />
-            ) : (
-              <NumpadGuide next={nextNumpadKey(current, input)} />
-            )}
+            <NumpadGuide next={nextNumpadKey(current, input)} />
           </div>
         )}
 

@@ -46,12 +46,12 @@ export default function Sensei() {
 
   const say = useCallback(
     (afterPractice: boolean) => {
-      const { lastBackupAt, noNumpad } = settingsRef.current;
+      const { lastBackupAt } = settingsRef.current;
       const text = senseiLine({
         place: placeFromPath(pathname),
         sessions: sessionsRef.current,
         afterPractice,
-        settings: { lastBackupAt, noNumpad },
+        settings: { lastBackupAt },
         lang: langOf(settingsRef.current),
       });
       setLine((old) => ({ text, path: pathname, id: (old?.id ?? 0) + 1 }));

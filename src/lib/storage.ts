@@ -93,10 +93,7 @@ export type Settings = {
   reduceMotion?: boolean;
   /** true = a soft sound when an entry or record is correct. */
   soundCorrect?: boolean;
-  /**
-   * true = "Walang numpad ang keyboard ko" (2026-10-01): the numpad practice and tips teach the
-   * number keys above the letters instead of the numpad (and never say "turn on Num Lock").
-   */
+  /** OLD (added and removed 2026-10-01, owner's choice): "Walang numpad ang keyboard ko". Kept so data still loads; unused. */
   noNumpad?: boolean;
   /** true = "Madilim na itsura" (dark mode, 2026-10-01): html.dark, see index.css. */
   dark?: boolean;
