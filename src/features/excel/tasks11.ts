@@ -15,7 +15,8 @@ import { intBetween, shuffle, type Rng } from '../../lib/random';
 import { digits } from '../typing/generatePassage';
 import { computeSheet, sameResult } from './formulaEngine';
 import { cellName, cellsForCompute, isDateText, isFormula, makeSheet, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, setCells, typeFormula } from './taskHelpers';
 
 export const HEADERS_11 = ['Invoice No.', 'Date', 'Due Date', 'Age', 'Month', 'Supplier Date', 'Fixed Date'];
 const COL = { invoice: 0, date: 1, due: 2, age: 3, month: 4, supplier: 5, fixed: 6 } as const;
@@ -77,18 +78,6 @@ export function makeTable11(rng: Rng): Table11 {
     ]);
   }
   return { table: rows, dates, supplier, blankRow };
-}
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-const typeFormula = (f: string): SolutionStep[] => [key('='), { type: f }, key('Enter')];
-
-/** Set cells directly (a task's starting state, not an undo step). */
-function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
-  const cells = s.cells.map((row) => [...row]);
-  for (const [p, v] of changes) cells[p.r][p.c] = v;
-  return { ...s, cells };
 }
 
 /** m/d/yyyy or mm/dd/yyyy text -> the date, or null. */

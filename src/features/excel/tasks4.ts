@@ -15,6 +15,7 @@ import * as ph from '../../data/ph';
 import { digits, nameParts } from '../typing/generatePassage';
 import { countDuplicates, countMatches, lastUsed, makeSheet, type Sheet, type SheetCommand } from './sheet';
 import type { ExcelTask, SolutionStep } from './tasks';
+import { amount, date } from './taskHelpers';
 
 export const HEADERS_4 = ['Ref No.', 'Customer', 'Branch', 'Date', 'Amount'];
 const COL = { ref: 0, customer: 1, branch: 2, date: 3, amount: 4 } as const;
@@ -34,14 +35,6 @@ export const taskLabels4 = (lang: Lang = 'tl'): Record<string, string> => {
     removeDup: t('Tanggalin ang mga doble', 'Remove the duplicates'),
   };
 };
-
-function amount(rng: Rng): string {
-  return `${intBetween(rng, 150, 25000)}.${pick(rng, ['00', '50', '25', '75', digits(rng, 2)])}`;
-}
-
-function date(rng: Rng): string {
-  return `${String(intBetween(rng, 1, 12)).padStart(2, '0')}/${String(intBetween(rng, 1, 28)).padStart(2, '0')}/2026`;
-}
 
 /** Only a few branches, so each one appears many times (filtering makes sense). */
 function branches(rng: Rng): string[] {

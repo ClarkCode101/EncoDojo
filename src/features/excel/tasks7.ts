@@ -17,7 +17,8 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { computeSheet } from './formulaEngine';
 import { cellName, isFormula, makeSheet, shiftFormula, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, setCells, typeFormula } from './taskHelpers';
 
 export const HEADERS_7 = ['Code', 'Qty', 'Item', 'Price', '', 'Code', 'Item', 'Price'];
 const COL = { code: 0, qty: 1, item: 2, price: 3, listCode: 5, listItem: 6, listPrice: 7 } as const;
@@ -65,18 +66,6 @@ export function makeTable7(rng: Rng): Table7 {
     rows[i + 1][COL.listPrice] = price;
   });
   return { table: rows, list, badRow };
-}
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-const typeFormula = (f: string): SolutionStep[] => [key('='), { type: f }, key('Enter')];
-
-/** Set cells directly (a task's starting state, not an undo step). */
-function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
-  const cells = s.cells.map((row) => [...row]);
-  for (const [p, v] of changes) cells[p.r][p.c] = v;
-  return { ...s, cells };
 }
 
 /** The computed sheet after changing some cells on a copy (the real sheet is untouched). */

@@ -11,7 +11,8 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits, nameParts } from '../typing/generatePassage';
 import { cellName, makeSheet, todayText, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { amount, date, key, typeValue } from './taskHelpers';
 
 export const HEADERS_2 = ['Ref No.', 'Customer', 'Branch', 'Date', 'Amount', 'Status'];
 const COL = { ref: 0, customer: 1, branch: 2, date: 3, amount: 4, status: 5 } as const;
@@ -39,14 +40,6 @@ export const taskLabels2 = (lang: Lang = 'tl'): Record<string, string> => {
  */
 const BLANK_STATUS_ROWS = new Set([4, 6, 7, 8, 10, 11, 12, 14, 15, 16]);
 
-function amount(rng: Rng): string {
-  return `${intBetween(rng, 150, 25000)}.${pick(rng, ['00', '50', '25', '75', digits(rng, 2)])}`;
-}
-
-function date(rng: Rng): string {
-  return `${String(intBetween(rng, 1, 12)).padStart(2, '0')}/${String(intBetween(rng, 1, 28)).padStart(2, '0')}/2026`;
-}
-
 function record(rng: Rng): string[] {
   const n = nameParts(rng);
   return [`SL-2026-${digits(rng, 5)}`, `${n.given} ${n.surname}`, pick(rng, ph.cities)[0], date(rng), amount(rng)];
@@ -62,11 +55,6 @@ export function makeTable2(rng: Rng): string[][] {
   return rows;
 }
 
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-/** Type a whole value into a cell: its first letter starts the edit, then the rest. */
-const typeValue = (value: string): SolutionStep[] => [key(value[0]), { type: value }];
 const same = (s: Sheet, rows: number[], c: number, value: string) => rows.every((r) => s.cells[r][c] === value);
 
 function allTasks2(rng: Rng, table: string[][], t: T): Record<string, ExcelTask> {

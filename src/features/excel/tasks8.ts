@@ -19,7 +19,8 @@ import * as ph from '../../data/ph';
 import { digits } from '../typing/generatePassage';
 import { computeSheet, sameResult } from './formulaEngine';
 import { cellName, isFormula, makeSheet, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, setCells, typeFormula } from './taskHelpers';
 
 export const HEADERS_8 = ['Name (raw)', 'Name', 'Ref (raw)', 'Ref No.', 'Branch', 'No.'];
 const COL = { rawName: 0, name: 1, rawRef: 2, ref: 3, branch: 4, no: 5 } as const;
@@ -64,18 +65,6 @@ export function makeTable8(rng: Rng): string[][] {
   const rows: string[][] = [HEADERS_8];
   for (let i = 0; i < count; i++) rows.push([messyName(rng, shortName(rng)), '', messyRef(rng), '', '', '']);
   return rows;
-}
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-const typeFormula = (f: string): SolutionStep[] => [key('='), { type: f }, key('Enter')];
-
-/** Set cells directly (a task's starting state, not an undo step). */
-function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
-  const cells = s.cells.map((row) => [...row]);
-  for (const [p, v] of changes) cells[p.r][p.c] = v;
-  return { ...s, cells };
 }
 
 function allTasks8(table: string[][], rng: Rng, t: T): Record<string, ExcelTask> {

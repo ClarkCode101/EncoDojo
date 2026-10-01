@@ -13,7 +13,8 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { digits, nameParts } from '../typing/generatePassage';
 import { cellName, formatKey, formatOf, makeSheet, pressKey, type CellFormat, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, typeValue } from './taskHelpers';
 
 export const HEADERS_3 = ['Emp No.', 'Name', 'Branch', 'Account No.', 'Daily Rate'];
 const COL = { emp: 0, name: 1, branch: 2, account: 3, rate: 4 } as const;
@@ -48,12 +49,6 @@ export function makeTable3(rng: Rng): string[][] {
   }
   return rows;
 }
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-/** Type a value into the active cell: its first character starts the edit, then the rest. */
-const typeValue = (value: string): SolutionStep[] => [key(value[0]), { type: value }];
 
 /** Put a raw entry in a cell as if typed (Excel's rules apply, e.g. zeros are lost without an apostrophe). */
 function typedEntry(s: Sheet, p: Pos, raw: string): Sheet {

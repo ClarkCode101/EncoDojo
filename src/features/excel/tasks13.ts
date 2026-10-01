@@ -25,7 +25,8 @@ import {
   type Pos,
   type Sheet,
 } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, typeFormula } from './taskHelpers';
 
 export const TAB_NAMES = ['Orders', 'Prices', 'Sheet3'];
 export const REPORT = 'Summary';
@@ -94,11 +95,6 @@ function build({ orders, prices }: Data13, index: number, third = TAB_NAMES[2]):
     index,
   );
 }
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-const typeFormula = (f: string): SolutionStep[] => [key('='), { type: f }, key('Enter')];
 
 function allTasks13(data: Data13, t: T): Record<string, ExcelTask> {
   const n = data.orders.length;

@@ -29,6 +29,7 @@ import {
   type Sheet,
   type SheetCommand,
 } from './sheet';
+import { amount, date, key } from './taskHelpers';
 
 export const HEADERS = ['Ref No.', 'Customer', 'Branch', 'Date', 'Amount'];
 /** Columns of the table (0-based): A..E */
@@ -92,14 +93,6 @@ export type ExcelTask = {
 /** A sheet and one task of every kind, all on that sheet. */
 export type TaskSet = { sheet: Sheet; tasks: Record<TaskId, ExcelTask>; lastRow: number };
 
-function amount(rng: Rng): string {
-  return `${intBetween(rng, 150, 25000)}.${pick(rng, ['00', '50', '25', '75', digits(rng, 2)])}`;
-}
-
-function date(rng: Rng): string {
-  return `${String(intBetween(rng, 1, 12)).padStart(2, '0')}/${String(intBetween(rng, 1, 28)).padStart(2, '0')}/2026`;
-}
-
 /** The fake sales log: a header row and 18 to 26 records (so Ctrl+↓ really saves time). */
 export function makeTable(rng: Rng): string[][] {
   const count = intBetween(rng, 18, 26);
@@ -129,9 +122,6 @@ function setValue(s: Sheet, p: Pos, value: string): Sheet {
 
 const activeIs = (p: Pos) => (s: Sheet) => !s.editing && s.active.r === p.r && s.active.c === p.c;
 const cellIs = (p: Pos, value: string) => (s: Sheet) => !s.editing && s.cells[p.r][p.c] === value;
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
 
 /** Every task kind on this table. Every task gets its OWN row, so one never gets in the way of another. */
 function allTasks(rng: Rng, table: string[][], t: T): Record<TaskId, ExcelTask> {

@@ -5,16 +5,6 @@
 
 export type Rng = () => number;
 
-/** Turn any string into a 32-bit seed. */
-export function seedFromString(text: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
 /** Create a deterministic random number generator returning 0 <= n < 1. */
 export function makeRng(seed: number): Rng {
   let a = seed >>> 0;

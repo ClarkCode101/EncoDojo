@@ -18,7 +18,8 @@ import * as ph from '../../data/ph';
 import { nameParts } from '../typing/generatePassage';
 import { computeSheet } from './formulaEngine';
 import { cellName, isFormula, makeSheet, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, near, setCells, typeFormula } from './taskHelpers';
 
 export const HEADERS_6 = ['Agent', 'Branch', 'Sales', 'Result', '', 'Summary', 'Value'];
 const COL = { agent: 0, branch: 1, sales: 2, result: 3, label: 5, value: 6 } as const;
@@ -52,24 +53,11 @@ export function makeTable6(rng: Rng): { table: string[][]; branches: Branches6 }
   return { table: rows, branches };
 }
 
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-const typeFormula = (f: string): SolutionStep[] => [key('='), { type: f }, key('Enter')];
-
-/** Set cells directly (a task's starting state, not an undo step). */
-function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
-  const cells = s.cells.map((row) => [...row]);
-  for (const [p, v] of changes) cells[p.r][p.c] = v;
-  return { ...s, cells };
-}
-
 /** The computed sheet after changing some cells on a copy (the real sheet is untouched). */
 function probe(s: Sheet, changes: [Pos, string][]): string[][] {
   return computeSheet(setCells(s, changes).cells);
 }
 
-const near = (a: string, b: number) => a !== '' && Math.abs(Number(a) - b) < 0.005;
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.toLowerCase();
 
 function allTasks6(table: string[][], branches: Branches6, t: T): Record<string, ExcelTask> {

@@ -14,7 +14,8 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { computeSheet } from './formulaEngine';
 import { cellName, isFormula, makeSheet, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, near, setCells, typeFormula } from './taskHelpers';
 
 export const HEADERS_5 = ['Item', 'Qty', 'Unit Price', 'Amount', '', 'Summary', 'Value'];
 const COL = { item: 0, qty: 1, price: 2, amount: 3, label: 5, value: 6 } as const;
@@ -37,20 +38,6 @@ export function makeTable5(rng: Rng): string[][] {
   rows.push(['', '', 'Total', '', '', '', '']);
   return rows;
 }
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean; alt?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-const typeFormula = (f: string): SolutionStep[] => [key('='), { type: f }, key('Enter')];
-
-/** Set cells directly (a task's starting state, not an undo step). */
-function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
-  const cells = s.cells.map((row) => [...row]);
-  for (const [p, v] of changes) cells[p.r][p.c] = v;
-  return { ...s, cells };
-}
-
-const near = (a: string, b: number) => a !== '' && Math.abs(Number(a) - b) < 0.005;
 
 function allTasks5(table: string[][], t: T): Record<string, ExcelTask> {
   const n = table.length - 2; // items are rows 1..n; the Total row is n+1

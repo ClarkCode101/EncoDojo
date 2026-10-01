@@ -40,9 +40,6 @@ export const FIELDS: { key: FieldKey; label: string; tl: string; hint?: string }
 /** "Date of Birth (Petsa ng kapanganakan)" (English: "Date of Birth") — for tables and tips. */
 export const copyFieldLabels = (lang: Lang = 'tl') => fieldLabels(FIELDS, lang) as Record<FieldKey, string>;
 
-/** The Taglish labels. */
-export const FIELD_LABEL = copyFieldLabels();
-
 /** The two Copy Test layouts, as shown on the page and the results. */
 export const copyModeLabel = (mode: CopyMode, t: T) =>
   mode === 'sheet'

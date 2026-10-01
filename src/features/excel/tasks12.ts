@@ -16,7 +16,8 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { computeSheet } from './formulaEngine';
 import { colLetter, makeSheet, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key } from './taskHelpers';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 export const HEADERS_12 = ['Agent', 'Branch', 'Old Code', 'Contact No.', ...MONTHS, 'Total'];
@@ -77,10 +78,6 @@ export function makeTable12(rng: Rng): Table12 {
   while (Math.abs(insertAt - duplicateRow) <= 1) insertAt = insertAt >= n ? 2 : insertAt + 1;
   return { table: rows, insertAt, duplicateRow };
 }
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
 
 function allTasks12({ table, insertAt, duplicateRow }: Table12, base: Sheet, t: T): Record<string, ExcelTask> {
   const n = table.length - 2; // agents are rows 1..n; the Total row is n+1

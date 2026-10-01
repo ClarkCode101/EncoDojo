@@ -15,7 +15,8 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 import * as ph from '../../data/ph';
 import { computeSheet } from './formulaEngine';
 import { cellName, isFormula, makeSheet, type Pos, type Sheet } from './sheet';
-import type { ExcelTask, SolutionStep } from './tasks';
+import type { ExcelTask } from './tasks';
+import { key, setCells, typeValue } from './taskHelpers';
 
 export const HEADERS_9 = ['Full Name', 'Last Name', 'First Name', 'Name Tag'];
 const COL = { full: 0, last: 1, first: 2, tag: 3 } as const;
@@ -36,19 +37,6 @@ export function makePeople9(rng: Rng): Person9[] {
     people.push(p);
   }
   return people;
-}
-
-const key = (k: string, mods: { ctrl?: boolean; shift?: boolean } = {}): SolutionStep => ({
-  press: { key: k, ...mods },
-});
-/** Type a value into the active cell (the first letter starts the edit, like a person typing). */
-const typeValue = (v: string): SolutionStep[] => [key(v[0]), { type: v }];
-
-/** Set cells directly (a task's starting state, not an undo step). */
-function setCells(s: Sheet, changes: [Pos, string][]): Sheet {
-  const cells = s.cells.map((row) => [...row]);
-  for (const [p, v] of changes) cells[p.r][p.c] = v;
-  return { ...s, cells };
 }
 
 function allTasks9(people: Person9[], t: T): Record<string, ExcelTask> {

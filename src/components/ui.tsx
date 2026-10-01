@@ -119,35 +119,6 @@ export function ConfirmButton({
   );
 }
 
-export function Card({
-  title,
-  icon,
-  children,
-  className = '',
-  compact = false,
-}: {
-  title?: string;
-  icon?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  /** Less padding (practice screens, where every pixel of height counts). */
-  compact?: boolean;
-}) {
-  return (
-    <section
-      className={`rounded-lg border border-stone-300 bg-white shadow-sm ${compact ? 'p-4' : 'p-6'} ${className}`}
-    >
-      {title && (
-        <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-stone-900">
-          {icon && <span className="text-brand-700">{icon}</span>}
-          {title}
-        </h2>
-      )}
-      {children}
-    </section>
-  );
-}
-
 /**
  * A part of a page with a ruled heading, like a section in a notebook:
  * a slab heading over a dark line, then the content (no box around it).
@@ -391,34 +362,6 @@ export function Toggle({
         {checked ? 'On' : 'Off'}
       </span>
     </button>
-  );
-}
-
-/** A big, easy-to-click checkbox with a label (and optional description). */
-export function Checkbox({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description?: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3">
-      <input
-        type="checkbox"
-        className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-brand-700"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span>
-        <span className="block text-base font-semibold text-stone-900">{label}</span>
-        {description && <span className="block text-sm text-stone-600">{description}</span>}
-      </span>
-    </label>
   );
 }
 
