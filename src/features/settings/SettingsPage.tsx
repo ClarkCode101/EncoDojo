@@ -12,7 +12,7 @@ import { Button, HelpTip, Notice, PageHeader, Section, SegmentedPicker, Toggle }
 import { langOf, translator } from '../../lib/i18n';
 import { backupStatusText, needsBackup } from '../../lib/reminders';
 import { downloadBackup } from '../../lib/backup';
-import { defaultData, parseImport, type AppData } from '../../lib/storage';
+import { IMPORT_TOO_BIG, MAX_IMPORT_BYTES, defaultData, parseImport, type AppData } from '../../lib/storage';
 import { replaceAppData, updateAppData, updateSettings, useAppData } from '../../lib/useAppData';
 
 /** One ruled Settings row: the name and one short line on the left, the control on the right. */
@@ -67,7 +67,8 @@ export default function SettingsPage() {
     setMessage(null);
     setPendingImport(null);
     if (!file) return;
-    const result = parseImport(await file.text());
+    // Check the size first, so a huge file is never even read into the page.
+    const result = file.size > MAX_IMPORT_BYTES ? IMPORT_TOO_BIG : parseImport(await file.text());
     if (result.ok) {
       setPendingImport(result.data);
     } else {
@@ -76,7 +77,9 @@ export default function SettingsPage() {
         text:
           result.problem === 'unreadable'
             ? t(result.error, "This file can't be read. Make sure it is an EncoDojo backup file (.json).")
-            : t(result.error, 'This is not an EncoDojo backup file. Choose another file.'),
+            : result.problem === 'tooBig'
+              ? t(result.error, 'This file is too big to be an EncoDojo backup. Choose another file.')
+              : t(result.error, 'This is not an EncoDojo backup file. Choose another file.'),
       });
     }
     // allow choosing the same file again later

@@ -323,10 +323,25 @@ export function exportFileName(now: Date = new Date()): string {
 
 /** `problem`: 'unreadable' (not JSON) or 'notEncodojo' (JSON, but not our data), so the page can say it in either language. */
 export type ImportResult =
-  { ok: true; data: AppData } | { ok: false; error: string; problem: 'unreadable' | 'notEncodojo' };
+  { ok: true; data: AppData } | { ok: false; error: string; problem: 'unreadable' | 'notEncodojo' | 'tooBig' };
+
+/**
+ * The largest backup file Import accepts (2026-10-01). A real backup is far smaller (the browser
+ * keeps only a few MB per site, and at most 500 results), so a bigger file is not a real backup
+ * and would only slow the page down.
+ */
+export const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
+
+/** The answer for a file over MAX_IMPORT_BYTES (Settings checks the size before reading the file). */
+export const IMPORT_TOO_BIG: ImportResult = {
+  ok: false,
+  problem: 'tooBig',
+  error: 'Masyadong malaki ang file na ito para maging backup ng EncoDojo. Pumili ng ibang file.',
+};
 
 /** Check an imported file BEFORE replacing anything. */
 export function parseImport(text: string): ImportResult {
+  if (text.length > MAX_IMPORT_BYTES) return IMPORT_TOO_BIG;
   let raw: unknown;
   try {
     raw = JSON.parse(text);

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  MAX_IMPORT_BYTES,
   MAX_SESSIONS,
   PRACTICE_TYPES,
   STORAGE_KEY,
@@ -303,5 +304,13 @@ describe('export / import', () => {
 
   it('names the file with the local date', () => {
     expect(exportFileName(new Date(2026, 8, 6))).toBe('encodojo-progress-2026-09-06.json');
+  });
+});
+
+describe('import size limit', () => {
+  it('refuses a file far bigger than any real backup', () => {
+    const result = parseImport(' '.repeat(MAX_IMPORT_BYTES + 1));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.problem).toBe('tooBig');
   });
 });

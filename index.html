@@ -20,14 +20,8 @@
     <title>EncoDojo: Encoder at Data Entry practice</title>
   </head>
   <body>
-    <script>
-      // Dark mode and large text before the app loads, so the page never flashes white (see Layout.tsx).
-      try {
-        var s = JSON.parse(localStorage.getItem('encodojo:v1') || '{}').settings || {};
-        if (s.dark === true) document.documentElement.classList.add('dark');
-        if (s.largeText === true) document.documentElement.classList.add('large-text');
-      } catch (e) {}
-    </script>
+    <!-- Dark mode and large text before the app loads (no white flash). A file, not inline, for the CSP (vercel.json). -->
+    <script src="/theme-init.js"></script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -79,6 +79,7 @@ The app must be easy for **older and non-techy users**:
 - Target: Vercel Hobby (free) or Cloudflare Pages (free). Static build only (`npm run build` → `dist/`).
 - Add SPA fallback so deep links work: `vercel.json` rewrite to `/index.html`, and `public/_redirects` with `/* /index.html 200` for Cloudflare.
 - No environment variables should be required to build or run.
+- **Security headers** (2026-10-01, owner approved): `vercel.json` `headers` and the same in `public/_headers` (Cloudflare): a Content-Security-Policy (`default-src 'self'`, `script-src 'self'` = only the site's own scripts, `style-src 'self' 'unsafe-inline'`, `img-src 'self' data: blob:` for the result card, `font-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`. So: **no inline `<script>` in index.html** (the dark-mode/large-text early script is `public/theme-init.js`), no `eval`, and anything loaded from another site (a CDN, an API) needs the CSP changed in BOTH files. Checked by serving `dist/` with these headers: no violations on the welcome screen, Home, Typing, an Excel formula lesson, Kodigo, Settings. Import refuses files over `MAX_IMPORT_BYTES` (10 MB; `IMPORT_TOO_BIG`) before reading them.
 
 ## Commands
 - `npm run dev` — local dev server
