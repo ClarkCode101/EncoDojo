@@ -36,6 +36,9 @@ import { QcMistakesCard } from '../qc/QcResults';
 import { TypingMistakesCard } from '../typing/TypingResults';
 import { assessmentCommentsBySection } from './comments';
 import { downloadResultCard, resultCardData } from './resultCard';
+import { downloadBackup } from '../../lib/backup';
+import { useT } from '../../lib/i18n';
+import { notBackedUpSince } from '../../lib/reminders';
 import { assessmentChecks, assessmentCopyKph, hasCopyPart, hasEncodingPart, hasQcPart, type Check } from './evaluate';
 
 /** Which part of the Assessment (typing, numpad, copy, encoding). */
@@ -187,7 +190,9 @@ export default function AssessmentReport({
   backLabel: string;
   onRetake: () => void;
 }) {
-  const { sessions } = useAppData();
+  const data = useAppData();
+  const { sessions } = data;
+  const t = useT();
   const m = assessment.metrics;
   const p = previous?.metrics;
   const checks = assessmentChecks(m);
@@ -250,6 +255,24 @@ export default function AssessmentReport({
           </div>
         </div>
       </section>
+
+      {/* The belt lives only in this browser: offer the backup right here until this assessment is in one. */}
+      {notBackedUpSince(data.settings.lastBackupAt, assessment) && (
+        <div
+          role="status"
+          className="-mt-6 mb-10 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-r-lg border-l-4 border-brand-600 bg-brand-50 px-5 py-3 text-stone-900"
+        >
+          <p className="min-w-0 flex-1 basis-80">
+            {t(
+              'I-download ang backup para hindi mawala ang resultang ito at ang belt mo. Sa browser na ito lang sila naka-save.',
+              'Download a backup so this result and your belt are not lost. They are saved only in this browser.',
+            )}
+          </p>
+          <Button variant="secondary" onClick={() => downloadBackup(data)}>
+            <DownloadIcon className="h-5 w-5" /> {t('I-download ang backup', 'Download a backup')}
+          </Button>
+        </div>
+      )}
 
       {/* 2. Scorecard */}
       <Section title="Scorecard" className="mb-10">

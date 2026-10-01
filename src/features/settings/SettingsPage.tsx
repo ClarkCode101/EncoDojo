@@ -11,7 +11,8 @@ import { SettingsIcon } from '../../components/icons';
 import { Button, HelpTip, Notice, PageHeader, Section, SegmentedPicker, Toggle } from '../../components/ui';
 import { langOf, translator } from '../../lib/i18n';
 import { backupStatusText, needsBackup } from '../../lib/reminders';
-import { defaultData, exportFileName, exportJson, parseImport, type AppData } from '../../lib/storage';
+import { downloadBackup } from '../../lib/backup';
+import { defaultData, parseImport, type AppData } from '../../lib/storage';
 import { replaceAppData, updateAppData, updateSettings, useAppData } from '../../lib/useAppData';
 
 /** One ruled Settings row: the name and one short line on the left, the control on the right. */
@@ -42,16 +43,6 @@ function SettingRow({
       <div>{children}</div>
     </div>
   );
-}
-
-function downloadText(fileName: string, text: string) {
-  const blob = new Blob([text], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 const inputClass =
@@ -110,12 +101,6 @@ export default function SettingsPage() {
             ),
           },
     );
-  }
-
-  function downloadBackup() {
-    downloadText(exportFileName(), exportJson(data));
-    // Remember when, for "Huling backup: ..." and the reminder.
-    updateSettings({ lastBackupAt: new Date().toISOString() });
   }
 
   function resetAll() {
@@ -325,7 +310,7 @@ export default function SettingsPage() {
           )}
         </HelpTip>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Button onClick={downloadBackup}>{t('I-download ang backup', 'Download a backup')}</Button>
+          <Button onClick={() => downloadBackup(data)}>{t('I-download ang backup', 'Download a backup')}</Button>
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
             {t('Ibalik mula sa backup…', 'Restore from a backup…')}
           </Button>

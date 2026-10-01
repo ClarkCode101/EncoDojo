@@ -1,7 +1,8 @@
 /**
  * Small reminders from the Settings choices (owner's request, 2026-09-27):
  * the backup reminder (progress lives only in this browser, so a backup file
- * is the only way not to lose it). Used by Settings and Sensei. Pure functions,
+ * is the only way not to lose it). Used by Settings, Sensei, the Home reminder
+ * and the Assessment report. Pure functions,
  * tested. (The daily goal was removed with its setting, owner's choice 2026-10-01.)
  */
 import { translator, type Lang } from './i18n';
@@ -40,4 +41,26 @@ export function needsBackup(lastBackupAt: string | undefined, sessions: Session[
   if (sessions.length < BACKUP_REMIND_MIN_SESSIONS) return false;
   const days = daysSinceBackup(lastBackupAt, now);
   return days === null || days >= BACKUP_REMIND_DAYS;
+}
+
+/** "Mamaya na" on the Home reminder hides it for this many days. */
+export const BACKUP_SNOOZE_DAYS = 7;
+
+/** The Home reminder: when a backup is needed and the user did not say "Mamaya na" recently. */
+export function showBackupReminder(
+  lastBackupAt: string | undefined,
+  sessions: Session[],
+  snoozeUntil: string | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (!needsBackup(lastBackupAt, sessions, now)) return false;
+  const until = snoozeUntil ? new Date(snoozeUntil).getTime() : NaN;
+  return Number.isNaN(until) || until <= now.getTime();
+}
+
+/** The Assessment report's note: this assessment (and its belt) is not in any backup yet. */
+export function notBackedUpSince(lastBackupAt: string | undefined, assessment: Session): boolean {
+  if (!lastBackupAt) return true;
+  const last = new Date(lastBackupAt).getTime();
+  return Number.isNaN(last) || last < new Date(assessment.startedAt).getTime();
 }

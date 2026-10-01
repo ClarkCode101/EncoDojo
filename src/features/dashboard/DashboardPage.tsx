@@ -21,6 +21,7 @@ import {
   NumpadIcon,
   QcIcon,
 } from '../../components/icons';
+import BackupBanner from '../../components/BackupBanner';
 import BeltCard from '../../components/BeltCard';
 import { Button, ConfirmButton, HelpTip, Section } from '../../components/ui';
 import { langOf, localeOf, translator, useT, type T } from '../../lib/i18n';
@@ -273,6 +274,10 @@ export default function DashboardPage() {
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <NextFocusCard />
           <BeltCard />
+        </div>
+        {/* Only when it is time to back up (lib/reminders.ts showBackupReminder). */}
+        <div className="mt-4 empty:hidden">
+          <BackupBanner />
         </div>
       </header>
 

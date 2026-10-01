@@ -145,6 +145,7 @@ type AppData = {
     noNumpad?: boolean;                      // OLD, unused: "Walang numpad ang keyboard ko" was added and removed 2026-10-01 (owner: not useful); still accepted so data loads
     dark?: boolean;                          // 2026-10-01: "Madilim na itsura" (html.dark, see Brand > Dark mode)
     keyGuide?: boolean;                      // 2026-10-01: "Gabay sa keyboard" (components/KeyGuide.tsx), Typing + Numpad practice only
+    backupSnoozeUntil?: string;              // 2026-10-01: ISO; "Mamaya na" on the Home backup reminder hides it until then (7 days); cleared by a backup
   };
   // History: v1 one `difficulty` 1-6 -> v2 typingLevel + numpadDifficulty -> v3 + largeText
   // -> v4 numpadMode (everyone starts on "mixed"; typingLevel/numpadDifficulty removed).
@@ -205,7 +206,7 @@ Status: built, tested, and live at https://encodojo.vercel.app (Vercel project `
 - Recent sessions list (last 10).
 
 ### 5. Settings (`features/settings`)
-- Layout (owner's request 2026-09-27, "hindi nakaka-overwhelm"): ruled `SettingRow`s (name + one line left, control right: `Toggle` On/Off or `SegmentedPicker hideLabel`) in groups: Ikaw (language, name; the daily goal row was removed 2026-10-01, owner's choice) · Pagbasa at itsura (dark mode "Madilim na itsura", larger text, bigger reading text, less motion, Sensei) · Practice at tunog ("Gabay sa keyboard" `keyGuide`, mistake sound, correct sound; a "starting duration" option was built and removed on purpose, owner's decision) · Backup (status "Huling backup: ...", amber reminder at 5+ sessions and 7+ days) · "Burahin ang lahat ng data" folded in a `<details>`.
+- Layout (owner's request 2026-09-27, "hindi nakaka-overwhelm"): ruled `SettingRow`s (name + one line left, control right: `Toggle` On/Off or `SegmentedPicker hideLabel`) in groups: Ikaw (language, name; the daily goal row was removed 2026-10-01, owner's choice) · Pagbasa at itsura (dark mode "Madilim na itsura", larger text, bigger reading text, less motion, Sensei) · Practice at tunog ("Gabay sa keyboard" `keyGuide`, mistake sound, correct sound; a "starting duration" option was built and removed on purpose, owner's decision) · Backup (status "Huling backup: ...", amber reminder at 5+ sessions and 7+ days); **the backup is also offered where the user is** (owner's request 2026-10-01): an amber line on Home under the two cards (`components/BackupBanner.tsx`, `showBackupReminder`: same 5+ / 7+ rule, "I-download ang backup" right there, "Mamaya na" = hidden 7 days) and a line on the Assessment report until a backup is made after that assessment (`notBackedUpSince`; "para hindi mawala ... ang belt mo"). One download function for all: `lib/backup.ts` `downloadBackup(data)` (sets `lastBackupAt`, clears the snooze) · "Burahin ang lahat ng data" folded in a `<details>`.
 - Display name, larger text, sound. (No live-stats toggle: practice always shows live stats; the Assessment never does.) (Difficulty is not in Settings: Numpad Practice has a Halo-halo / Pang-baguhan picker; Typing has no level picker while it is plain text only.)
 - Export progress, Import progress, Reset all data (with typed confirmation).
 

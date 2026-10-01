@@ -97,6 +97,8 @@ export type Settings = {
   noNumpad?: boolean;
   /** true = "Madilim na itsura" (dark mode, 2026-10-01): html.dark, see index.css. */
   dark?: boolean;
+  /** "Mamaya na" on the Home backup reminder: hidden until this time (ISO). Cleared by a backup. */
+  backupSnoozeUntil?: string;
   /** true = "Gabay sa keyboard" (2026-10-01): a keyboard/numpad under Typing and Numpad practice with the next key lit. */
   keyGuide?: boolean;
 };
@@ -155,6 +157,8 @@ function hasValidExtraSettings(settings: Record<string, unknown>): boolean {
     isBooleanOrMissing(settings.noNumpad) &&
     isBooleanOrMissing(settings.dark) &&
     isBooleanOrMissing(settings.keyGuide) &&
+    (settings.backupSnoozeUntil === undefined ||
+      (typeof settings.backupSnoozeUntil === 'string' && !Number.isNaN(Date.parse(settings.backupSnoozeUntil)))) &&
     (settings.language === undefined || settings.language === 'tl' || settings.language === 'en')
   );
 }
