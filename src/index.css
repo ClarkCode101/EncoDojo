@@ -298,3 +298,159 @@ html.big-source .source-zoom > * {
     display: none;
   }
 }
+
+/*
+ * The welcome screen (features/welcome/Welcome.tsx), "itali ang belt": the key pops in, the gold
+ * belt slides across, the knot drops, the words rise one by one; "Simulan" zooms the logo until it
+ * fills the screen and fades into the app. `both` keeps each part hidden until its turn, and with
+ * "Bawasan ang galaw" (html.reduce-motion) or the computer's reduce-motion setting it is all still.
+ */
+.wl-cloth {
+  background:
+    radial-gradient(circle at 50% 32%, rgba(245, 179, 1, 0.16), transparent 42%),
+    repeating-linear-gradient(135deg, rgba(245, 179, 1, 0.05) 0 2px, transparent 2px 28px);
+}
+.wl-key,
+.wl-band,
+.wl-ends,
+.wl-knot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.wl-key {
+  animation: wl-pop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.1s both;
+}
+.wl-band {
+  transform-origin: left center;
+  animation: wl-slide 0.5s ease-out 0.55s both;
+}
+.wl-knot {
+  animation: wl-knot 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) 0.95s both;
+}
+.wl-ends {
+  transform-origin: top center;
+  animation: wl-ends 0.4s ease-out 1.15s both;
+}
+.wl-glow {
+  background: radial-gradient(circle, rgba(245, 179, 1, 0.35), transparent 65%);
+  transform: scale(1.6);
+  animation: wl-glow 2.4s ease-in-out 1.2s infinite alternate both;
+}
+.wl-rise {
+  animation: wl-rise 0.55s ease-out both;
+}
+.wl-fade {
+  animation: wl-fade 0.6s ease-out 0.8s both;
+}
+.wl-start {
+  box-shadow: 0 0 0 0 rgba(245, 179, 1, 0.5);
+}
+
+/* "Simulan": the logo grows past the screen, the words fade, then the whole screen fades away. */
+.wl-leaving {
+  animation: wl-out 0.75s ease-in both;
+}
+.wl-leaving .wl-logo-wrap {
+  animation: wl-zoom 0.75s cubic-bezier(0.6, 0, 0.8, 0.4) both;
+}
+.wl-leaving .wl-out,
+.wl-leaving > button {
+  animation: wl-fade-out 0.25s ease-in both;
+  animation-delay: 0s !important; /* not the entrance delays */
+}
+
+@keyframes wl-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-8deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+@keyframes wl-slide {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+@keyframes wl-knot {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(1.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes wl-ends {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+@keyframes wl-glow {
+  from {
+    opacity: 0.55;
+    transform: scale(1.45);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.75);
+  }
+}
+@keyframes wl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes wl-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes wl-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wl-zoom {
+  to {
+    transform: scale(9);
+    opacity: 0;
+  }
+}
+@keyframes wl-out {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-root,
+  .wl-root * {
+    animation: none !important;
+  }
+}

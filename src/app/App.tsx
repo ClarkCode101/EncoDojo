@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ButtonLink, PageHeader } from '../components/ui';
 import { useT } from '../lib/i18n';
+import Welcome from '../features/welcome/Welcome';
 import Layout from './Layout';
 
 // Each screen is loaded only when you open it (smaller first download).
@@ -34,6 +35,8 @@ function NotFound() {
 export default function App() {
   return (
     <BrowserRouter>
+      {/* The welcome screen, each time the app is opened (features/welcome). */}
+      <Welcome />
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
