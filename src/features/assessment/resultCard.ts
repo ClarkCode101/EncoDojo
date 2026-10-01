@@ -102,7 +102,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-/** The belt shape of the logo (48 x 48 units), scaled to `size`, in any color. */
+/** A tied belt (48 x 48 units, like BeltIcon), scaled to `size`, in any color: the belt earned. */
 function drawBelt(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, fill: string, stroke: string) {
   ctx.save();
   ctx.translate(x, y);
@@ -137,12 +137,49 @@ function drawBelt(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
   ctx.restore();
 }
 
-/** The EncoDojo logo: a gold tile with an indigo belt. */
+/** The EncoDojo logo, the same drawing as <Logo /> (icons.tsx): an "E" keycap with a gold belt tied around it. */
 function drawLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
-  ctx.fillStyle = C.gold;
-  roundRect(ctx, x, y, size, size, size / 4);
-  ctx.fill();
-  drawBelt(ctx, x, y, size, C.brandDark, C.gold);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(size / 48, size / 48);
+  ctx.strokeStyle = C.brandDark;
+  ctx.lineJoin = 'round';
+  const box = (bx: number, by: number, w: number, h: number, r: number, fill: string, line = 0) => {
+    roundRect(ctx, bx, by, w, h, r);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (line) {
+      ctx.lineWidth = line;
+      ctx.stroke();
+    }
+  };
+  // The key: its side, then its top face.
+  box(4, 5, 40, 38, 9, '#B9B5E6', 1.5);
+  box(8, 7, 32, 29, 6, C.paper, 1);
+  // The letter E.
+  box(16, 11, 5, 18, 1, C.brand);
+  box(16, 11, 16, 4.5, 1, C.brand);
+  box(16, 17.75, 12.5, 4.5, 1, C.brand);
+  box(16, 24.5, 16, 4.5, 1, C.brand);
+  // The gold belt: the band, the two hanging ends, the knot.
+  box(1.5, 32, 45, 6.5, 1.5, C.gold, 1.5);
+  for (const end of [
+    [21, 39, 16.5, 46.5, 21.5, 46.5, 24, 41.5],
+    [27, 39, 31.5, 46.5, 26.5, 46.5, 24, 41.5],
+  ]) {
+    ctx.beginPath();
+    ctx.moveTo(end[0], end[1]);
+    ctx.lineTo(end[2], end[3]);
+    ctx.lineTo(end[4], end[5]);
+    ctx.lineTo(end[6], end[7]);
+    ctx.closePath();
+    ctx.fillStyle = C.gold;
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  box(19, 29.5, 10, 11.5, 2.5, C.gold, 1.5);
+  ctx.restore();
 }
 
 export function drawResultCard(ctx: CanvasRenderingContext2D, d: ResultCardData) {

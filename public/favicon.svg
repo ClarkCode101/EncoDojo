@@ -1,8 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <!-- EncoDojo logo: a tied belt on a gold tile (same as <Logo /> in src/components/icons.tsx) -->
-  <rect width="48" height="48" rx="12" fill="#F5B301" />
-  <rect x="5" y="17" width="38" height="8" rx="2" fill="#231F55" />
-  <path d="M21.5 27 L15 40 h5.5 L24.5 30 Z" fill="#231F55" />
-  <path d="M26.5 27 L33 40 h-5.5 L23.5 30 Z" fill="#231F55" />
-  <rect x="18.5" y="14" width="11" height="14" rx="3" fill="#231F55" stroke="#F5B301" stroke-width="2" />
+  <!-- EncoDojo logo: an "E" keycap with a gold belt tied around it (same as <Logo /> in src/components/icons.tsx) -->
+  <rect x="4" y="5" width="40" height="38" rx="9" fill="#B9B5E6" stroke="#231F55" stroke-width="1.5" />
+  <rect x="8" y="7" width="32" height="29" rx="6" fill="#FBF8F1" stroke="#231F55" stroke-width="1" />
+  <g fill="#2E2A6B">
+    <rect x="16" y="11" width="5" height="18" rx="1" />
+    <rect x="16" y="11" width="16" height="4.5" rx="1" />
+    <rect x="16" y="17.75" width="12.5" height="4.5" rx="1" />
+    <rect x="16" y="24.5" width="16" height="4.5" rx="1" />
+  </g>
+  <g fill="#F5B301" stroke="#231F55" stroke-width="1.5" stroke-linejoin="round">
+    <rect x="1.5" y="32" width="45" height="6.5" rx="1.5" />
+    <path d="M21 39 L16.5 46.5 h5 L24 41.5 Z" />
+    <path d="M27 39 L31.5 46.5 h-5 L24 41.5 Z" />
+    <rect x="19" y="29.5" width="10" height="11.5" rx="2.5" />
+  </g>
 </svg>

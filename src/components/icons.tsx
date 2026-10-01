@@ -28,16 +28,31 @@ type IconProps = { className?: string };
  * The EncoDojo logo: a tied martial-arts belt on a gold tile.
  * Colors match `belt-400` and `brand-900` in tailwind.config.js.
  */
+/**
+ * The EncoDojo logo (owner's choice 2026-10-01, easier to remember than the old belt on a gold tile):
+ * an "E" keycap (E for EncoDojo; a key = keyboard skills) with a gold belt tied around it (the dojo).
+ * The light lavender side with a dark outline shows on the dark sidebar and on light pages alike.
+ * Same drawing in public/favicon.svg and in the result card (features/assessment/resultCard.ts).
+ */
 export const Logo = ({ className = 'h-11 w-11' }: IconProps) => (
   <svg viewBox="0 0 48 48" aria-hidden="true" className={className}>
-    <rect width="48" height="48" rx="12" fill="#F5B301" />
-    {/* belt going across */}
-    <rect x="5" y="17" width="38" height="8" rx="2" fill="#231F55" />
-    {/* the two hanging ends */}
-    <path d="M21.5 27 L15 40 h5.5 L24.5 30 Z" fill="#231F55" />
-    <path d="M26.5 27 L33 40 h-5.5 L23.5 30 Z" fill="#231F55" />
-    {/* the knot, outlined in gold so it stands out from the belt */}
-    <rect x="18.5" y="14" width="11" height="14" rx="3" fill="#231F55" stroke="#F5B301" strokeWidth="2" />
+    {/* the key: its side, then its top face */}
+    <rect x="4" y="5" width="40" height="38" rx="9" fill="#B9B5E6" stroke="#231F55" strokeWidth="1.5" />
+    <rect x="8" y="7" width="32" height="29" rx="6" fill="#FBF8F1" stroke="#231F55" strokeWidth="1" />
+    {/* the letter E */}
+    <g fill="#2E2A6B">
+      <rect x="16" y="11" width="5" height="18" rx="1" />
+      <rect x="16" y="11" width="16" height="4.5" rx="1" />
+      <rect x="16" y="17.75" width="12.5" height="4.5" rx="1" />
+      <rect x="16" y="24.5" width="16" height="4.5" rx="1" />
+    </g>
+    {/* the gold belt tied around the key: the band, the two hanging ends, the knot */}
+    <g fill="#F5B301" stroke="#231F55" strokeWidth="1.5" strokeLinejoin="round">
+      <rect x="1.5" y="32" width="45" height="6.5" rx="1.5" />
+      <path d="M21 39 L16.5 46.5 h5 L24 41.5 Z" />
+      <path d="M27 39 L31.5 46.5 h-5 L24 41.5 Z" />
+      <rect x="19" y="29.5" width="10" height="11.5" rx="2.5" />
+    </g>
   </svg>
 );
 
