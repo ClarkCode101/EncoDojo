@@ -95,6 +95,10 @@ export default function Layout() {
     document.documentElement.classList.toggle('reduce-motion', reduceMotion === true);
     document.documentElement.classList.toggle('big-source', bigSource === true);
   }, [reduceMotion, bigSource]);
+  // Settings -> "Madilim na itsura" (index.html sets it before the first paint too, so there is no white flash).
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', settings.dark === true);
+  }, [settings.dark]);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -112,7 +116,7 @@ export default function Layout() {
           className={
             // No width animation on purpose (owner's request): the labels and cards switch at once anyway,
             // so an animated width only showed squeezed, half-drawn states. An instant switch looks cleaner.
-            'sidebar bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden print:hidden ' +
+            'sidebar theme-fixed bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden print:hidden ' +
             (collapsed ? 'md:w-20' : 'md:w-64')
           }
         >

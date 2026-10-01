@@ -93,6 +93,13 @@ describe('optional settings', () => {
     expect(isAppData(withSettings({ dailyGoal: 7 }))).toBe(false);
     expect(isAppData(withSettings({ englishOnly: 'yes' }))).toBe(false);
   });
+
+  it('dark mode and "no numpad" (2026-10-01) may be missing or a boolean', () => {
+    const base = defaultData();
+    const withSettings = (extra: Record<string, unknown>) => ({ ...base, settings: { ...base.settings, ...extra } });
+    expect(isAppData(withSettings({ dark: true, noNumpad: false }))).toBe(true);
+    expect(isAppData(withSettings({ dark: 'on' }))).toBe(false);
+  });
 });
 
 describe('saveData', () => {

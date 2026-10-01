@@ -189,6 +189,19 @@ export default function SettingsPage() {
       <Section title={t('Pagbasa at itsura', 'Reading and look')} className="mb-12">
         <div className="-mt-4">
           <SettingRow
+            label={t('Madilim na itsura', 'Dark mode')}
+            description={t(
+              'Madilim na background, mas magaan sa mata sa gabi o sa matagal na practice.',
+              'A dark background, easier on the eyes at night or in long practice.',
+            )}
+          >
+            <Toggle
+              label={t('Madilim na itsura', 'Dark mode')}
+              checked={s.dark === true}
+              onChange={(v) => updateSettings({ dark: v })}
+            />
+          </SettingRow>
+          <SettingRow
             label={t('Mas malaking text', 'Larger text')}
             description={t('Palakihin ang lahat ng sulat at button.', 'Makes all text and buttons bigger.')}
           >

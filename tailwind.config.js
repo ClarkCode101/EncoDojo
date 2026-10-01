@@ -1,3 +1,12 @@
+/*
+ * Every color is a CSS variable (index.css), so "Madilim na itsura" (dark mode, Settings) can swap
+ * them all at once: html.dark reverses each scale (50 <-> 950, 100 <-> 900, ...), white becomes a
+ * dark surface, and the paper a dark page. `.theme-fixed` keeps the normal colors (the sidebar).
+ */
+const SHADES = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
+const scale = (name, shades = SHADES) =>
+  Object.fromEntries(shades.map((s) => [s, `rgb(var(--${name}-${s}) / <alpha-value>)`]));
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -20,29 +29,21 @@ export default {
        * Red (mistakes), green (correct), and amber (warnings) keep their meaning,
        * so they are NOT used as brand colors.
        */
+      // The values live in index.css (light on :root, reversed on html.dark). Light values:
+      // brand 50 #F2F1FA, 100 #E4E2F5, 200 #C9C5EB, 300 #A59FDB, 400 #7F77C8, 500 #5E55B1, 600 #4A4299,
+      //   700 #3B3483, 800 #2E2A6B, 900 #231F55, 950 #16143A;
+      // belt 50 #FFFAEB, 100 #FFF1C2, 300 #FFD45C, 400 #F5B301, 500 #D99A00, 600 #A87700; paper #FBF8F1.
       colors: {
-        brand: {
-          50: '#F2F1FA',
-          100: '#E4E2F5',
-          200: '#C9C5EB',
-          300: '#A59FDB',
-          400: '#7F77C8',
-          500: '#5E55B1',
-          600: '#4A4299',
-          700: '#3B3483',
-          800: '#2E2A6B',
-          900: '#231F55',
-          950: '#16143A',
-        },
-        belt: {
-          50: '#FFFAEB',
-          100: '#FFF1C2',
-          300: '#FFD45C',
-          400: '#F5B301',
-          500: '#D99A00',
-          600: '#A87700',
-        },
-        paper: '#FBF8F1',
+        brand: scale('brand'),
+        belt: scale('belt', ['50', '100', '300', '400', '500', '600']),
+        paper: 'rgb(var(--paper) / <alpha-value>)',
+        white: 'rgb(var(--white) / <alpha-value>)',
+        stone: scale('stone'),
+        red: scale('red'),
+        green: scale('green'),
+        amber: scale('amber'),
+        yellow: scale('yellow'),
+        blue: scale('blue'),
       },
       boxShadow: {
         /** Makes a card look like a sheet of paper on a desk. */

@@ -28,8 +28,8 @@ export default function BeltCard() {
       className="group block rounded-xl border border-stone-300 bg-white p-4 shadow-sm transition-colors hover:border-brand-500 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-600"
     >
       <div className="flex items-center gap-3">
-        {/* A dark tile, so the white belt shows on the white card. */}
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-brand-900">
+        {/* A dark tile (also in dark mode: theme-fixed), so the white belt shows on the card. */}
+        <span className="theme-fixed flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-brand-900">
           <BeltIcon color={s.belt.color} className="h-10 w-10" />
         </span>
         <div className="min-w-0">

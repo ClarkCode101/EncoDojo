@@ -98,6 +98,8 @@ export type Settings = {
    * number keys above the letters instead of the numpad (and never say "turn on Num Lock").
    */
   noNumpad?: boolean;
+  /** true = "Madilim na itsura" (dark mode, 2026-10-01): html.dark, see index.css. */
+  dark?: boolean;
 };
 
 /** The daily goals the user can pick in Settings (0 = none). */
@@ -152,6 +154,7 @@ function hasValidExtraSettings(settings: Record<string, unknown>): boolean {
     isBooleanOrMissing(settings.reduceMotion) &&
     isBooleanOrMissing(settings.soundCorrect) &&
     isBooleanOrMissing(settings.noNumpad) &&
+    isBooleanOrMissing(settings.dark) &&
     (settings.language === undefined || settings.language === 'tl' || settings.language === 'en')
   );
 }
