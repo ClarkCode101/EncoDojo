@@ -5,7 +5,6 @@
  * where belts are earned.
  */
 import { Link } from 'react-router-dom';
-import { useBeltPreview, previewSessions } from '../features/assessment/DevJump'; // TEMPORARY (DevJump)
 import { beltStatus } from '../lib/belts';
 import { useLang } from '../lib/i18n';
 import { useAppData } from '../lib/useAppData';
@@ -13,13 +12,9 @@ import { ArrowRightIcon, BeltIcon } from './icons';
 
 export default function BeltCard() {
   const { sessions } = useAppData();
-  // TEMPORARY (DevJump): localhost-only belt preview; null = the real belt.
-  // import.meta.env.DEV is a build-time constant, so this is never called (and is removed) in the built site.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const preview = import.meta.env.DEV ? useBeltPreview() : null;
   const lang = useLang();
   const en = lang === 'en';
-  const s = beltStatus(preview ? previewSessions(preview) : sessions, lang);
+  const s = beltStatus(sessions, lang);
   const nextWord = en ? 'Next' : 'Susunod';
 
   return (
@@ -33,10 +28,7 @@ export default function BeltCard() {
           <BeltIcon color={s.belt.color} className="h-10 w-10" />
         </span>
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-stone-600">
-            {en ? 'Your belt' : 'Ang belt mo'}
-            {preview && ' (test preview)'}
-          </div>
+          <div className="text-sm font-semibold text-stone-600">{en ? 'Your belt' : 'Ang belt mo'}</div>
           <div className="text-lg font-bold leading-tight text-stone-900">{s.belt.label}</div>
         </div>
         <ArrowRightIcon className="ml-auto h-5 w-5 text-stone-500 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />

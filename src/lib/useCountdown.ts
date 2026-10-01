@@ -22,17 +22,6 @@ export function useCountdown(durationSec: number, onFinish: () => void) {
   const elapsedSec = startedAt === null ? 0 : Math.min(durationSec, (now - startedAt) / 1000);
   const remainingSec = Math.max(0, durationSec - elapsedSec);
 
-  // TEMPORARY (DevJump): "Tapusin agad" on localhost ends the running part at once.
-  useEffect(() => {
-    if (!import.meta.env.DEV || finished) return;
-    const timeUp = () => {
-      setFinished(true);
-      onFinishRef.current();
-    };
-    window.addEventListener('encodojo:dev-time-up', timeUp);
-    return () => window.removeEventListener('encodojo:dev-time-up', timeUp);
-  }, [finished]);
-
   useEffect(() => {
     if (startedAt === null || finished) return;
     const id = window.setInterval(() => {

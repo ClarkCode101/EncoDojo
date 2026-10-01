@@ -20,7 +20,7 @@ import {
   QcIcon,
 } from '../../components/icons';
 import { PracticeFrame } from '../../components/Practice';
-import { Button, ConfirmButton, HelpTip, Kbd, Notice, PageHeader, Section } from '../../components/ui';
+import { Button, ConfirmButton, HelpTip, Kbd, PageHeader, Section } from '../../components/ui';
 import { listNumber } from '../../lib/listNumber';
 import { HELP } from '../../lib/glossary';
 import { display } from '../../lib/scoring';
@@ -38,15 +38,6 @@ import QcRunner from '../qc/QcRunner';
 import { useFocusMode } from '../../lib/focusMode';
 import { useSenseiQuiet } from '../sensei/quiet';
 import AssessmentReport from './AssessmentReport';
-import {
-  DEV_TOOLS,
-  DevJumpPanel,
-  DevTimeUpButton,
-  blankPart,
-  samplePreset,
-  type JumpTarget,
-  type SamplePreset,
-} from './DevJump'; // TEMPORARY (DevJump)
 import {
   ASSESSMENT,
   assessmentCopyKph,
@@ -296,8 +287,6 @@ export default function AssessmentPage() {
   const { sound } = data.settings;
   const [step, setStep] = useState<Step>({ name: 'intro' });
   const [seed, setSeed] = useState(randomSeed);
-  // TEMPORARY (DevJump): a test run started from the jump buttons is not saved.
-  const [testRun, setTestRun] = useState(false);
 
   const passage = useMemo(
     () => buildPassage(makeRng(seed), PLAIN_TEXT_LEVEL, charsNeeded(ASSESSMENT.typingSeconds / 60)),
@@ -328,69 +317,29 @@ export default function AssessmentPage() {
 
   function start() {
     setSeed(randomSeed());
-    setTestRun(false);
     setStep({ name: 'typing' });
   }
 
   function finishQc(typing: Session, numpad: Session, copy: Session, encoding: Session, qc: Session) {
     const assessment = buildAssessmentSession(typing, numpad, copy, encoding, qc);
-    if (!testRun) saveSession(assessment);
+    saveSession(assessment);
     setStep({ name: 'report', assessment, fromHistory: false });
   }
 
   /** "Itigil ang Assessment": back to the start; nothing is saved. */
   function cancel() {
-    setTestRun(false);
     setStep({ name: 'intro' });
-  }
-
-  // TEMPORARY (DevJump): start at a later part; skipped parts count as 0.
-  function jump(to: JumpTarget) {
-    setSeed(randomSeed());
-    setTestRun(true);
-    const typing = blankPart('typing');
-    const numpad = blankPart('numpad');
-    const copy = blankPart('copy');
-    const encoding = blankPart('encoding');
-    if (to === 'typing') setStep({ name: 'typing' });
-    else if (to === 'break1') setStep({ name: 'break1', typing });
-    else if (to === 'numpad') setStep({ name: 'numpad', typing });
-    else if (to === 'break2') setStep({ name: 'break2', typing, numpad });
-    else if (to === 'copy') setStep({ name: 'copy', typing, numpad });
-    else if (to === 'break3') setStep({ name: 'break3', typing, numpad, copy });
-    else if (to === 'encoding') setStep({ name: 'encoding', typing, numpad, copy });
-    else if (to === 'break4') setStep({ name: 'break4', typing, numpad, copy, encoding });
-    else setStep({ name: 'qc', typing, numpad, copy, encoding });
-  }
-
-  // TEMPORARY (DevJump): a made-up report (not saved).
-  function sampleReport(preset: SamplePreset) {
-    setTestRun(true);
-    const p = samplePreset(preset);
-    setStep({
-      name: 'report',
-      assessment: buildAssessmentSession(p.typing, p.numpad, p.copy, p.encoding, p.qc),
-      fromHistory: false,
-    });
   }
 
   if (step.name === 'report') {
     return (
-      <>
-        {/* TEMPORARY (DevJump) */}
-        {DEV_TOOLS && testRun && !step.fromHistory && (
-          <Notice kind="warning" className="mb-4">
-            🧪 TEST: hindi ito na-save.
-          </Notice>
-        )}
-        <AssessmentReport
-          assessment={step.assessment}
-          previous={previousAssessment(data.sessions, step.assessment)}
-          onBack={() => setStep({ name: 'intro' })}
-          backLabel={step.fromHistory ? 'Bumalik sa listahan' : 'Tapos na'}
-          onRetake={start}
-        />
-      </>
+      <AssessmentReport
+        assessment={step.assessment}
+        previous={previousAssessment(data.sessions, step.assessment)}
+        onBack={() => setStep({ name: 'intro' })}
+        backLabel={step.fromHistory ? 'Bumalik sa listahan' : 'Tapos na'}
+        onRetake={start}
+      />
     );
   }
 
@@ -404,7 +353,6 @@ export default function AssessmentPage() {
           note="1 minuto"
           part={1}
         />
-        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <TypingRunner
           passage={passage}
           seconds={ASSESSMENT.typingSeconds}
@@ -459,7 +407,6 @@ export default function AssessmentPage() {
           note="1 minuto"
           part={2}
         />
-        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <NumpadRunner
           seconds={ASSESSMENT.numpadSeconds}
           difficulty={ASSESSMENT.numpadDifficulty}
@@ -516,7 +463,6 @@ export default function AssessmentPage() {
           note="2 minuto"
           part={3}
         />
-        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <CopyRunner
           seconds={ASSESSMENT.copySeconds}
           showLiveStats={false}
@@ -572,7 +518,6 @@ export default function AssessmentPage() {
           note="3 minuto"
           part={4}
         />
-        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <EntryFormRunner
           seconds={ASSESSMENT.encodingSeconds}
           showLiveStats={false}
@@ -656,7 +601,6 @@ export default function AssessmentPage() {
           note="2 minuto"
           part={5}
         />
-        {DEV_TOOLS && testRun && <DevTimeUpButton />} {/* TEMPORARY (DevJump) */}
         <QcRunner
           seconds={ASSESSMENT.qcSeconds}
           showLiveStats={false}
@@ -675,9 +619,6 @@ export default function AssessmentPage() {
         title="Assessment"
         description="Parang totoong hiring exam para sa Encoder / Data Entry. Sa dulo, malalaman mo kung job-ready ka na."
       />
-
-      {/* TEMPORARY (DevJump): localhost only */}
-      {DEV_TOOLS && <DevJumpPanel onJump={jump} onSampleReport={sampleReport} />}
 
       <Rules />
 
