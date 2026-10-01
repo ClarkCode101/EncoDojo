@@ -143,4 +143,19 @@ src/
 
 ## License
 
-[GPL-3.0](LICENSE). EncoDojo uses HyperFormula under its GPL-3.0 license, so this project stays open source.
+Copyright (C) 2026 ClarkCode101
+
+EncoDojo is free software: you can redistribute it and/or modify it under the terms of the GNU General
+Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
+option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+[GNU General Public License](LICENSE) for more details.
+
+EncoDojo uses HyperFormula under its GPL-3.0 license, so this project stays open source.
+
+## Name and logo
+
+The GPL covers the code, not the brand. The name **EncoDojo** and the EncoDojo logo (the "E" key with a gold
+belt) are not licensed for use in other projects. If you publish your own version of this code, please give it
+a different name and logo, and do not suggest that it is the official EncoDojo or made by its author. Saying
+that your project is based on EncoDojo, with a link to this repository, is welcome.
