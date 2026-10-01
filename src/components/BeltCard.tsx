@@ -47,12 +47,12 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
       to="/assessment"
       title={summary}
       aria-label={`${yourBelt}: ${summary}`}
-      className={`block rounded-xl border border-brand-700 bg-brand-800 p-3 transition-colors hover:border-belt-400 ${focusRing}`}
+      className={`sb-card block rounded-xl border border-brand-700 bg-brand-800 p-3 transition-colors hover:border-belt-400 ${focusRing}`}
     >
       <div className="flex items-center gap-3">
         <BeltIcon color={s.belt.color} className="h-11 w-11 shrink-0" />
         <div>
-          <div className="text-sm text-brand-200">
+          <div className="sb-card-label text-sm text-brand-200">
             {yourBelt}
             {preview && ' (test preview)'}
           </div>
@@ -60,11 +60,11 @@ export default function BeltCard({ collapsed }: { collapsed: boolean }) {
         </div>
       </div>
       {/* Progress toward the next belt (the text below says the same in words). */}
-      <div aria-hidden="true" className="mt-3 h-2 overflow-hidden rounded-full bg-brand-950">
+      <div aria-hidden="true" className="sb-belt-bar mt-3 h-2 overflow-hidden rounded-full bg-brand-950">
         <div className="h-full rounded-full bg-belt-400" style={{ width: `${Math.round(s.progress * 100)}%` }} />
       </div>
-      {/* Hidden on short screens so the sidebar never needs to scroll (the hover title has it). */}
-      <p className="mt-2 text-sm leading-snug text-brand-100 [@media(max-height:900px)]:hidden">
+      {/* Hidden when the sidebar must fit a short window (useSidebarFit; the hover title has it). */}
+      <p className="sb-belt-hint mt-2 text-sm leading-snug text-brand-100">
         {s.next ? (
           <>
             {nextWord}: <strong className="text-white">{s.next.label}</strong>. {s.nextHint}

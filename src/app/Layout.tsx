@@ -1,4 +1,4 @@
-import { Suspense, useEffect, type ReactNode } from 'react';
+import { Suspense, useEffect, useRef, type ReactNode } from 'react';
 import BeltCard from '../components/BeltCard';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
@@ -20,6 +20,7 @@ import { updateSettings, useAppData } from '../lib/useAppData';
 import NextFocusCard from '../features/dashboard/NextFocusCard';
 import { useIsSenseiQuiet } from '../features/sensei/quiet';
 import Sensei from '../features/sensei/Sensei';
+import { useSidebarFit } from './useSidebarFit';
 
 type NavItem = { to: string; label: string; icon: ReactNode };
 /** `heading`: [Taglish, English]. */
@@ -56,8 +57,8 @@ const navClass =
   (collapsed: boolean) =>
   ({ isActive }: { isActive: boolean }) => {
     return (
-      // Short screens (<900px tall): a little less space, so the sidebar never needs its own scrollbar.
-      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors [@media(min-height:721px)_and_(max-height:900px)]:py-1.5 [@media(min-height:681px)_and_(max-height:720px)]:py-1 [@media(max-height:680px)]:py-0.5 ' +
+      // sb-link: tighter when the sidebar must fit a short window (useSidebarFit, index.css).
+      'sb-link relative flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors ' +
       (collapsed ? 'md:justify-center md:px-0 ' : '') +
       'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-brand-300 ' +
       (isActive
@@ -68,7 +69,7 @@ const navClass =
   };
 
 export default function Layout() {
-  const settings = useAppData().settings;
+  const { settings, sessions } = useAppData();
   const { largeText, sidebarCollapsed, sensei, reduceMotion, bigSource } = settings;
   // "Exam mode" (a running Assessment): no sidebar, the exam gets the whole screen.
   const focus = useIsFocusMode();
@@ -78,6 +79,12 @@ export default function Layout() {
   const collapsed = sidebarCollapsed === true;
   const lang = langOf(settings);
   const t = translator(lang);
+  // The sidebar measures itself and gets tighter until it fits the window (no scrollbar).
+  const sidebarRef = useRef<HTMLElement>(null);
+  const fit = useSidebarFit(
+    sidebarRef,
+    [largeText, lang, collapsed, focus, sessions.length, settings.dailyGoal].join('|'),
+  );
 
   // The page's language, for screen readers and the browser (Settings -> "Wika / Language").
   useEffect(() => {
@@ -105,20 +112,17 @@ export default function Layout() {
 
       {!focus && (
         <aside
+          ref={sidebarRef}
+          data-fit={fit}
           className={
             // No width animation on purpose (owner's request): the labels and cards switch at once anyway,
             // so an animated width only showed squeezed, half-drawn states. An instant switch looks cleaner.
-            'bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden print:hidden ' +
+            'sidebar bg-brand-900 text-white md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:overflow-y-auto md:overflow-x-hidden print:hidden ' +
             (collapsed ? 'md:w-20' : 'md:w-64')
           }
         >
-          <div
-            className={
-              'flex items-center gap-3 px-5 py-5 [@media(min-height:721px)_and_(max-height:900px)]:py-3 [@media(max-height:720px)]:py-1.5 ' +
-              (collapsed ? 'md:flex-col md:px-0' : '')
-            }
-          >
-            <Logo className="h-12 w-12 shrink-0" />
+          <div className={'sb-head flex items-center gap-3 px-5 py-5 ' + (collapsed ? 'md:flex-col md:px-0' : '')}>
+            <Logo className="sb-logo h-12 w-12 shrink-0" />
             <div className={'font-display text-2xl font-bold leading-tight ' + (collapsed ? 'md:sr-only' : '')}>
               EncoDojo
             </div>
@@ -148,16 +152,13 @@ export default function Layout() {
           <nav id="main-nav" aria-label="Main" className="px-3 pb-4">
             <div className="flex flex-wrap gap-1 md:block">
               {groups.map((group, i) => (
-                <div
-                  key={i}
-                  className="md:mb-4 md:[@media(min-height:721px)_and_(max-height:900px)]:mb-2 md:[@media(max-height:720px)]:mb-1"
-                >
+                <div key={i} className="sb-group md:mb-4">
                   {group.heading &&
                     (collapsed ? (
                       // Collapsed: a thin line instead of the heading.
                       <div aria-hidden="true" className="mx-2 mb-2 hidden border-t border-brand-700 md:block" />
                     ) : (
-                      <div className="hidden px-3 pb-1 text-sm font-semibold text-brand-300 md:block">
+                      <div className="sb-heading hidden px-3 pb-1 text-sm font-semibold text-brand-300 md:block">
                         {t(...group.heading)}
                       </div>
                     ))}
@@ -183,7 +184,7 @@ export default function Layout() {
           </nav>
 
           {/* "Susunod na gagawin" + the belt card: bottom of the sidebar on desktop, under the links on phones. */}
-          <div className="space-y-2 px-3 pb-4 md:mt-auto">
+          <div className="sb-cards space-y-2 px-3 pb-4 md:mt-auto">
             <NextFocusCard collapsed={collapsed} />
             <BeltCard collapsed={collapsed} />
           </div>

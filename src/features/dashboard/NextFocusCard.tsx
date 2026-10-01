@@ -58,28 +58,20 @@ export default function NextFocusCard({ collapsed }: { collapsed: boolean }) {
       to={f.to}
       title={summary}
       aria-label={summary}
-      className={`group block rounded-xl border border-dashed border-brand-600 p-3 transition-colors hover:border-belt-400 hover:bg-brand-800 ${focusRing}`}
+      className={`sb-card group block rounded-xl border border-dashed border-brand-600 p-3 transition-colors hover:border-belt-400 hover:bg-brand-800 ${focusRing}`}
     >
-      <div className="text-sm text-brand-200">{heading}</div>
+      <div className="sb-card-label text-sm text-brand-200">{heading}</div>
       <div className="mt-0.5 flex items-center gap-2 font-bold text-white">
         <span className="text-belt-300">{ICONS[f.skill]('h-5 w-5')}</span>
         {f.label}
         <ArrowRightIcon className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
       </div>
       {/*
-        Hidden on short screens so the sidebar never needs to scroll (the hover title has it).
-        With a daily goal there is one more line, so the reason already hides below 1000px
-        (the goal line is the one kept there).
+        These lines hide when the sidebar must fit a short window (useSidebarFit; the hover title has them):
+        the reason first, then the daily goal.
       */}
-      <p
-        className={
-          'mt-1 text-sm leading-snug text-brand-100 [@media(max-height:900px)]:hidden ' +
-          (goal ? '[@media(max-height:1000px)]:hidden' : '')
-        }
-      >
-        {f.reason}
-      </p>
-      {goal && <p className="mt-1 text-sm font-semibold text-belt-300 [@media(max-height:760px)]:hidden">{goal}</p>}
+      <p className="sb-reason mt-1 text-sm leading-snug text-brand-100">{f.reason}</p>
+      {goal && <p className="sb-goal mt-1 text-sm font-semibold text-belt-300">{goal}</p>}
     </Link>
   );
 }
