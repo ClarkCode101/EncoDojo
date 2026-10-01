@@ -100,6 +100,8 @@ export type Settings = {
   noNumpad?: boolean;
   /** true = "Madilim na itsura" (dark mode, 2026-10-01): html.dark, see index.css. */
   dark?: boolean;
+  /** true = "Gabay sa keyboard" (2026-10-01): a keyboard/numpad under Typing and Numpad practice with the next key lit. */
+  keyGuide?: boolean;
 };
 
 /** The daily goals the user can pick in Settings (0 = none). */
@@ -155,6 +157,7 @@ function hasValidExtraSettings(settings: Record<string, unknown>): boolean {
     isBooleanOrMissing(settings.soundCorrect) &&
     isBooleanOrMissing(settings.noNumpad) &&
     isBooleanOrMissing(settings.dark) &&
+    isBooleanOrMissing(settings.keyGuide) &&
     (settings.language === undefined || settings.language === 'tl' || settings.language === 'en')
   );
 }

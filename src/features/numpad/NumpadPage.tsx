@@ -157,6 +157,8 @@ export default function NumpadPage() {
         showLiveStats // always shown in practice (hidden in the Assessment)
         allowFinishEarly
         sound={sound}
+        keyGuide={data.settings.keyGuide === true}
+        noNumpad={noNumpad === true}
         onStart={() => setRunning(true)}
         onFinish={handleFinish}
       />

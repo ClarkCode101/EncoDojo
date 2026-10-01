@@ -144,6 +144,7 @@ export default function TypingPage() {
         showLiveStats // always shown in practice (hidden in the Assessment)
         allowFinishEarly
         sound={sound}
+        keyGuide={data.settings.keyGuide === true}
         onStart={() => setRunning(true)}
         onFinish={handleFinish}
       />

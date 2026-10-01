@@ -19,8 +19,7 @@ import { intBetween, pick, shuffle, type Rng } from '../../lib/random';
 
 // ---------- small building blocks ----------
 
-export const digits = (rng: Rng, count: number) =>
-  String(intBetween(rng, 0, 10 ** count - 1)).padStart(count, '0');
+export const digits = (rng: Rng, count: number) => String(intBetween(rng, 0, 10 ** count - 1)).padStart(count, '0');
 
 export const upperLetter = (rng: Rng) => String.fromCharCode(65 + intBetween(rng, 0, 25));
 
@@ -54,8 +53,7 @@ function timeRange(rng: Rng): [string, string] {
 }
 
 /** Random peso amount, as centavos. */
-const centavos = (rng: Rng, minPesos: number, maxPesos: number) =>
-  intBetween(rng, minPesos * 100, maxPesos * 100);
+const centavos = (rng: Rng, minPesos: number, maxPesos: number) => intBetween(rng, minPesos * 100, maxPesos * 100);
 
 /**
  * A name in parts, for forms with separate boxes (Surname / Given Name /
@@ -218,7 +216,10 @@ function receipt(rng: Rng): string {
 }
 
 function inventory(rng: Rng): string {
-  const codes = Array.from({ length: 3 }, () => `WH-${digits(rng, 5)}, ${intBetween(rng, 1, 4000).toLocaleString('en-US')} pcs`);
+  const codes = Array.from(
+    { length: 3 },
+    () => `WH-${digits(rng, 5)}, ${intBetween(rng, 1, 4000).toLocaleString('en-US')} pcs`,
+  );
   return (
     `Inventory count as of ${recentDate(rng)}: Item code ${codes.join('; Item code ')}. ` +
     `Recount scheduled on ${recentDate(rng)} at ${officeTime(rng)}, Bay ${intBetween(rng, 1, 30)}-${upperLetter(rng)}.`

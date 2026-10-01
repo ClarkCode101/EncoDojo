@@ -261,6 +261,19 @@ export default function SettingsPage() {
       <Section title={t('Practice at tunog', 'Practice and sound')} className="mb-12">
         <div className="-mt-4">
           <SettingRow
+            label={t('Gabay sa keyboard', 'Keyboard guide')}
+            description={t(
+              'Para sa nagsisimula: may keyboard sa ilalim ng Typing at Numpad practice, umiilaw ang susunod na key at sinasabi kung aling daliri.',
+              'For beginners: a keyboard under Typing and Numpad practice lights up the next key and says which finger to use.',
+            )}
+          >
+            <Toggle
+              label={t('Gabay sa keyboard', 'Keyboard guide')}
+              checked={s.keyGuide === true}
+              onChange={(v) => updateSettings({ keyGuide: v })}
+            />
+          </SettingRow>
+          <SettingRow
             label={t('Walang numpad ang keyboard ko', 'My keyboard has no numpad')}
             description={t(
               'Para sa laptop: ituturo ng Numpad Practice ang number keys sa itaas ng mga letra.',

@@ -7,6 +7,7 @@
  * gives it a new `key` so React creates a fresh one.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { KeyboardGuide } from '../../components/KeyGuide';
 import { Button, EnTl, KeyTips, LiveStatsBar } from '../../components/ui';
 import { accuracyPct, display, netWpm, wrongKeystrokes } from '../../lib/scoring';
 import { useT } from '../../lib/i18n';
@@ -27,6 +28,7 @@ export default function TypingRunner({
   showLiveStats,
   allowFinishEarly,
   sound,
+  keyGuide = false,
   onStart,
   onFinish,
 }: {
@@ -37,6 +39,8 @@ export default function TypingRunner({
   showLiveStats: boolean;
   allowFinishEarly: boolean;
   sound: boolean;
+  /** Settings -> "Gabay sa keyboard": the keyboard with the next key lit (practice only, never the Assessment). */
+  keyGuide?: boolean;
   onStart?: () => void;
   onFinish: (session: Session, finishedEarly: boolean) => void;
 }) {
@@ -133,33 +137,48 @@ export default function TypingRunner({
         <PassageView passage={passage} alignment={alignment} />
         <ColorLegend />
 
-        <label htmlFor="typing-input" className="mb-2 mt-4 block text-lg font-bold text-stone-900">
-          {t('Dito ka mag-type', 'Type here')}
-        </label>
-        <textarea
-          id="typing-input"
-          autoFocus
-          value={typed}
-          onChange={(e) => handleChange(e.target.value)}
-          onPaste={(e) => e.preventDefault()}
-          onDrop={(e) => e.preventDefault()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.preventDefault();
-          }}
-          placeholder={t('I-click dito at magsimulang mag-type…', 'Click here and start typing…')}
-          spellCheck={false}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          rows={2}
-          className="w-full rounded-lg border-[1.5px] border-stone-500 bg-white p-4 font-mono text-xl placeholder:text-stone-500 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
-        />
-        <div className="mt-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
-          <KeyTips tips={[{ key: 'Backspace', text: t('para magbura', 'to erase') }]} />
-          {allowFinishEarly && timer.started && (
-            <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
-              <EnTl en="Finish" tl="Tapusin na" />
-            </Button>
+        {/*
+          The typing box; with "Gabay sa keyboard" the keyboard sits to its RIGHT on wide screens
+          (under it on narrow ones), so the passage keeps its room on short laptop screens.
+        */}
+        <div
+          className={keyGuide ? 'shrink-0 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-6' : 'shrink-0'}
+        >
+          <div className="min-w-0">
+            <label htmlFor="typing-input" className="mb-2 mt-4 block text-lg font-bold text-stone-900">
+              {t('Dito ka mag-type', 'Type here')}
+            </label>
+            <textarea
+              id="typing-input"
+              autoFocus
+              value={typed}
+              onChange={(e) => handleChange(e.target.value)}
+              onPaste={(e) => e.preventDefault()}
+              onDrop={(e) => e.preventDefault()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.preventDefault();
+              }}
+              placeholder={t('I-click dito at magsimulang mag-type…', 'Click here and start typing…')}
+              spellCheck={false}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              rows={2}
+              className="w-full rounded-lg border-[1.5px] border-stone-500 bg-white p-4 font-mono text-xl placeholder:text-stone-500 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-200"
+            />
+            <div className="mt-3 flex min-h-11 flex-wrap items-center justify-between gap-3">
+              <KeyTips tips={[{ key: 'Backspace', text: t('para magbura', 'to erase') }]} />
+              {allowFinishEarly && timer.started && (
+                <Button variant="secondary" onClick={() => finish(timer.stop(), true)}>
+                  <EnTl en="Finish" tl="Tapusin na" />
+                </Button>
+              )}
+            </div>
+          </div>
+          {keyGuide && (
+            <div className="mt-3 lg:mt-0 lg:pb-1">
+              <KeyboardGuide next={alignment.cursor < passage.length ? passage[alignment.cursor] : null} />
+            </div>
           )}
         </div>
       </div>
