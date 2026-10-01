@@ -74,8 +74,8 @@ export function TypingMistakesCard({
                 <tr key={i} className="border-t border-stone-200">
                   <td className="py-2 pr-4 text-stone-600">{mistake.index + 1}</td>
                   <td className="py-2 pr-4 text-stone-800">{t(...KIND_LABEL[mistakeKind(mistake)])}</td>
-                  <td className="py-2 pr-4 font-mono text-lg text-green-800">{showChar(mistake.expected) || '—'}</td>
-                  <td className="py-2 font-mono text-lg text-red-700">{showChar(mistake.typed) || '—'}</td>
+                  <td className="py-2 pr-4 font-mono text-lg text-green-800">{showChar(mistake.expected) || '–'}</td>
+                  <td className="py-2 font-mono text-lg text-red-700">{showChar(mistake.typed) || '–'}</td>
                 </tr>
               ))}
             </tbody>

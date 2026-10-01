@@ -301,7 +301,7 @@ export function drawResultCard(ctx: CanvasRenderingContext2D, d: ResultCardData)
   ctx.fillStyle = C.faint;
   ctx.font = `500 22px ${FONT}`;
   ctx.textAlign = 'center';
-  ctx.fillText('Practice result — self-assessed, hindi opisyal na certificate', W / 2, CARD_HEIGHT - 70);
+  ctx.fillText('Practice result lang, self-assessed. Hindi ito opisyal na certificate.', W / 2, CARD_HEIGHT - 70);
   ctx.fillText('encodojo.vercel.app', W / 2, CARD_HEIGHT - 38);
   ctx.textAlign = 'left';
 }

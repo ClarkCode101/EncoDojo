@@ -246,17 +246,17 @@ function History({ sessions, onOpen }: { sessions: Session[]; onOpen: (s: Sessio
                 <td className="py-3 pr-4">
                   {hasCopyPart(s.metrics)
                     ? `${display(s.metrics.copyFieldAccuracy)}%, ${display(assessmentCopyKph(s.metrics)).toLocaleString()} KPH`
-                    : '—'}
+                    : '–'}
                 </td>
                 <td className="py-3 pr-4">
                   {hasEncodingPart(s.metrics)
                     ? `${display(s.metrics.encodingFieldAccuracy)}%, ${display(s.metrics.encodingKph).toLocaleString()} KPH`
-                    : '—'}
+                    : '–'}
                 </td>
                 <td className="py-3 pr-4">
                   {hasQcPart(s.metrics)
                     ? `${display(s.metrics.qcDecisionAccuracy)}%, ${display(s.metrics.qcPerMinute)}/min`
-                    : '—'}
+                    : '–'}
                 </td>
                 <td className="py-3">
                   <div className="flex flex-wrap items-center justify-end gap-2">
